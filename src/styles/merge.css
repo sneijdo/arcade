@@ -1,0 +1,148 @@
+/* Merge — game-specific styles */
+
+#mergeArea {
+  width: 100%;
+}
+
+.merge-board {
+  position: relative;
+  width: min(100%, 56vh, 420px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+}
+
+.merge-bg-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 3%;
+  padding: 3%;
+}
+.merge-bg-cell {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.merge-tiles {
+  position: absolute;
+  inset: 0;
+}
+
+.merge-tile {
+  position: absolute;
+  width: 25%;
+  height: 25%;
+  box-sizing: border-box;
+  padding: calc(1.5% + 1.5px);
+  transition: none;
+}
+
+.merge-tile-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  background: var(--surface-2);
+  color: var(--text);
+  line-height: 1;
+}
+
+.merge-tile-inner.len-2 {
+  font-size: clamp(16px, 8vw, 34px);
+}
+.merge-tile-inner.len-3 {
+  font-size: clamp(13px, 6.4vw, 27px);
+}
+.merge-tile-inner.len-4 {
+  font-size: clamp(11px, 5.2vw, 21px);
+}
+
+.merge-tile-inner.is-new {
+  animation: tile-spawn 0.18s var(--ease);
+}
+.merge-tile-inner.is-merged {
+  animation: tile-pop 0.18s var(--ease);
+}
+
+@keyframes tile-spawn {
+  from {
+    transform: scale(0.35);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes tile-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.merge-tile-inner.v2 {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.merge-tile-inner.v4 {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.merge-tile-inner.v8 {
+  background: linear-gradient(135deg, #3a2f5c, #4a3a72);
+  color: #f3f2fa;
+}
+.merge-tile-inner.v16 {
+  background: linear-gradient(135deg, #4a3a72, #6a4bff);
+  color: #f3f2fa;
+}
+.merge-tile-inner.v32 {
+  background: linear-gradient(135deg, #6a4bff, #8b6bff);
+  color: #f3f2fa;
+}
+.merge-tile-inner.v64 {
+  background: linear-gradient(135deg, #8b6bff, #ac93ff);
+  color: #f3f2fa;
+  box-shadow: 0 0 16px var(--violet-glow);
+}
+.merge-tile-inner.v128 {
+  background: linear-gradient(135deg, #3fa8e0, #5cd0ff);
+  color: #08070c;
+}
+.merge-tile-inner.v256 {
+  background: linear-gradient(135deg, #2fd0b8, #5cd0ff);
+  color: #08070c;
+}
+.merge-tile-inner.v512 {
+  background: linear-gradient(135deg, #9fd82c, #c9f73e);
+  color: #08070c;
+  box-shadow: 0 0 16px var(--lime-glow);
+}
+.merge-tile-inner.v1024 {
+  background: linear-gradient(135deg, #c9f73e, #f2ff8a);
+  color: #08070c;
+  box-shadow: 0 0 22px var(--lime-glow);
+}
+.merge-tile-inner.v2048 {
+  background: linear-gradient(135deg, #ffd23f, #ff9d3f);
+  color: #08070c;
+  box-shadow: 0 0 26px rgba(255, 210, 63, 0.55);
+}
+.merge-tile-inner.vsuper {
+  background: linear-gradient(135deg, #ff5d7a, #ffd23f);
+  color: #08070c;
+  box-shadow: 0 0 30px var(--coral-glow);
+}

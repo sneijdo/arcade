@@ -74,4 +74,52 @@ export const ScoreKinds: Record<string, ScoreKind> = {
       return { label: 'SKAL ØVES', color: 'var(--coral)' };
     },
   },
+  stack_height: {
+    direction: 'desc',
+    unit: ' blokke',
+    format: (v) => `${Math.round(v)}`,
+    rating: (v) => {
+      if (v >= 25) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 18) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 12) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 6) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
+  color_accuracy: {
+    direction: 'desc',
+    unit: '%',
+    format: (v) => `${Math.round(v)}`,
+    rating: (v) => {
+      if (v >= 95) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 85) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 70) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 50) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
+  dash_distance: {
+    direction: 'desc',
+    unit: 'm',
+    format: (v) => `${Math.round(v)}`,
+    rating: (v) => {
+      if (v >= 400) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 200) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 100) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 40) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
+  merge_tile: {
+    direction: 'desc',
+    unit: '',
+    format: (v) => `${Math.round(v)}`,
+    rating: (v) => {
+      if (v >= 1024) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 512) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 256) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 128) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
 };

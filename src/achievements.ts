@@ -23,11 +23,27 @@ export const ACHIEVEMENTS: Achievement[] = [
 
   // Breach Protocol
   { id: 'tactical_operator', icon: '🪖', title: 'OPERATØR', desc: 'Ryd 3+ rum i Breach Protocol.', check: (s) => (s.bestScores.tactical ?? 0) >= 3 },
-  { id: 'tactical_commander', icon: '🎖️', title: 'BEFALINGSMAND', desc: 'Fuldfør hele missionen i Breach Protocol.', check: (s) => (s.bestScores.tactical ?? 0) >= 7 },
+  { id: 'tactical_commander', icon: '🎖️', title: 'BEFALINGSMAND', desc: 'Fuldfør hele missionen i Breach Protocol.', check: (s) => (s.bestScores.tactical ?? 0) >= 10 },
+
+  // Color Match
+  { id: 'color_eye', icon: '🎨', title: 'SKARPT ØJE', desc: '85%+ nøjagtighed i Color Match.', check: (s) => (s.bestScores.color ?? 0) >= 85 },
+  { id: 'color_perfect', icon: '🖌️', title: 'FARVEGENI', desc: '95%+ nøjagtighed i Color Match.', check: (s) => (s.bestScores.color ?? 0) >= 95 },
+
+  // Stack Tower
+  { id: 'stack_builder', icon: '🧱', title: 'BYGMESTER', desc: '12+ blokke i Stack Tower.', check: (s) => (s.bestScores.stack ?? 0) >= 12 },
+  { id: 'stack_architect', icon: '🏗️', title: 'ARKITEKT', desc: '25+ blokke i Stack Tower.', check: (s) => (s.bestScores.stack ?? 0) >= 25 },
+
+  // Dash
+  { id: 'dash_runner', icon: '💨', title: 'LØBER', desc: '100+ meter i Dash.', check: (s) => (s.bestScores.dash ?? 0) >= 100 },
+  { id: 'dash_unstoppable', icon: '🌪️', title: 'USTOPPELIG', desc: '400+ meter i Dash.', check: (s) => (s.bestScores.dash ?? 0) >= 400 },
+
+  // Merge
+  { id: 'merge_512', icon: '🔢', title: 'TALKNUSER', desc: 'Nå 512 i Merge.', check: (s) => (s.bestScores.merge ?? 0) >= 512 },
+  { id: 'merge_1024', icon: '🌟', title: 'TALGENI', desc: 'Nå 1024 i Merge.', check: (s) => (s.bestScores.merge ?? 0) >= 1024 },
 
   // Cross-game
   { id: 'firstplace', icon: '🏆', title: 'MESTER', desc: 'Indtag #1-pladsen på et leaderboard.', check: (s) => Object.values(s.ranks).some((r) => r === 1) },
-  { id: 'allrounder', icon: '🎮', title: 'ALLROUNDER', desc: 'Sæt en rekord i alle spil.', check: (s) => s.gamesPlayed >= 6 },
+  { id: 'allrounder', icon: '🎮', title: 'ALLROUNDER', desc: 'Sæt en rekord i alle spil.', check: (s) => s.gamesPlayed >= 10 },
   { id: 'grinder', icon: '🔥', title: 'I GANG', desc: 'Spil 5 runder i alt.', check: (s) => s.sessionsPlayed >= 5 },
   { id: 'dedicated', icon: '💀', title: 'ÉN MERE', desc: 'Spil 10 runder i alt.', check: (s) => s.sessionsPlayed >= 10 },
 ];

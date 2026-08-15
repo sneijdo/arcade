@@ -1,0 +1,49 @@
+/* Dash — game-specific styles */
+
+.dash-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(139, 107, 255, 0.06), transparent 30%),
+    linear-gradient(0deg, rgba(255, 93, 122, 0.05), transparent 25%);
+}
+
+.dash-live-score {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--text);
+  text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.dash-player {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e8ffb0, var(--lime) 55%, #92c928);
+  box-shadow: 0 0 24px 4px var(--lime-glow), inset 0 -4px 10px rgba(0, 0, 0, 0.22);
+  transition: transform 0.06s linear;
+  z-index: 2;
+  will-change: transform, left, top;
+}
+
+.dash-pipe {
+  position: absolute;
+  background: linear-gradient(90deg, #ff8a5c, var(--coral) 60%, #d9455f);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 16px rgba(255, 93, 122, 0.25);
+  border-radius: 6px;
+  z-index: 1;
+}
+.dash-pipe-top {
+  top: 0;
+}
+.dash-pipe-bottom {
+  bottom: 0;
+}

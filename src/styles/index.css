@@ -8,5 +8,9 @@
 @import './numberrush.css';
 @import './snake.css';
 @import './tactical.css';
+@import './color.css';
+@import './stack.css';
+@import './dash.css';
+@import './merge.css';
 @import './pages.css';
 @import './modal.css';

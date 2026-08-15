@@ -1,0 +1,317 @@
+import { ScoreKinds } from '../../scoring';
+import { Sound } from '../../sound';
+import { Haptics } from '../../haptics';
+import { finishGameSession } from '../../state';
+
+const SIZE = 4;
+const SWIPE_THRESHOLD = 24;
+
+type Direction = 'up' | 'down' | 'left' | 'right';
+type Phase = 'idle' | 'playing' | 'gameover';
+
+interface Tile {
+  id: number;
+  value: number;
+  merged: boolean;
+  isNew: boolean;
+}
+type Cell = Tile | null;
+type Grid = Cell[][];
+
+interface MergeState {
+  grid: Grid;
+  phase: Phase;
+  best: number;
+  moves: number;
+}
+
+let nextId = 1;
+let state: MergeState = makeInitialState();
+let swipeStart: { x: number; y: number } | null = null;
+let swipeTriggered = false;
+
+function emptyGrid(): Grid {
+  return Array.from({ length: SIZE }, () => Array<Cell>(SIZE).fill(null));
+}
+
+function makeInitialState(): MergeState {
+  const grid = emptyGrid();
+  spawnTile(grid);
+  spawnTile(grid);
+  return { grid, phase: 'idle', best: highestValue(grid), moves: 0 };
+}
+
+function highestValue(g: Grid): number {
+  let best = 0;
+  for (const row of g) for (const c of row) if (c && c.value > best) best = c.value;
+  return best;
+}
+
+function randomEmptyCell(g: Grid): { row: number; col: number } | null {
+  const empties: { row: number; col: number }[] = [];
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (!g[r][c]) empties.push({ row: r, col: c });
+  if (!empties.length) return null;
+  return empties[Math.floor(Math.random() * empties.length)];
+}
+
+function spawnTile(g: Grid): void {
+  const cell = randomEmptyCell(g);
+  if (!cell) return;
+  const value = Math.random() < 0.9 ? 2 : 4;
+  g[cell.row][cell.col] = { id: nextId++, value, merged: false, isNew: true };
+}
+
+function getLine(g: Grid, dir: Direction, idx: number): Cell[] {
+  let arr: Cell[];
+  if (dir === 'left' || dir === 'right') arr = [...g[idx]];
+  else arr = [g[0][idx], g[1][idx], g[2][idx], g[3][idx]];
+  if (dir === 'right' || dir === 'down') arr = arr.reverse();
+  return arr;
+}
+
+function putLine(g: Grid, dir: Direction, idx: number, line: Cell[]): void {
+  const arr = dir === 'right' || dir === 'down' ? [...line].reverse() : line;
+  if (dir === 'left' || dir === 'right') g[idx] = arr;
+  else for (let r = 0; r < SIZE; r++) g[r][idx] = arr[r];
+}
+
+function processLine(line: Cell[]): { line: Cell[]; moved: boolean; mergedAny: boolean } {
+  const tiles = line.filter((c): c is Tile => c != null);
+  const result: Cell[] = [];
+  let mergedAny = false;
+  let i = 0;
+  while (i < tiles.length) {
+    const cur = tiles[i];
+    const next = tiles[i + 1];
+    if (next && next.value === cur.value) {
+      result.push({ id: nextId++, value: cur.value * 2, merged: true, isNew: false });
+      mergedAny = true;
+      i += 2;
+    } else {
+      result.push({ ...cur, merged: false, isNew: false });
+      i += 1;
+    }
+  }
+  while (result.length < SIZE) result.push(null);
+  const origVals = line.map((c) => (c ? c.value : 0));
+  const newVals = result.map((c) => (c ? c.value : 0));
+  const moved = origVals.some((v, idx) => v !== newVals[idx]);
+  return { line: result, moved, mergedAny };
+}
+
+function moveGrid(g: Grid, dir: Direction): { grid: Grid; moved: boolean; mergedAny: boolean } {
+  const next = emptyGrid();
+  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) next[r][c] = g[r][c];
+  let moved = false;
+  let mergedAny = false;
+  for (let idx = 0; idx < SIZE; idx++) {
+    const line = getLine(next, dir, idx);
+    const res = processLine(line);
+    if (res.moved) moved = true;
+    if (res.mergedAny) mergedAny = true;
+    putLine(next, dir, idx, res.line);
+  }
+  return { grid: next, moved, mergedAny };
+}
+
+function hasMovesLeft(g: Grid): boolean {
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      const cell = g[r][c];
+      if (!cell) return true;
+      if (c < SIZE - 1 && g[r][c + 1] && g[r][c + 1]!.value === cell.value) return true;
+      if (r < SIZE - 1 && g[r + 1][c] && g[r + 1][c]!.value === cell.value) return true;
+    }
+  }
+  return false;
+}
+
+function main(): HTMLElement {
+  return document.getElementById('main')!;
+}
+
+export function renderMergeGame(): void {
+  nextId = 1;
+  state = makeInitialState();
+  swipeStart = null;
+  swipeTriggered = false;
+  drawShell();
+}
+
+function drawShell(): void {
+  main().innerHTML = `
+    <div class="page">
+      <div class="game-shell">
+        <div class="game-topbar">
+          <span>MERGE</span>
+          <span class="mono" id="mergeScore">HØJESTE: 0</span>
+        </div>
+        <div id="mergeArea"></div>
+      </div>
+    </div>
+  `;
+  drawArea();
+}
+
+function drawArea(): void {
+  const area = document.getElementById('mergeArea')!;
+  if (state.phase === 'idle') {
+    area.innerHTML = `
+      <div class="arena">
+        <div class="arena-inner">
+          <div class="arena-title">Klar?</div>
+          <ul class="instructions-list">
+            <li>Swipe for at flytte alle brikker</li>
+            <li>Ens tal der rammer hinanden, flettes til det dobbelte</li>
+            <li>Nå så højt et tal du kan, før pladen løber tør for træk</li>
+          </ul>
+          <button class="btn btn-primary btn-lg" id="mergeStartBtn">START</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('mergeStartBtn')!.addEventListener('click', (e) => {
+      e.stopPropagation();
+      startGame();
+    });
+  } else if (state.phase === 'playing') {
+    area.innerHTML = `
+      <div class="arena">
+        <div class="merge-board" id="mergeBoard">
+          <div class="merge-bg-grid">${'<div class="merge-bg-cell"></div>'.repeat(SIZE * SIZE)}</div>
+          <div class="merge-tiles" id="mergeTiles"></div>
+        </div>
+      </div>
+    `;
+    renderTiles();
+    wireControls();
+  }
+}
+
+function startGame(): void {
+  state.phase = 'playing';
+  drawArea();
+}
+
+function updateScoreLabel(): void {
+  const el = document.getElementById('mergeScore');
+  if (el) el.textContent = `HØJESTE: ${state.best}`;
+}
+
+function tileLenClass(value: number): string {
+  const len = String(value).length;
+  if (len <= 2) return 'len-2';
+  if (len === 3) return 'len-3';
+  return 'len-4';
+}
+
+function renderTiles(): void {
+  const holder = document.getElementById('mergeTiles');
+  if (!holder) return;
+  const cells: string[] = [];
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      const tile = state.grid[r][c];
+      if (!tile) continue;
+      const cls = ['merge-tile-inner', `v${tile.value > 2048 ? 'super' : tile.value}`, tileLenClass(tile.value)];
+      if (tile.isNew) cls.push('is-new');
+      if (tile.merged) cls.push('is-merged');
+      cells.push(
+        `<div class="merge-tile" style="left:${(c * 100) / SIZE}%;top:${(r * 100) / SIZE}%"><div class="${cls.join(' ')}">${tile.value}</div></div>`,
+      );
+    }
+  }
+  holder.innerHTML = cells.join('');
+}
+
+function attemptMove(dir: Direction): void {
+  if (state.phase !== 'playing') return;
+  const result = moveGrid(state.grid, dir);
+  if (!result.moved) return;
+  state.grid = result.grid;
+  state.moves++;
+  if (result.mergedAny) {
+    Sound.hit();
+    Haptics.hit();
+  } else {
+    Sound.click();
+  }
+  spawnTile(state.grid);
+  state.best = Math.max(state.best, highestValue(state.grid));
+  renderTiles();
+  updateScoreLabel();
+  if (!hasMovesLeft(state.grid)) {
+    endGame();
+  }
+}
+
+function wireControls(): void {
+  const board = document.getElementById('mergeBoard')!;
+
+  board.addEventListener('pointerdown', (e) => {
+    if (!e.isPrimary) return;
+    e.preventDefault();
+    swipeStart = { x: e.clientX, y: e.clientY };
+    swipeTriggered = false;
+  });
+  board.addEventListener('pointermove', (e) => {
+    if (!swipeStart || swipeTriggered || !e.isPrimary) return;
+    const dx = e.clientX - swipeStart.x;
+    const dy = e.clientY - swipeStart.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE_THRESHOLD) return;
+    swipeTriggered = true;
+    if (Math.abs(dx) > Math.abs(dy)) attemptMove(dx > 0 ? 'right' : 'left');
+    else attemptMove(dy > 0 ? 'down' : 'up');
+  });
+  const endSwipe = () => {
+    swipeStart = null;
+    swipeTriggered = false;
+  };
+  board.addEventListener('pointerup', endSwipe);
+  board.addEventListener('pointercancel', endSwipe);
+}
+
+async function endGame(): Promise<void> {
+  state.phase = 'gameover';
+  Sound.mistake();
+  Haptics.miss();
+  const { isNewBest, xpGain, rank } = await finishGameSession('merge', state.best);
+  Sound.complete();
+  if (isNewBest) {
+    setTimeout(() => Sound.pb(), 250);
+    Haptics.personalBest();
+  }
+  drawFinalScreen(state.best, state.moves, isNewBest, xpGain, rank);
+}
+
+function drawFinalScreen(score: number, moves: number, isNewBest: boolean, xpGain: number, rank: number | null): void {
+  const rating = ScoreKinds.merge_tile.rating(score);
+  main().innerHTML = `
+    <div class="page">
+      <div class="game-shell">
+        <div class="final-wrap">
+          <div class="final-label">Højeste tal</div>
+          <div class="final-score">${score}</div>
+          <div class="final-rating" style="color:${rating.color}">${rating.label}</div>
+          ${isNewBest ? '<div class="pb-flag">★ NY PERSONLIG REKORD</div>' : ''}
+          <div class="xp-toast">✦ +${xpGain} XP optjent${rank && rank <= 3 ? ' · TOP 3-BONUS' : ''}</div>
+
+          <div class="final-stats">
+            <div class="fstat"><div class="n">${score}</div><div class="l">Højeste tal</div></div>
+            <div class="fstat"><div class="n">${moves}</div><div class="l">Træk</div></div>
+            <div class="fstat"><div class="n">${rank ? '#' + rank : '—'}</div><div class="l">Placering</div></div>
+            <div class="fstat"><div class="n">+${xpGain}</div><div class="l">XP optjent</div></div>
+          </div>
+
+          <div class="final-ctas">
+            <button class="btn btn-primary btn-lg" id="mergePlayAgainBtn">SPIL IGEN</button>
+            <button class="btn btn-ghost btn-lg" data-nav="leaderboard">LEADERBOARD</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('mergePlayAgainBtn')!.addEventListener('click', () => {
+    Sound.click();
+    renderMergeGame();
+  });
+}
