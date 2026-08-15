@@ -1,31 +1,48 @@
-import type { Vec2 } from './types';
+import type { Vec2, BossId } from './types';
 import { vSub, vNorm, vAngle, vDist } from './types';
 import { BALANCE } from './balance';
 
 export interface BossInstance {
+  bossId: BossId;
   pos: Vec2;
   hp: number;
   maxHp: number;
   radius: number;
   facing: number;
   hitFlash: number;
-  phase: 'idle' | 'burstWindup' | 'burst' | 'slamTelegraph' | 'slamResolve';
+  /** Deliberately a plain string, not a fixed union — each boss owns its own phase names, dispatched on bossId, so adding a boss never means widening a shared enum. */
+  phase: string;
   phaseTimer: number;
+  // commander-only
   burstShotsRemaining: number;
   burstsSinceSlam: number;
   slamTarget: Vec2;
+  // harbinger-only
+  sweepShotsRemaining: number;
+  sweepAngle: number;
+  summonsSinceSweep: number;
 }
 
-export const BOSS_MAX_HP = BALANCE.boss.maxHp;
-export const BOSS_RADIUS = BALANCE.boss.radius;
-const BURST_WINDUP_S = 0.35;
+export const BOSS_NAMES: Record<BossId, string> = {
+  commander: 'ARMORED COMMANDER',
+  harbinger: 'SWARM HARBINGER',
+};
 
-export function spawnBoss(pos: Vec2): BossInstance {
+const ALL_BOSS_IDS: BossId[] = ['commander', 'harbinger'];
+
+export function pickBossId(): BossId {
+  return ALL_BOSS_IDS[Math.floor(Math.random() * ALL_BOSS_IDS.length)];
+}
+
+export function spawnBoss(pos: Vec2, bossId: BossId): BossInstance {
+  const maxHp = bossId === 'harbinger' ? BALANCE.harbinger.maxHp : BALANCE.boss.maxHp;
+  const radius = bossId === 'harbinger' ? BALANCE.harbinger.radius : BALANCE.boss.radius;
   return {
+    bossId,
     pos: { ...pos },
-    hp: BOSS_MAX_HP,
-    maxHp: BOSS_MAX_HP,
-    radius: BOSS_RADIUS,
+    hp: maxHp,
+    maxHp,
+    radius,
     facing: 0,
     hitFlash: 0,
     phase: 'idle',
@@ -33,6 +50,9 @@ export function spawnBoss(pos: Vec2): BossInstance {
     burstShotsRemaining: 0,
     burstsSinceSlam: 0,
     slamTarget: { ...pos },
+    sweepShotsRemaining: 0,
+    sweepAngle: 0,
+    summonsSinceSweep: 0,
   };
 }
 
@@ -40,25 +60,38 @@ export interface BossUpdateResult {
   fireShot?: { angleRad: number; damage: number };
   slamNowResolving?: { center: Vec2; radius: number; damage: number };
   enteredBurstWindup?: boolean;
+  /** Harbinger only — tactical.ts spawns `count` regular enemies of `defId` when this fires. */
+  summonAdds?: { count: number; defId: 'suppressor' | 'rusher' };
+  enteredSummonTelegraph?: boolean;
+  enteredSweepWindup?: boolean;
 }
 
-/** Three telegraphed states (wind-up, burst-fire, ground slam) — "mechanics > HP inflation" per spec. */
+/** Dispatches to the active boss's own state machine — see updateCommander/updateHarbinger below. Shared bookkeeping (facing, approach movement, hit-flash decay) happens once here so neither boss implementation has to repeat it. */
 export function updateBoss(b: BossInstance, playerPos: Vec2, dt: number, arenaW: number, arenaH: number): BossUpdateResult {
   if (b.hitFlash > 0) b.hitFlash -= dt;
   const toPlayer = vSub(playerPos, b.pos);
-  const result: BossUpdateResult = {};
-
   const dist = vDist(playerPos, b.pos);
-  if (b.phase !== 'slamTelegraph') b.facing = vAngle(toPlayer);
-  if (dist > BALANCE.boss.engageDistance && b.phase === 'idle') {
+  const engageDistance = b.bossId === 'harbinger' ? BALANCE.harbinger.engageDistance : BALANCE.boss.engageDistance;
+  const moveSpeed = b.bossId === 'harbinger' ? BALANCE.harbinger.moveSpeed : BALANCE.boss.moveSpeed;
+  const holdFacing = b.phase === 'slamTelegraph';
+  if (!holdFacing) b.facing = vAngle(toPlayer);
+  if (dist > engageDistance && b.phase === 'idle') {
     const dir = vNorm(toPlayer);
-    b.pos.x += dir.x * BALANCE.boss.moveSpeed * dt;
-    b.pos.y += dir.y * BALANCE.boss.moveSpeed * dt;
+    b.pos.x += dir.x * moveSpeed * dt;
+    b.pos.y += dir.y * moveSpeed * dt;
     b.pos.x = Math.max(b.radius, Math.min(arenaW - b.radius, b.pos.x));
     b.pos.y = Math.max(b.radius, Math.min(arenaH - b.radius, b.pos.y));
   }
 
   b.phaseTimer -= dt;
+  return b.bossId === 'harbinger' ? updateHarbinger(b, playerPos) : updateCommander(b, playerPos);
+}
+
+/** Original boss: telegraphed burst-fire volleys, escalating to a telegraphed ground slam every couple of bursts. "Mechanics > HP inflation" per spec. */
+function updateCommander(b: BossInstance, playerPos: Vec2): BossUpdateResult {
+  const result: BossUpdateResult = {};
+  const BURST_WINDUP_S = 0.35;
+
   if (b.phase === 'idle') {
     if (b.phaseTimer <= 0) {
       if (b.burstsSinceSlam >= BALANCE.boss.burstsBeforeSlam) {
@@ -67,7 +100,6 @@ export function updateBoss(b: BossInstance, playerPos: Vec2, dt: number, arenaW:
         b.slamTarget = { ...playerPos };
         b.burstsSinceSlam = 0;
       } else {
-        // brief visible wind-up before the burst starts, so the first shot isn't a total surprise
         b.phase = 'burstWindup';
         b.phaseTimer = BURST_WINDUP_S;
         result.enteredBurstWindup = true;
@@ -100,6 +132,55 @@ export function updateBoss(b: BossInstance, playerPos: Vec2, dt: number, arenaW:
     if (b.phaseTimer <= 0) {
       b.phase = 'idle';
       b.phaseTimer = BALANCE.boss.postSlamGapS;
+    }
+  }
+
+  return result;
+}
+
+/** Second boss: pressures with summoned adds instead of direct burst damage, then punctuates with a wide rotating projectile sweep instead of one ground slam — same "telegraphed, learnable" spirit, different verb (crowd control vs. a single big hit). */
+function updateHarbinger(b: BossInstance, playerPos: Vec2): BossUpdateResult {
+  const result: BossUpdateResult = {};
+  const B = BALANCE.harbinger;
+
+  if (b.phase === 'idle') {
+    if (b.phaseTimer <= 0) {
+      if (b.summonsSinceSweep >= B.summonsBeforeSweep) {
+        b.phase = 'sweepWindup';
+        b.phaseTimer = B.sweepWindupS;
+        b.sweepAngle = vAngle(vSub(playerPos, b.pos)) - B.sweepArcRad / 2;
+        result.enteredSweepWindup = true;
+      } else {
+        b.phase = 'summonTelegraph';
+        b.phaseTimer = B.summonTelegraphS;
+        result.enteredSummonTelegraph = true;
+      }
+    }
+  } else if (b.phase === 'summonTelegraph') {
+    if (b.phaseTimer <= 0) {
+      result.summonAdds = { count: B.summonCount, defId: Math.random() < 0.5 ? 'suppressor' : 'rusher' };
+      b.summonsSinceSweep++;
+      b.phase = 'idle';
+      b.phaseTimer = B.summonGapS;
+    }
+  } else if (b.phase === 'sweepWindup') {
+    if (b.phaseTimer <= 0) {
+      b.phase = 'sweeping';
+      b.sweepShotsRemaining = B.sweepShots;
+      b.phaseTimer = B.sweepShotIntervalS;
+    }
+  } else if (b.phase === 'sweeping') {
+    if (b.phaseTimer <= 0 && b.sweepShotsRemaining > 0) {
+      const progress = 1 - (b.sweepShotsRemaining - 1) / Math.max(1, B.sweepShots - 1);
+      const angle = b.sweepAngle + B.sweepArcRad * progress;
+      result.fireShot = { angleRad: angle, damage: B.sweepDamage };
+      b.sweepShotsRemaining--;
+      b.phaseTimer = B.sweepShotIntervalS;
+      if (b.sweepShotsRemaining <= 0) {
+        b.phase = 'idle';
+        b.phaseTimer = B.postSweepGapS;
+        b.summonsSinceSweep = 0;
+      }
     }
   }
 

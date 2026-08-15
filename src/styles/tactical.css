@@ -67,6 +67,82 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+.weapon-card.locked {
+  opacity: 0.85;
+}
+.weapon-card.locked .tagline {
+  color: var(--lime);
+  font-weight: 600;
+  -webkit-line-clamp: 1;
+}
+
+.tac-currency-chip {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--lime);
+  background: rgba(201, 247, 62, 0.08);
+  border: 1px solid rgba(201, 247, 62, 0.3);
+  border-radius: 999px;
+  padding: 4px 11px;
+  flex-shrink: 0;
+}
+
+/* ---- Perk shop modal ---- */
+.perk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+  max-height: 52vh;
+  overflow-y: auto;
+}
+.perk-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--void-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+.perk-row.owned {
+  border-color: rgba(201, 247, 62, 0.35);
+  background: linear-gradient(180deg, rgba(201, 247, 62, 0.06), var(--void-2) 60%);
+}
+.perk-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.perk-info {
+  flex: 1;
+  min-width: 0;
+}
+.perk-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+}
+.perk-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+.perk-owned-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: var(--lime);
+  flex-shrink: 0;
+}
+.perk-buy-btn {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  min-height: 36px;
+  padding: 0 12px;
+}
 
 .tactical-shell {
   display: flex;

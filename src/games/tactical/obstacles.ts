@@ -27,11 +27,29 @@ export function resolveCircleVsObstacles(pos: Vec2, radius: number, obstacles: O
     const dx = pos.x - closestX;
     const dy = pos.y - closestY;
     const distSq = dx * dx + dy * dy;
-    if (distSq < radius * radius) {
-      const dist = Math.sqrt(distSq) || 0.0001;
+    if (distSq >= radius * radius) continue;
+    if (distSq > 1e-6) {
+      const dist = Math.sqrt(distSq);
       const push = radius - dist;
       pos.x += (dx / dist) * push;
       pos.y += (dy / dist) * push;
+    } else {
+      // Center sits exactly inside the rect (closestX/Y collapse onto pos, so
+      // dx/dy are both 0 and the normal push direction is undefined) — push
+      // out toward whichever face is nearest instead of doing nothing. This
+      // is the case that mattered in practice: rooms whose cover sits near
+      // the arena center can otherwise trap the player exactly on spawn,
+      // permanently blocking their own line-of-sight to every enemy while
+      // enemy attacks (which don't check LOS) still land freely.
+      const distLeft = pos.x - r.x;
+      const distRight = r.x + r.w - pos.x;
+      const distTop = pos.y - r.y;
+      const distBottom = r.y + r.h - pos.y;
+      const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+      if (minDist === distLeft) pos.x = r.x - radius;
+      else if (minDist === distRight) pos.x = r.x + r.w + radius;
+      else if (minDist === distTop) pos.y = r.y - radius;
+      else pos.y = r.y + r.h + radius;
     }
   }
 }

@@ -65,7 +65,9 @@ export interface WeaponStats {
   splashRadius?: number;
 }
 
-export type EnemyId = 'rifleman' | 'rusher' | 'shotgunner' | 'sniper' | 'elite_rifleman' | 'flanker';
+export type EnemyId = 'rifleman' | 'rusher' | 'shotgunner' | 'sniper' | 'elite_rifleman' | 'flanker' | 'brute' | 'suppressor';
+
+export type BossId = 'commander' | 'harbinger';
 
 export interface EnemyStats {
   id: EnemyId;

@@ -2,7 +2,21 @@ import { finishGameSession } from '../../state';
 import { ScoreKinds } from '../../scoring';
 import { Haptics } from '../../haptics';
 import { Sound } from '../../sound';
+import { toast } from '../../toast';
 import { TacticalSound } from './audio';
+import {
+  loadMeta,
+  saveMeta,
+  applyPerks,
+  computeRunReward,
+  isWeaponUnlocked,
+  tryUnlockWeapon,
+  tryUnlockPerk,
+  WEAPON_COSTS,
+  PERK_DEFS,
+  STARTING_UNLOCKED_WEAPON,
+  type TacticalMeta,
+} from './meta';
 import { Player } from './player';
 import { InputController } from './input';
 import { ProjectilePool } from './projectiles';
@@ -11,7 +25,7 @@ import { selectTarget, type TargetCandidate } from './targeting';
 import { WEAPONS, STARTING_WEAPON_ID, listWeapons } from './weapons';
 import { ENEMY_DEFS } from './enemies';
 import { spawnEnemy, updateEnemy, type EnemyInstance } from './enemyRuntime';
-import { spawnBoss, updateBoss, BOSS_MAX_HP, type BossInstance } from './boss';
+import { spawnBoss, updateBoss, pickBossId, BOSS_NAMES, type BossInstance } from './boss';
 import { buildRoomSequence, TOTAL_ROOMS, type EncounterWave } from './encounters';
 import { pickUpgradeChoices } from './upgrades';
 import { makeDefaultBuild, vAngle, vSub, vDist, vNorm, type BuildStats, type EnemyId, type WeaponId } from './types';
@@ -19,7 +33,7 @@ import { toPixelRects, resolveCircleVsObstacles, hasLineOfSight, type ObstacleRe
 import { BALANCE } from './balance';
 import * as hud from './hud';
 
-type RunPhase = 'intro' | 'playing' | 'levelup' | 'roomclear' | 'gameover';
+type RunPhase = 'intro' | 'playing' | 'levelup' | 'roomclear' | 'vault' | 'gameover';
 
 interface SpawnTicket {
   defId: EnemyId;
@@ -66,6 +80,15 @@ interface RunState {
 }
 
 let run: RunState | null = null;
+let meta: TacticalMeta = { currency: 0, unlockedWeapons: [STARTING_UNLOCKED_WEAPON], unlockedPerks: [] };
+let metaLoaded = false;
+
+/** Loaded once per session (not on every run) — mutated in place and saved on every currency/unlock change, so repeat loads can't race a save still in flight. */
+async function ensureMetaLoaded(): Promise<void> {
+  if (metaLoaded) return;
+  meta = await loadMeta();
+  metaLoaded = true;
+}
 
 function xpForLevel(level: number): number {
   return BALANCE.xp.baseForLevel + (level - 1) * BALANCE.xp.perLevelGrowth;
@@ -126,7 +149,7 @@ export function renderTacticalGame(): void {
   run.input.attachJoystick(joyBase, joyKnob);
   hud.showJoystickIfTouch();
 
-  showIntroOverlay(wrap);
+  void showIntroOverlay(wrap);
   hud.updateXpBar(1, 0, xpForLevel(1));
   hud.updateRoomLabel(`RUM 1/${TOTAL_ROOMS}`);
 }
@@ -142,9 +165,12 @@ function resizeCanvas(): void {
   run.ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-function showIntroOverlay(wrap: HTMLElement): void {
+async function showIntroOverlay(wrap: HTMLElement): Promise<void> {
   if (!run) return;
-  const weapons = listWeapons();
+  await ensureMetaLoaded();
+  if (!run) return; // navigated away while meta was loading
+  if (!isWeaponUnlocked(meta, run.weaponId)) run.weaponId = STARTING_UNLOCKED_WEAPON;
+
   const overlay = document.createElement('div');
   overlay.id = 'tacIntroOverlay';
   // Fixed header + fixed footer (title, hint, start button always visible)
@@ -153,35 +179,85 @@ function showIntroOverlay(wrap: HTMLElement): void {
   // ~240px-tall canvas area) is a real bug, not a nice-to-have.
   overlay.style.cssText =
     'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;gap:8px;background:rgba(8,7,12,.9);z-index:5;padding:14px 16px;';
+  wrap.appendChild(overlay);
+  renderIntroOverlayContent(overlay);
+}
+
+function renderIntroOverlayContent(overlay: HTMLElement): void {
+  if (!run) return;
+  const weapons = listWeapons();
   overlay.innerHTML = `
-    <div class="arena-title" style="flex-shrink:0">Vælg dit våben</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;max-width:420px;flex-shrink:0">
+      <div class="arena-title" style="margin:0">Vælg dit våben</div>
+      <div class="tac-currency-chip">🔷 ${meta.currency}</div>
+    </div>
     <div class="weapon-select-grid" id="weaponSelectGrid" style="flex:1 1 auto;min-height:0;max-height:none;">
       ${weapons
-        .map(
-          (w) => `
-        <button class="weapon-card ${w.id === run!.weaponId ? 'selected' : ''}" data-weapon="${w.id}">
+        .map((w) => {
+          const unlocked = isWeaponUnlocked(meta, w.id);
+          const cost = WEAPON_COSTS[w.id] ?? 0;
+          return `
+        <button class="weapon-card ${w.id === run!.weaponId ? 'selected' : ''} ${unlocked ? '' : 'locked'}" data-weapon="${w.id}">
           <div class="icon">${w.icon}</div>
           <div class="name">${w.name}</div>
-          <div class="tagline">${w.tagline}</div>
+          <div class="tagline">${unlocked ? w.tagline : `🔒 Lås op for 🔷 ${cost}`}</div>
         </button>
-      `,
-        )
+      `;
+        })
         .join('')}
     </div>
     <p style="flex-shrink:0;color:var(--text-faint);font-size:11px;text-align:center;line-height:1.4;margin:0">Stop for automatisk at skyde. Ryd rum, level op, overlev bossen.</p>
-    <button class="btn btn-primary btn-lg" id="tacStartBtn" style="flex-shrink:0;width:100%;max-width:340px">START MISSION</button>
+    <div style="display:flex;gap:8px;width:100%;max-width:340px;flex-shrink:0">
+      <button class="btn btn-ghost" id="tacPerksBtn" style="flex:1">PERKS</button>
+      <button class="btn btn-primary" id="tacStartBtn" style="flex:2">START MISSION</button>
+    </div>
   `;
-  wrap.appendChild(overlay);
 
   overlay.querySelectorAll<HTMLButtonElement>('[data-weapon]').forEach((btn) => {
     btn.addEventListener('pointerdown', (e) => {
       if (!(e as PointerEvent).isPrimary || !run) return;
       e.preventDefault();
-      run.weaponId = btn.dataset.weapon as WeaponId;
+      const id = btn.dataset.weapon as WeaponId;
+      if (!isWeaponUnlocked(meta, id)) {
+        const cost = WEAPON_COSTS[id] ?? 999999;
+        if (meta.currency < cost) {
+          toast('Ikke nok Fragmenter til dette våben endnu');
+          return;
+        }
+        tryUnlockWeapon(meta, id);
+        void saveMeta(meta);
+        Sound.pb();
+        Haptics.personalBest();
+        run.weaponId = id;
+        renderIntroOverlayContent(overlay);
+        return;
+      }
+      run.weaponId = id;
       overlay.querySelectorAll('.weapon-card').forEach((c) => c.classList.remove('selected'));
       btn.classList.add('selected');
       Sound.click();
     });
+  });
+
+  document.getElementById('tacPerksBtn')!.addEventListener('click', (e) => {
+    e.stopPropagation();
+    Sound.click();
+    hud.showPerkShopModal(
+      meta,
+      PERK_DEFS,
+      (perkId) => {
+        const bought = tryUnlockPerk(meta, perkId);
+        if (bought) {
+          void saveMeta(meta);
+          Sound.pb();
+          Haptics.personalBest();
+        } else {
+          toast('Ikke nok Fragmenter til denne perk endnu');
+        }
+        return bought;
+      },
+      () => renderIntroOverlayContent(overlay),
+    );
   });
 
   document.getElementById('tacStartBtn')!.addEventListener('click', (e) => {
@@ -193,6 +269,7 @@ function showIntroOverlay(wrap: HTMLElement): void {
 
 function startRun(): void {
   if (!run) return;
+  applyPerks(meta, run.build);
   run.player.reset({ x: run.arenaW / 2, y: run.arenaH / 2 }, run.build);
   run.roomSequence = buildRoomSequence();
   hud.updateWeaponChip(currentWeapon().name);
@@ -214,9 +291,11 @@ function startRoom(index: number): void {
 
   if (index >= run.roomSequence.length) {
     hud.updateRoomLabel(`RUM ${TOTAL_ROOMS}/${TOTAL_ROOMS} · BOSS`);
-    run.boss = spawnBoss({ x: run.arenaW / 2, y: run.arenaH * 0.28 });
+    const bossId = pickBossId();
+    run.boss = spawnBoss({ x: run.arenaW / 2, y: run.arenaH * 0.28 }, bossId);
     hud.showBossBar(true);
-    hud.updateBossBar(run.boss.hp, BOSS_MAX_HP);
+    hud.updateBossName(BOSS_NAMES[bossId]);
+    hud.updateBossBar(run.boss.hp, run.boss.maxHp);
     run.spawnQueue = [];
     run.obstacles = []; // open arena for the boss fight
     run.vfx.warningBanner('boss', { x: run.arenaW / 2, y: run.arenaH / 2 });
@@ -249,8 +328,11 @@ function spawnAtEdge(defId: EnemyId): void {
   else if (edge === 1) { x = run.arenaW - pad; y = Math.random() * run.arenaH; }
   else if (edge === 2) { x = Math.random() * run.arenaW; y = pad; }
   else { x = Math.random() * run.arenaW; y = run.arenaH - pad; }
-  run.enemies.push(spawnEnemy(defId, { x, y }));
-  if (ENEMY_DEFS[defId].isElite) {
+  // Elite-instance chance climbs with room progress — near-zero in the opening rooms, capped at 22% by the last non-boss room, so lategame runs get real elite pressure without the first room ever surprising a new player.
+  const eliteChance = Math.min(0.22, run.roomIndex * 0.025);
+  const enemy = spawnEnemy(defId, { x, y }, eliteChance);
+  run.enemies.push(enemy);
+  if (ENEMY_DEFS[defId].isElite || enemy.eliteMod) {
     run.vfx.warningBanner('elite', { x: run.arenaW / 2, y: run.arenaH / 2 });
     TacticalSound.eliteWarning();
   }
@@ -324,6 +406,28 @@ function update(dt: number): void {
     resolveCircleVsObstacles(r.boss.pos, r.boss.radius, r.obstacles);
     if (bossResult.enteredBurstWindup) TacticalSound.bossWindup();
     if (bossResult.fireShot) fireBossProjectile(r.boss, bossResult.fireShot.angleRad, bossResult.fireShot.damage);
+    if (bossResult.enteredSummonTelegraph) {
+      TacticalSound.eliteWarning();
+      r.vfx.warningBanner('elite', r.boss.pos);
+    }
+    if (bossResult.enteredSweepWindup) {
+      TacticalSound.bossWindup();
+      r.vfx.warningBanner('boss', r.boss.pos);
+    }
+    if (bossResult.summonAdds) {
+      const { count, defId } = bossResult.summonAdds;
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const spawnDist = r.boss.radius + 60 + Math.random() * 40;
+        r.enemies.push(
+          spawnEnemy(defId, {
+            x: Math.max(20, Math.min(r.arenaW - 20, r.boss.pos.x + Math.cos(angle) * spawnDist)),
+            y: Math.max(20, Math.min(r.arenaH - 20, r.boss.pos.y + Math.sin(angle) * spawnDist)),
+          }),
+        );
+      }
+      r.vfx.impactSpark(r.boss.pos, '#8b6bff');
+    }
     if (bossResult.slamNowResolving) {
       const { center, radius, damage } = bossResult.slamNowResolving;
       if (vDist(r.player.pos, center) <= radius) {
@@ -333,7 +437,7 @@ function update(dt: number): void {
       r.vfx.deathBurst(center, '#ff5d7a');
       r.vfx.shake(14);
     }
-    hud.updateBossBar(r.boss.hp, BOSS_MAX_HP);
+    hud.updateBossBar(r.boss.hp, r.boss.maxHp);
     if (r.boss.hp <= 0) {
       r.vfx.deathBurst(r.boss.pos, '#ff5d7a');
       r.vfx.shake(16);
@@ -357,12 +461,52 @@ function update(dt: number): void {
     r.roomsCleared = r.roomIndex + 1;
     TacticalSound.waveClear();
     const nextIndex = r.roomIndex + 1;
+    // A vault checkpoint every 3rd cleared room (never right before the boss room, which has its own warning beat) — a breather with a guaranteed reward instead of pure combat back-to-back.
+    const showVault = (r.roomIndex + 1) % 3 === 0 && nextIndex < r.roomSequence.length;
+    r.phase = showVault ? 'vault' : 'playing';
     setTimeout(() => {
-      if (!run || run.phase !== 'playing') return;
-      startRoom(nextIndex);
+      if (!run) return;
+      if (showVault) {
+        if (run.phase !== 'vault') return;
+        showVaultScreen(nextIndex);
+      } else {
+        if (run.phase !== 'playing') return;
+        startRoom(nextIndex);
+      }
     }, 500);
-    r.phase = 'playing'; // stays playing; brief gap has no enemies which is fine
   }
+}
+
+/** Vault checkpoint: a guaranteed, player-picked reward (heal / currency / a bonus upgrade) between rooms — no combat, just a beat of forward progress that doesn't ride on RNG the way a room-clear drop would. */
+function showVaultScreen(nextIndex: number): void {
+  if (!run) return;
+  TacticalSound.levelUp();
+  hud.showVaultModal((choice) => {
+    if (!run) return;
+    if (choice === 'heal') {
+      run.player.heal(run.player.maxHp);
+      toast('❤️ Fuldt helbredt');
+      run.phase = 'playing';
+      startRoom(nextIndex);
+    } else if (choice === 'currency') {
+      meta.currency += 40;
+      void saveMeta(meta);
+      toast('🔷 +40 Fragmenter');
+      run.phase = 'playing';
+      startRoom(nextIndex);
+    } else {
+      const choices = pickUpgradeChoices(run.upgradesTaken, 3);
+      hud.showLevelUpModal(choices, (chosen) => {
+        if (!run) return;
+        chosen.apply(run.build);
+        run.upgradesTaken[chosen.id] = (run.upgradesTaken[chosen.id] ?? 0) + 1;
+        run.player.applyBuildHpChange(run.build);
+        TacticalSound.upgradePick();
+        run.phase = 'playing';
+        startRoom(nextIndex);
+      });
+    }
+  });
 }
 
 function onPlayerHit(dmg: number): void {
@@ -388,7 +532,7 @@ function resolveFireTarget(): TargetCandidate | null {
   if (!run) return null;
   const r = run;
   const range = computeWeaponRange();
-  const candidates: TargetCandidate[] = r.enemies.map((e) => ({ id: e.id, pos: e.pos, isElite: ENEMY_DEFS[e.defId].isElite }));
+  const candidates: TargetCandidate[] = r.enemies.map((e) => ({ id: e.id, pos: e.pos, isElite: ENEMY_DEFS[e.defId].isElite || e.eliteMod }));
   if (r.boss) candidates.push({ id: -1, pos: r.boss.pos, isElite: true });
 
   if (r.lockedTargetId != null && r.lockTimeRemaining > 0) {
@@ -588,12 +732,13 @@ function applyDamageToEnemy(e: EnemyInstance, dmg: number, crit: boolean): void 
   if (run.build.lifestealPct > 0) run.player.heal(dmg * run.build.lifestealPct);
 
   if (e.hp <= 0) {
+    const xpReward = Math.round(ENEMY_DEFS[e.defId].xpReward * (e.eliteMod ? 1.6 : 1));
     run.vfx.deathBurst(e.pos, ENEMY_DEFS[e.defId].color);
-    run.vfx.xpPop(e.pos, ENEMY_DEFS[e.defId].xpReward);
+    run.vfx.xpPop(e.pos, xpReward);
     TacticalSound.enemyDeath();
     Haptics.hit();
     run.hitStopRemaining = Math.max(run.hitStopRemaining, BALANCE.juice.hitStopKillS);
-    grantXp(ENEMY_DEFS[e.defId].xpReward);
+    grantXp(xpReward);
     run.enemies = run.enemies.filter((x) => x.id !== e.id);
     run.enemiesKilled++;
     if (run.build.healOnKillChance > 0 && Math.random() < run.build.healOnKillChance) run.player.heal(8);
@@ -775,6 +920,31 @@ function render(): void {
     ctx.fill();
   }
 
+  // harbinger: violet pulse ring while summoning adds — distinct color from the coral commander tells, so a player who's seen both bosses reads "purple = adds incoming" at a glance
+  if (run.boss && run.boss.phase === 'summonTelegraph') {
+    ctx.beginPath();
+    ctx.arc(run.boss.pos.x, run.boss.pos.y, run.boss.radius + 10, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(139,107,255,0.75)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
+  // harbinger: wide wedge showing the sweep's full arc before it starts firing — the player sees the whole danger zone up front, not just where the current shot is
+  if (run.boss && run.boss.phase === 'sweepWindup') {
+    const B = run.boss;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(B.pos.x, B.pos.y);
+    ctx.arc(B.pos.x, B.pos.y, 340, B.sweepAngle, B.sweepAngle + BALANCE.harbinger.sweepArcRad);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,93,122,0.09)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,93,122,0.5)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+  }
+
   // enemy attack telegraphs — ranged types show an aim line, melee types show a closing warning ring (works for any enemy that sets telegraphRemaining/telegraphTotal, so new archetypes get this for free)
   for (const e of run.enemies) {
     if (e.telegraphRemaining <= 0) continue;
@@ -809,14 +979,17 @@ function render(): void {
     ctx.fillStyle = e.hitFlash > 0 ? '#ffffff' : def.color;
     traceEnemyShape(ctx, def.shape, def.radius);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-    ctx.lineWidth = 1.5;
+    // runtime elite-modified instances get a violet outline instead of the
+    // default dark one — the same "elite = violet" language as elite_rifleman's
+    // hp sliver, so it reads as a threat tier even on an otherwise-plain enemy shape
+    ctx.strokeStyle = e.eliteMod ? '#8b6bff' : 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = e.eliteMod ? 2.5 : 1.5;
     ctx.stroke();
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.fillRect(def.radius - 3, -3, 10, 6);
     ctx.restore();
-    // hp sliver for elites
-    if (def.isElite) {
+    // hp sliver for elites (static isElite defs and runtime-elite instances alike)
+    if (def.isElite || e.eliteMod) {
       const w = def.radius * 2;
       ctx.fillStyle = 'rgba(0,0,0,.4)';
       ctx.fillRect(e.pos.x - w / 2, e.pos.y - def.radius - 10, w, 4);
@@ -829,6 +1002,7 @@ function render(): void {
   // multi-part threat rather than just a scaled-up regular enemy
   if (run.boss) {
     const b = run.boss;
+    const bossAccent = b.bossId === 'harbinger' ? '#8b6bff' : '#ff5d7a';
     ctx.save();
     ctx.translate(b.pos.x, b.pos.y);
     ctx.rotate(b.facing);
@@ -836,7 +1010,7 @@ function render(): void {
     ctx.fillRect(-b.radius * 0.3, -b.radius * 1.35, b.radius * 0.9, b.radius * 0.55);
     ctx.fillRect(-b.radius * 0.3, b.radius * 0.8, b.radius * 0.9, b.radius * 0.55);
     ctx.fillStyle = b.hitFlash > 0 ? '#ffffff' : '#3a2540';
-    ctx.strokeStyle = '#ff5d7a';
+    ctx.strokeStyle = bossAccent;
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.arc(0, 0, b.radius, 0, Math.PI * 2);
@@ -906,22 +1080,25 @@ function endRun(victory: boolean): void {
   if (!run) return;
   run.phase = 'gameover';
   const score = run.roomsCleared;
+  const reward = computeRunReward(run.roomsCleared, run.enemiesKilled, victory);
+  meta.currency += reward;
+  void saveMeta(meta);
   TacticalSound.waveClear();
   Haptics.miss();
-  void finishAndShowResults(score, victory);
+  void finishAndShowResults(score, victory, reward);
 }
 
-async function finishAndShowResults(score: number, victory: boolean): Promise<void> {
+async function finishAndShowResults(score: number, victory: boolean, reward: number): Promise<void> {
   const { isNewBest, xpGain, rank } = await finishGameSession('tactical', score);
   Sound.complete();
   if (isNewBest) {
     setTimeout(() => Sound.pb(), 250);
     Haptics.personalBest();
   }
-  showResultsScreen(score, victory, isNewBest, xpGain, rank);
+  showResultsScreen(score, victory, isNewBest, xpGain, rank, reward);
 }
 
-function showResultsScreen(score: number, victory: boolean, isNewBest: boolean, xpGain: number, rank: number | null): void {
+function showResultsScreen(score: number, victory: boolean, isNewBest: boolean, xpGain: number, rank: number | null, reward: number): void {
   if (run?.rafId != null) cancelAnimationFrame(run.rafId);
   run?.input.destroy();
   const rating = ScoreKinds.tactical_rooms.rating(score);
@@ -935,6 +1112,7 @@ function showResultsScreen(score: number, victory: boolean, isNewBest: boolean, 
           <div class="final-rating" style="color:${rating.color}">${rating.label}</div>
           ${isNewBest ? '<div class="pb-flag">★ NY PERSONLIG REKORD</div>' : ''}
           <div class="xp-toast">✦ +${xpGain} XP optjent${rank && rank <= 3 ? ' · TOP 3-BONUS' : ''}</div>
+          <div class="xp-toast">🔷 +${reward} Fragmenter optjent</div>
 
           <div class="final-stats">
             <div class="fstat"><div class="n">${score}</div><div class="l">Rum ryddet</div></div>

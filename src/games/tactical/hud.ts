@@ -1,4 +1,5 @@
 import type { UpgradeDef } from './types';
+import type { PerkDef, TacticalMeta } from './meta';
 
 export function renderShell(main: HTMLElement): void {
   main.innerHTML = `
@@ -18,7 +19,7 @@ export function renderShell(main: HTMLElement): void {
         <div class="tactical-canvas-wrap" id="tacCanvasWrap">
           <canvas id="tacticalCanvas"></canvas>
           <div class="tactical-boss-bar-wrap" id="tacBossBar" style="display:none">
-            <div class="tactical-boss-name">ARMORED COMMANDER</div>
+            <div class="tactical-boss-name" id="tacBossName">ARMORED COMMANDER</div>
             <div class="tactical-boss-bar-track"><div class="tactical-boss-bar-fill" id="tacBossFill" style="width:100%"></div></div>
           </div>
           <div class="tactical-joystick" id="tacJoystick"><div class="tactical-joystick-knob" id="tacJoystickKnob"></div></div>
@@ -53,6 +54,11 @@ export function updateRoomLabel(text: string): void {
 export function updateWeaponChip(name: string): void {
   const el = document.getElementById('tacWeaponChip');
   if (el) el.textContent = name.toUpperCase();
+}
+
+export function updateBossName(name: string): void {
+  const el = document.getElementById('tacBossName');
+  if (el) el.textContent = name;
 }
 
 export function showBossBar(show: boolean): void {
@@ -107,4 +113,101 @@ export function showLevelUpModal(choices: UpgradeDef[], onPick: (u: UpgradeDef) 
     });
   });
   return backdrop;
+}
+
+const VAULT_OPTIONS: { id: 'heal' | 'currency' | 'upgrade'; icon: string; name: string; desc: string }[] = [
+  { id: 'heal', icon: '❤️', name: 'Fuld Helbredelse', desc: 'Genopfyld dit HP til maks. med det samme.' },
+  { id: 'currency', icon: '🔷', name: 'Fragmenter', desc: 'Modtag 40 Fragmenter til brug i næste run.' },
+  { id: 'upgrade', icon: '⭐', name: 'Garanteret Opgradering', desc: 'Vælg med det samme blandt 3 opgraderinger.' },
+];
+
+export function showVaultModal(onPick: (choice: 'heal' | 'currency' | 'upgrade') => void): void {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal" style="max-width:560px">
+      <div class="hero-tag" style="margin-bottom:6px">HVÆLV FUNDET</div>
+      <h2>Vælg din belønning</h2>
+      <div class="upgrade-grid">
+        ${VAULT_OPTIONS.map(
+          (o, i) => `
+          <button class="upgrade-card rarity-rare" data-idx="${i}">
+            <div class="icon">${o.icon}</div>
+            <div class="name">${o.name}</div>
+            <div class="desc">${o.desc}</div>
+          </button>
+        `,
+        ).join('')}
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  backdrop.querySelectorAll<HTMLButtonElement>('[data-idx]').forEach((btn) => {
+    btn.addEventListener('pointerdown', (e) => {
+      if (!(e as PointerEvent).isPrimary) return;
+      e.preventDefault();
+      const idx = Number(btn.dataset.idx);
+      backdrop.remove();
+      onPick(VAULT_OPTIONS[idx].id);
+    });
+  });
+}
+
+/**
+ * `onBuy` performs the actual purchase (mutate meta + persist + feedback)
+ * and returns whether it succeeded — the modal only re-renders itself on a
+ * true result, so a failed purchase (insufficient currency) just leaves the
+ * modal as-is instead of silently "closing" the attempt.
+ */
+export function showPerkShopModal(meta: TacticalMeta, perks: PerkDef[], onBuy: (perkId: string) => boolean, onClose: () => void): void {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+
+  function renderContent(): void {
+    backdrop.innerHTML = `
+      <div class="modal" style="max-width:480px">
+        <div class="hero-tag" style="margin-bottom:6px">PERMANENTE PERKS</div>
+        <h2>Perk-butik</h2>
+        <p style="margin-top:-6px">Din saldo: <b style="color:var(--lime)">🔷 ${meta.currency}</b></p>
+        <div class="perk-list">
+          ${perks
+            .map((p) => {
+              const owned = meta.unlockedPerks.includes(p.id);
+              const afford = meta.currency >= p.cost;
+              return `
+            <div class="perk-row ${owned ? 'owned' : ''}">
+              <div class="perk-icon">${p.icon}</div>
+              <div class="perk-info">
+                <div class="perk-name">${p.name}</div>
+                <div class="perk-desc">${p.desc}</div>
+              </div>
+              ${
+                owned
+                  ? '<div class="perk-owned-tag">EJET</div>'
+                  : `<button class="btn btn-ghost perk-buy-btn" data-perk="${p.id}" ${afford ? '' : 'disabled style="opacity:.4"'}>🔷 ${p.cost}</button>`
+              }
+            </div>
+          `;
+            })
+            .join('')}
+        </div>
+        <button class="btn btn-primary btn-block" id="perkShopCloseBtn" style="margin-top:14px">LUK</button>
+      </div>
+    `;
+    backdrop.querySelectorAll<HTMLButtonElement>('[data-perk]').forEach((btn) => {
+      btn.addEventListener('pointerdown', (e) => {
+        if (!(e as PointerEvent).isPrimary) return;
+        e.preventDefault();
+        const bought = onBuy(btn.dataset.perk!);
+        if (bought) renderContent();
+      });
+    });
+    backdrop.querySelector<HTMLButtonElement>('#perkShopCloseBtn')!.addEventListener('click', () => {
+      backdrop.remove();
+      onClose();
+    });
+  }
+
+  document.body.appendChild(backdrop);
+  renderContent();
 }

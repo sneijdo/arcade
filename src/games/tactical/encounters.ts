@@ -116,6 +116,20 @@ const TOTAL_WAR_COVER: ObstacleDef[] = [
   { x: 0.7, y: 0.65, w: 0.12, h: 0.12 },
 ];
 
+// Two wide blocks give room to circle around the brutes without ever fully
+// losing them — kiting room, not a hiding room. A slow, heavy threat with
+// nowhere to truly break line of sight forces you to keep moving instead
+// of camping one spot.
+const HEAVY_ORDNANCE_COVER: ObstacleDef[] = [
+  { x: 0.18, y: 0.3, w: 0.16, h: 0.14 },
+  { x: 0.66, y: 0.56, w: 0.16, h: 0.14 },
+];
+
+// Deliberately sparse — suppressors punish standing still far more than
+// they punish being in the open, so heavy cover would trivialize the room's
+// actual lesson (keep moving, don't trade shots at a fixed spot).
+const SUPPRESSIVE_FIRE_COVER: ObstacleDef[] = [{ x: 0.43, y: 0.44, w: 0.14, h: 0.12 }];
+
 /**
  * Pool of handcrafted room templates, tagged by tier — NOT a fixed linear
  * list anymore. buildRoomSequence() draws a run's actual room order from
@@ -190,6 +204,17 @@ export const ENCOUNTER_POOL: EncounterWave[] = [
   // spawn timer. Cover has to serve whichever threat is most urgent right
   // now, not a fixed danger — priorities shift constantly.
   { label: 'Total Krig', tier: 'late', enemies: [{ defId: 'sniper', count: 1 }, { defId: 'shotgunner', count: 1 }, { defId: 'flanker', count: 2 }, { defId: 'rusher', count: 2 }], spawnIntervalMs: 420, obstacles: TOTAL_WAR_COVER },
+
+  // Introduces the brute: slow but hits hard and soaks a lot of damage —
+  // this room is a kiting test, not a burst-them-down test. One rifleman
+  // adds chip pressure so circling the brutes forever isn't free either.
+  { label: 'Tungt Skyts', tier: 'mid', enemies: [{ defId: 'brute', count: 2 }, { defId: 'rifleman', count: 1 }], spawnIntervalMs: 700, obstacles: HEAVY_ORDNANCE_COVER },
+
+  // Introduces the suppressor: weak per hit but attacks nearly three times
+  // as often as a rifleman, so standing still anywhere near one bleeds you
+  // out fast even though no single shot feels dangerous. Constant movement
+  // beats trading shots.
+  { label: 'Undertrykkende Ild', tier: 'late', enemies: [{ defId: 'suppressor', count: 3 }, { defId: 'rusher', count: 1 }], spawnIntervalMs: 480, obstacles: SUPPRESSIVE_FIRE_COVER },
 ];
 
 /** How many non-boss rooms a run draws from the pool (plus 1 boss room). */

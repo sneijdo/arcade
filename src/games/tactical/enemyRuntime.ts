@@ -15,24 +15,33 @@ export interface EnemyInstance {
   hitFlash: number;
   facing: number;
   isMelee: boolean;
+  /** True if this specific spawned instance rolled the elite modifier — makes ANY base type elite at runtime, not just defs with a static isElite flag. Scales hp/damage/moveSpeed and reuses the same harder-to-hit strafing behavior. */
+  eliteMod: boolean;
 }
 
 let nextEnemyId = 1;
 
-export function spawnEnemy(defId: EnemyId, pos: Vec2): EnemyInstance {
+const ELITE_HP_MULT = 1.75;
+const ELITE_DAMAGE_MULT = 1.4;
+const ELITE_MOVESPEED_MULT = 1.15;
+
+export function spawnEnemy(defId: EnemyId, pos: Vec2, eliteChance = 0): EnemyInstance {
   const def = ENEMY_DEFS[defId];
+  const eliteMod = Math.random() < eliteChance;
+  const hp = eliteMod ? def.hp * ELITE_HP_MULT : def.hp;
   return {
     id: nextEnemyId++,
     defId,
     pos: { ...pos },
-    hp: def.hp,
-    maxHp: def.hp,
+    hp,
+    maxHp: hp,
     telegraphRemaining: 0,
     telegraphTotal: 0,
     attackCooldownRemaining: 0.5 + Math.random() * 0.6,
     hitFlash: 0,
     facing: 0,
     isMelee: def.preferredRange === 0,
+    eliteMod,
   };
 }
 
@@ -65,15 +74,17 @@ export function updateEnemy(e: EnemyInstance, playerPos: Vec2, dt: number, arena
   if (e.hitFlash > 0) e.hitFlash -= dt;
 
   const result: EnemyUpdateResult = {};
+  const dmg = e.eliteMod ? def.damage * ELITE_DAMAGE_MULT : def.damage;
+  const moveSpeed = e.eliteMod ? def.moveSpeed * ELITE_MOVESPEED_MULT : def.moveSpeed;
 
   if (e.telegraphRemaining > 0) {
     e.telegraphRemaining -= dt;
     if (e.telegraphRemaining <= 0) {
       e.attackCooldownRemaining = def.attackCooldown;
       if (e.isMelee) {
-        if (dist <= def.attackRange + 20) result.meleeAttack = { from: e, damage: def.damage };
+        if (dist <= def.attackRange + 20) result.meleeAttack = { from: e, damage: dmg };
       } else {
-        result.rangedAttack = { from: e, angleRad: e.facing, damage: def.damage };
+        result.rangedAttack = { from: e, angleRad: e.facing, damage: dmg };
       }
     }
     return result; // holding position while telegraphing
@@ -99,12 +110,12 @@ export function updateEnemy(e: EnemyInstance, playerPos: Vec2, dt: number, arena
     const rangeError = dist - def.preferredRange;
     if (Math.abs(rangeError) > 24) {
       moveDir = rangeError > 0 ? dir : { x: -dir.x, y: -dir.y };
-    } else if (def.isElite) {
+    } else if (def.isElite || e.eliteMod) {
       moveDir = { x: perp.x * sideSign, y: perp.y * sideSign };
     }
   }
-  e.pos.x += moveDir.x * def.moveSpeed * dt;
-  e.pos.y += moveDir.y * def.moveSpeed * dt;
+  e.pos.x += moveDir.x * moveSpeed * dt;
+  e.pos.y += moveDir.y * moveSpeed * dt;
   e.pos.x = Math.max(def.radius, Math.min(arenaW - def.radius, e.pos.x));
   e.pos.y = Math.max(def.radius, Math.min(arenaH - def.radius, e.pos.y));
 
@@ -116,7 +127,7 @@ export function updateEnemy(e: EnemyInstance, playerPos: Vec2, dt: number, arena
     if (e.telegraphRemaining <= 0) {
       // instant (untelegraphed melee) attacks resolve immediately
       e.attackCooldownRemaining = def.attackCooldown;
-      if (e.isMelee) result.meleeAttack = { from: e, damage: def.damage };
+      if (e.isMelee) result.meleeAttack = { from: e, damage: dmg };
     }
   }
 
