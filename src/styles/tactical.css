@@ -1,4 +1,73 @@
 /* ============================= TACTICAL ============================= */
+
+.weapon-select-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 9px;
+  width: 100%;
+  max-width: 420px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 3px;
+}
+.weapon-card {
+  background: var(--void-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 11px 12px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 44px;
+  touch-action: manipulation;
+  transition: border-color 0.12s var(--ease), box-shadow 0.12s var(--ease), transform 0.1s var(--ease);
+  position: relative;
+}
+.weapon-card:active {
+  transform: scale(0.97);
+}
+.weapon-card.selected {
+  border-color: var(--lime);
+  box-shadow: 0 0 0 1px var(--lime), 0 0 16px -4px var(--lime-glow);
+  background: linear-gradient(180deg, rgba(201, 247, 62, 0.08), var(--void-2) 60%);
+}
+.weapon-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 7px;
+  right: 9px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--lime);
+  color: var(--void);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+.weapon-card .icon {
+  font-size: 19px;
+  line-height: 1;
+}
+.weapon-card .name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12.5px;
+  padding-right: 16px; /* room for the selected checkmark so the name never runs under it */
+}
+.weapon-card .tagline {
+  font-size: 10px;
+  color: var(--text-faint);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .tactical-shell {
   display: flex;
   flex-direction: column;
@@ -19,6 +88,10 @@
   color: var(--text-dim);
   letter-spacing: 0.08em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 34vw;
+  flex-shrink: 1;
 }
 .tactical-bar-group {
   flex: 1;
@@ -73,6 +146,10 @@
   overflow: hidden;
   background: #0a0b10;
   touch-action: none;
+  /* Subtle frame — a hint of the site's violet glow language plus an inset
+     shadow so the arena reads as a contained "viewport," not a bare box.
+     Kept faint deliberately: combat readability outranks atmosphere. */
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 8px 28px -12px var(--violet-glow), inset 0 0 40px rgba(0, 0, 0, 0.5);
 }
 #tacticalCanvas {
   display: block;
@@ -133,26 +210,45 @@
   transform: translateX(-50%);
   width: 70%;
   max-width: 420px;
+  padding: 8px 10px 7px;
+  background: rgba(8, 7, 12, 0.55);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 93, 122, 0.25);
+  border-radius: var(--radius);
+  box-shadow: 0 0 24px -6px var(--coral-glow);
 }
 .tactical-boss-name {
   text-align: center;
   font-family: var(--font-display);
   font-size: 11px;
-  letter-spacing: 0.12em;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   color: var(--coral);
-  margin-bottom: 4px;
+  margin-bottom: 5px;
   text-shadow: 0 0 12px var(--coral-glow);
+  animation: tactical-boss-pulse 1.8s ease-in-out infinite;
+}
+@keyframes tactical-boss-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
 }
 .tactical-boss-bar-track {
-  height: 10px;
+  height: 11px;
   border-radius: 6px;
   background: var(--surface-3);
   border: 1px solid var(--border-2);
   overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 .tactical-boss-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--coral), #ff9d7a);
+  box-shadow: 0 0 10px 0 var(--coral-glow);
   transition: width 0.15s var(--ease);
 }
 
@@ -185,8 +281,12 @@
 .upgrade-card:active {
   transform: scale(0.97);
 }
+.upgrade-card.rarity-common {
+  border-color: rgba(255, 255, 255, 0.16);
+}
 .upgrade-card.rarity-rare {
   border-color: rgba(92, 208, 255, 0.4);
+  box-shadow: 0 0 16px -8px rgba(92, 208, 255, 0.5);
 }
 .upgrade-card.rarity-epic {
   border-color: rgba(139, 107, 255, 0.55);

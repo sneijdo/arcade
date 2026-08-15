@@ -14,6 +14,10 @@ export interface Projectile {
   radius: number;
   color: string;
   hitIds: Set<number>;
+  /** Pixels the target is shoved away from the impact — 0 for most weapons. */
+  knockback: number;
+  /** On impact, also damages other enemies within this radius — 0 for most weapons. */
+  splashRadius: number;
 }
 
 /** Fixed-size pool — combat never Instantiates/Destroys projectiles, just flips `active`. */
@@ -37,10 +41,12 @@ export class ProjectilePool {
       radius: 4,
       color: '#c9f73e',
       hitIds: new Set<number>(),
+      knockback: 0,
+      splashRadius: 0,
     }));
   }
 
-  spawn(init: Omit<Projectile, 'active' | 'traveled' | 'hitIds'>): Projectile | null {
+  spawn(init: Omit<Projectile, 'active' | 'traveled' | 'hitIds' | 'knockback' | 'splashRadius'> & { knockback?: number; splashRadius?: number }): Projectile | null {
     const p = this.pool.find((p) => !p.active);
     if (!p) return null;
     p.active = true;
@@ -58,6 +64,8 @@ export class ProjectilePool {
     p.radius = init.radius;
     p.color = init.color;
     p.hitIds.clear();
+    p.knockback = init.knockback ?? 0;
+    p.splashRadius = init.splashRadius ?? 0;
     return p;
   }
 

@@ -26,12 +26,25 @@ export function vAngle(a: Vec2): number {
   return Math.atan2(a.y, a.x);
 }
 
-export type WeaponId = 'viper_ar' | 'spectre_smg' | 'breach_shotgun' | 'longshot_rifle' | 'sidekick_pistol';
+export type WeaponId =
+  | 'viper_ar'
+  | 'spectre_smg'
+  | 'breach_shotgun'
+  | 'longshot_rifle'
+  | 'sidekick_pistol'
+  | 'talon_burst'
+  | 'juggernaut_lmg'
+  | 'wraith_dmr'
+  | 'havoc_launcher'
+  | 'falcon_carbine';
 
 export interface WeaponStats {
   id: WeaponId;
   name: string;
-  fireRate: number; // shots per second
+  /** One-line Danish flavor text for the weapon-select screen. */
+  tagline: string;
+  icon: string;
+  fireRate: number; // shots per second (or per burst, for burst weapons — see burstCount)
   damage: number;
   projectileSpeed: number;
   projectileCount: number;
@@ -40,6 +53,16 @@ export interface WeaponStats {
   critMultiplier: number;
   range: number;
   penetration: number; // number of enemies a projectile can pass through
+  /** Visual + hit radius. Optional — defaults to 4 if omitted. */
+  projectileRadius?: number;
+  /** Shots fired in rapid succession per trigger (e.g. a 3-round burst rifle). Omit/1 = single shot per cooldown, existing behavior. */
+  burstCount?: number;
+  /** Delay between shots within a burst, seconds. Only relevant if burstCount > 1. */
+  burstDelayS?: number;
+  /** Pixels an enemy is shoved away from the impact on hit. Omit/0 = no knockback. */
+  knockbackForce?: number;
+  /** On impact, also damages other enemies within this radius (same damage amount). Omit/0 = no splash. */
+  splashRadius?: number;
 }
 
 export type EnemyId = 'rifleman' | 'rusher' | 'shotgunner' | 'sniper' | 'elite_rifleman' | 'flanker';
@@ -58,6 +81,8 @@ export interface EnemyStats {
   color: string;
   isElite?: boolean;
   telegraphMs?: number; // warning time before ranged attacks fire
+  /** Silhouette shape — distinct per archetype so enemies read apart at a glance even by shape alone, not just color. Defaults to 'circle'. */
+  shape?: 'circle' | 'triangle' | 'diamond' | 'hex' | 'chevron';
 }
 
 export type UpgradeTag = 'offense' | 'movement' | 'projectile' | 'survival';

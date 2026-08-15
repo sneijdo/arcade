@@ -8,13 +8,13 @@ import { InputController } from './input';
 import { ProjectilePool } from './projectiles';
 import { VfxSystem } from './vfx';
 import { selectTarget, type TargetCandidate } from './targeting';
-import { WEAPONS, STARTING_WEAPON_ID } from './weapons';
+import { WEAPONS, STARTING_WEAPON_ID, listWeapons } from './weapons';
 import { ENEMY_DEFS } from './enemies';
 import { spawnEnemy, updateEnemy, type EnemyInstance } from './enemyRuntime';
 import { spawnBoss, updateBoss, BOSS_MAX_HP, type BossInstance } from './boss';
-import { ENCOUNTERS, TOTAL_ROOMS } from './encounters';
+import { buildRoomSequence, TOTAL_ROOMS, type EncounterWave } from './encounters';
 import { pickUpgradeChoices } from './upgrades';
-import { makeDefaultBuild, vAngle, vSub, vDist, type BuildStats, type EnemyId } from './types';
+import { makeDefaultBuild, vAngle, vSub, vDist, vNorm, type BuildStats, type EnemyId, type WeaponId } from './types';
 import { toPixelRects, resolveCircleVsObstacles, hasLineOfSight, type ObstacleRect } from './obstacles';
 import { BALANCE } from './balance';
 import * as hud from './hud';
@@ -26,8 +26,15 @@ interface SpawnTicket {
   delay: number;
 }
 
+interface BurstState {
+  shotsRemaining: number;
+  delayRemaining: number;
+  angleRad: number;
+}
+
 interface RunState {
   phase: RunPhase;
+  weaponId: WeaponId;
   player: Player;
   build: BuildStats;
   upgradesTaken: Record<string, number>;
@@ -36,6 +43,7 @@ interface RunState {
   xpForNext: number;
   enemies: EnemyInstance[];
   boss: BossInstance | null;
+  roomSequence: EncounterWave[];
   roomIndex: number;
   roomsCleared: number;
   enemiesKilled: number;
@@ -47,6 +55,7 @@ interface RunState {
   lockedTargetId: number | null;
   lockTimeRemaining: number;
   hitStopRemaining: number;
+  burst: BurstState | null;
   input: InputController;
   projectiles: ProjectilePool;
   vfx: VfxSystem;
@@ -65,6 +74,7 @@ function xpForLevel(level: number): number {
 function makeRunState(): RunState {
   return {
     phase: 'intro',
+    weaponId: STARTING_WEAPON_ID,
     player: new Player(),
     build: makeDefaultBuild(),
     upgradesTaken: {},
@@ -73,6 +83,7 @@ function makeRunState(): RunState {
     xpForNext: xpForLevel(1),
     enemies: [],
     boss: null,
+    roomSequence: [],
     roomIndex: 0,
     roomsCleared: 0,
     enemiesKilled: 0,
@@ -83,6 +94,7 @@ function makeRunState(): RunState {
     obstacles: [],
     lockedTargetId: null,
     lockTimeRemaining: 0,
+    burst: null,
     hitStopRemaining: 0,
     input: new InputController(),
     projectiles: new ProjectilePool(),
@@ -131,20 +143,47 @@ function resizeCanvas(): void {
 }
 
 function showIntroOverlay(wrap: HTMLElement): void {
+  if (!run) return;
+  const weapons = listWeapons();
   const overlay = document.createElement('div');
-  overlay.className = 'arena-inner';
   overlay.id = 'tacIntroOverlay';
-  overlay.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(8,7,12,.82);z-index:5;padding:24px;';
+  // Fixed header + fixed footer (title, hint, start button always visible)
+  // with only the weapon grid scrolling in between — a cut-off, unreachable
+  // Start button on short viewports (10 weapon cards easily overflow a
+  // ~240px-tall canvas area) is a real bug, not a nice-to-have.
+  overlay.style.cssText =
+    'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;gap:8px;background:rgba(8,7,12,.9);z-index:5;padding:14px 16px;';
   overlay.innerHTML = `
-    <div class="arena-title">Klar til indsats?</div>
-    <ul class="tactical-intro-list">
-      <li>Bevæg dig med WASD/piletaster eller joysticket</li>
-      <li>Stop for automatisk at sigte og skyde mod nærmeste fjende</li>
-      <li>Ryd rum, level op, byg dit build — overlev bossen</li>
-    </ul>
-    <button class="btn btn-primary btn-lg" id="tacStartBtn">START MISSION</button>
+    <div class="arena-title" style="flex-shrink:0">Vælg dit våben</div>
+    <div class="weapon-select-grid" id="weaponSelectGrid" style="flex:1 1 auto;min-height:0;max-height:none;">
+      ${weapons
+        .map(
+          (w) => `
+        <button class="weapon-card ${w.id === run!.weaponId ? 'selected' : ''}" data-weapon="${w.id}">
+          <div class="icon">${w.icon}</div>
+          <div class="name">${w.name}</div>
+          <div class="tagline">${w.tagline}</div>
+        </button>
+      `,
+        )
+        .join('')}
+    </div>
+    <p style="flex-shrink:0;color:var(--text-faint);font-size:11px;text-align:center;line-height:1.4;margin:0">Stop for automatisk at skyde. Ryd rum, level op, overlev bossen.</p>
+    <button class="btn btn-primary btn-lg" id="tacStartBtn" style="flex-shrink:0;width:100%;max-width:340px">START MISSION</button>
   `;
   wrap.appendChild(overlay);
+
+  overlay.querySelectorAll<HTMLButtonElement>('[data-weapon]').forEach((btn) => {
+    btn.addEventListener('pointerdown', (e) => {
+      if (!(e as PointerEvent).isPrimary || !run) return;
+      e.preventDefault();
+      run.weaponId = btn.dataset.weapon as WeaponId;
+      overlay.querySelectorAll('.weapon-card').forEach((c) => c.classList.remove('selected'));
+      btn.classList.add('selected');
+      Sound.click();
+    });
+  });
+
   document.getElementById('tacStartBtn')!.addEventListener('click', (e) => {
     e.stopPropagation();
     overlay.remove();
@@ -155,6 +194,8 @@ function showIntroOverlay(wrap: HTMLElement): void {
 function startRun(): void {
   if (!run) return;
   run.player.reset({ x: run.arenaW / 2, y: run.arenaH / 2 }, run.build);
+  run.roomSequence = buildRoomSequence();
+  hud.updateWeaponChip(currentWeapon().name);
   run.phase = 'playing';
   startRoom(0);
   run.lastTime = performance.now();
@@ -168,9 +209,10 @@ function startRoom(index: number): void {
   run.boss = null;
   run.lockedTargetId = null;
   run.lockTimeRemaining = 0;
+  run.burst = null;
   hud.showBossBar(false);
 
-  if (index >= ENCOUNTERS.length) {
+  if (index >= run.roomSequence.length) {
     hud.updateRoomLabel(`RUM ${TOTAL_ROOMS}/${TOTAL_ROOMS} · BOSS`);
     run.boss = spawnBoss({ x: run.arenaW / 2, y: run.arenaH * 0.28 });
     hud.showBossBar(true);
@@ -182,7 +224,7 @@ function startRoom(index: number): void {
     return;
   }
 
-  const wave = ENCOUNTERS[index];
+  const wave = run.roomSequence[index];
   run.obstacles = toPixelRects(wave.obstacles ?? [], run.arenaW, run.arenaH);
   hud.updateRoomLabel(`RUM ${index + 1}/${TOTAL_ROOMS} · ${wave.label.toUpperCase()}`);
   const tickets: SpawnTicket[] = [];
@@ -251,7 +293,18 @@ function update(dt: number): void {
   if (isMoving) r.player.facing = vAngle({ x: moveVec.x, y: moveVec.y }) || r.player.facing;
 
   if (r.lockTimeRemaining > 0) r.lockTimeRemaining -= dt;
-  if (!isMoving && r.player.canFire()) tryFire();
+
+  if (r.burst) {
+    r.burst.delayRemaining -= dt;
+    if (r.burst.delayRemaining <= 0) {
+      fireWeaponShots(r.burst.angleRad);
+      r.burst.shotsRemaining--;
+      r.burst.delayRemaining = WEAPONS[r.weaponId]?.burstDelayS ?? 0.08;
+      if (r.burst.shotsRemaining <= 0) r.burst = null;
+    }
+  } else if (!isMoving && r.player.canFire()) {
+    tryFire();
+  }
 
   r.projectiles.update(dt);
   handleProjectileCollisions();
@@ -299,7 +352,7 @@ function update(dt: number): void {
     return;
   }
 
-  const roomHasBoss = r.roomIndex >= ENCOUNTERS.length;
+  const roomHasBoss = r.roomIndex >= r.roomSequence.length;
   if (!roomHasBoss && r.spawnQueue.length === 0 && r.enemies.length === 0 && r.phase === 'playing') {
     r.roomsCleared = r.roomIndex + 1;
     TacticalSound.waveClear();
@@ -321,9 +374,13 @@ function onPlayerHit(dmg: number): void {
   void dmg;
 }
 
+function currentWeapon() {
+  return WEAPONS[run!.weaponId]!;
+}
+
 function computeWeaponRange(): number {
   if (!run) return 0;
-  return WEAPONS[STARTING_WEAPON_ID].range * run.build.rangeMult;
+  return currentWeapon().range * run.build.rangeMult;
 }
 
 /** Finds/keeps a target to fire at. Once locked, the same target is reused for BALANCE.juice.targetLockSeconds (or until it dies/leaves range/LOS) instead of re-selecting every shot — stops visible flicker between two similarly-placed enemies. */
@@ -349,15 +406,11 @@ function resolveFireTarget(): TargetCandidate | null {
   return picked;
 }
 
-function tryFire(): void {
+/** Spawns one weapon's worth of projectiles (all of `projectileCount`, spread across `spreadDeg`) at a fixed angle — shared by the immediate-fire path and each shot of a burst weapon. */
+function fireWeaponShots(angle: number): void {
   if (!run) return;
   const r = run;
-  const weapon = WEAPONS[STARTING_WEAPON_ID];
-  const target = resolveFireTarget();
-  if (!target) return;
-
-  const angle = vAngle(vSub(target.pos, r.player.pos));
-  r.player.facing = angle;
+  const weapon = currentWeapon();
   const count = weapon.projectileCount + r.build.projectileCountBonus;
   const spreadRad = (weapon.spreadDeg * Math.PI) / 180;
   for (let i = 0; i < count; i++) {
@@ -376,12 +429,35 @@ function tryFire(): void {
       ricochetChance: r.build.ricochetChance,
       maxRange: computeWeaponRange(),
       fromPlayer: true,
-      radius: 4,
+      radius: weapon.projectileRadius ?? 4,
       color: crit ? '#ffcf4d' : '#c9f73e',
+      knockback: weapon.knockbackForce ?? 0,
+      splashRadius: weapon.splashRadius ?? 0,
     });
   }
   r.vfx.muzzleFlash(r.player.pos, angle);
   TacticalSound.shot();
+}
+
+function tryFire(): void {
+  if (!run) return;
+  const r = run;
+  const weapon = currentWeapon();
+  const target = resolveFireTarget();
+  if (!target) return;
+
+  const angle = vAngle(vSub(target.pos, r.player.pos));
+  r.player.facing = angle;
+
+  if ((weapon.burstCount ?? 1) > 1) {
+    // First shot fires immediately; the rest are queued and fired by the burst
+    // ticker in update() so a 3-round burst actually reads as three shots,
+    // not one instant triple-damage hit.
+    fireWeaponShots(angle);
+    r.burst = { shotsRemaining: weapon.burstCount! - 1, delayRemaining: weapon.burstDelayS ?? 0.08, angleRad: angle };
+  } else {
+    fireWeaponShots(angle);
+  }
   r.player.fireCooldownRemaining = r.player.fireCooldownFor(weapon, r.build);
 }
 
@@ -437,10 +513,26 @@ function handleProjectileCollisions(): void {
     if (p.fromPlayer) {
       let hitSomething = false;
       for (const e of r.enemies) {
-        if (p.hitIds.has(e.id)) continue;
+        if (p.hitIds.has(e.id) || e.hp <= 0) continue;
         const def = ENEMY_DEFS[e.defId];
         if (vDist(p, e.pos) <= p.radius + def.radius) {
           applyDamageToEnemy(e, p.damage, p.crit);
+          if (p.knockback > 0) {
+            const dir = vNorm({ x: p.vx, y: p.vy });
+            e.pos.x += dir.x * p.knockback;
+            e.pos.y += dir.y * p.knockback;
+          }
+          if (p.splashRadius > 0) {
+            for (const other of r.enemies) {
+              if (other.id === e.id || other.hp <= 0 || p.hitIds.has(other.id)) continue;
+              if (vDist(e.pos, other.pos) <= p.splashRadius) {
+                applyDamageToEnemy(other, p.damage, false);
+                p.hitIds.add(other.id);
+              }
+            }
+            r.vfx.impactSpark(e.pos, '#ffb347');
+            r.vfx.shake(4);
+          }
           p.hitIds.add(e.id);
           hitSomething = true;
           if (p.penetration > 0) {
@@ -554,6 +646,48 @@ function triggerLevelUp(): void {
   });
 }
 
+/** Traces a shape path centered on the origin (caller has already translated/rotated) — distinct silhouettes per enemy archetype so they read apart by shape alone, not just color. */
+function traceEnemyShape(ctx: CanvasRenderingContext2D, shape: string | undefined, r: number): void {
+  ctx.beginPath();
+  switch (shape) {
+    case 'triangle':
+      ctx.moveTo(r * 1.15, 0);
+      ctx.lineTo(-r * 0.75, r * 0.9);
+      ctx.lineTo(-r * 0.75, -r * 0.9);
+      ctx.closePath();
+      break;
+    case 'diamond':
+      ctx.moveTo(r * 1.2, 0);
+      ctx.lineTo(0, r);
+      ctx.lineTo(-r * 1.2, 0);
+      ctx.lineTo(0, -r);
+      ctx.closePath();
+      break;
+    case 'hex': {
+      for (let i = 0; i < 6; i++) {
+        const a = (Math.PI / 3) * i;
+        const x = Math.cos(a) * r;
+        const y = Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      break;
+    }
+    case 'chevron': {
+      // an arrow-like wedge — reads as "moving diagonally," fitting the flanker's arc-in approach
+      ctx.moveTo(r * 1.2, 0);
+      ctx.lineTo(-r * 0.3, r);
+      ctx.lineTo(-r * 0.2, 0);
+      ctx.lineTo(-r * 0.3, -r);
+      ctx.closePath();
+      break;
+    }
+    default:
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+  }
+}
+
 function render(): void {
   if (!run || !run.ctx) return;
   const { ctx, arenaW, arenaH } = run;
@@ -578,14 +712,46 @@ function render(): void {
     ctx.lineTo(arenaW, y);
     ctx.stroke();
   }
+  // subtle vignette — draws the eye toward the center of the arena instead of the edges
+  const vignette = ctx.createRadialGradient(arenaW / 2, arenaH / 2, Math.min(arenaW, arenaH) * 0.35, arenaW / 2, arenaH / 2, Math.max(arenaW, arenaH) * 0.7);
+  vignette.addColorStop(0, 'rgba(0,0,0,0)');
+  vignette.addColorStop(1, 'rgba(0,0,0,0.35)');
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, arenaW, arenaH);
 
-  // obstacles / cover
+  // obstacles / cover — beveled top-left highlight / bottom-right shadow so
+  // they read as solid 3D crates rather than flat dark rectangles
   for (const o of run.obstacles) {
-    ctx.fillStyle = '#1c1a2b';
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-    ctx.lineWidth = 1;
+    ctx.fillStyle = '#1e1c2f';
     ctx.fillRect(o.x, o.y, o.w, o.h);
-    ctx.strokeRect(o.x, o.y, o.w, o.h);
+    ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(o.x, o.y + o.h);
+    ctx.lineTo(o.x, o.y);
+    ctx.lineTo(o.x + o.w, o.y);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx.beginPath();
+    ctx.moveTo(o.x + o.w, o.y);
+    ctx.lineTo(o.x + o.w, o.y + o.h);
+    ctx.lineTo(o.x, o.y + o.h);
+    ctx.stroke();
+    // faint diagonal hatching reinforces "solid cover" at a glance
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(o.x, o.y, o.w, o.h);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    const diag = o.w + o.h;
+    for (let hx = 0; hx < diag; hx += 9) {
+      ctx.beginPath();
+      ctx.moveTo(o.x + hx, o.y);
+      ctx.lineTo(o.x + hx - o.h, o.y + o.h);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   // boss burst wind-up tell
@@ -641,9 +807,11 @@ function render(): void {
     ctx.translate(e.pos.x, e.pos.y);
     ctx.rotate(e.facing);
     ctx.fillStyle = e.hitFlash > 0 ? '#ffffff' : def.color;
-    ctx.beginPath();
-    ctx.arc(0, 0, def.radius, 0, Math.PI * 2);
+    traceEnemyShape(ctx, def.shape, def.radius);
     ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.fillRect(def.radius - 3, -3, 10, 6);
     ctx.restore();
@@ -657,12 +825,16 @@ function render(): void {
     }
   }
 
-  // boss
+  // boss — a core plus two flanking armor plates so it reads as a bigger,
+  // multi-part threat rather than just a scaled-up regular enemy
   if (run.boss) {
     const b = run.boss;
     ctx.save();
     ctx.translate(b.pos.x, b.pos.y);
     ctx.rotate(b.facing);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(-b.radius * 0.3, -b.radius * 1.35, b.radius * 0.9, b.radius * 0.55);
+    ctx.fillRect(-b.radius * 0.3, b.radius * 0.8, b.radius * 0.9, b.radius * 0.55);
     ctx.fillStyle = b.hitFlash > 0 ? '#ffffff' : '#3a2540';
     ctx.strokeStyle = '#ff5d7a';
     ctx.lineWidth = 3;
@@ -675,10 +847,15 @@ function render(): void {
     ctx.restore();
   }
 
-  // player
+  // player — a soft glow ring plus a tapered "barrel" instead of a flat
+  // rectangle reads more like an armed operative than a bare circle
   const p = run.player;
   ctx.save();
   ctx.translate(p.pos.x, p.pos.y);
+  ctx.beginPath();
+  ctx.arc(0, 0, p.radius + 5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(201,247,62,0.12)';
+  ctx.fill();
   ctx.rotate(p.facing);
   ctx.fillStyle = p.invulnRemaining > 0.06 ? 'rgba(201,247,62,0.55)' : '#c9f73e';
   ctx.beginPath();
@@ -688,11 +865,33 @@ function render(): void {
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.fillStyle = '#08070c';
-  ctx.fillRect(p.radius - 4, -3, 12, 6);
+  ctx.beginPath();
+  ctx.moveTo(p.radius - 5, -4);
+  ctx.lineTo(p.radius + 9, -2);
+  ctx.lineTo(p.radius + 9, 2);
+  ctx.lineTo(p.radius - 5, 4);
+  ctx.closePath();
+  ctx.fill();
   ctx.restore();
 
-  // projectiles
+  // projectiles — a short fading trail behind each one reads as "moving fast"
+  // far better than a bare dot, especially for the faster/smaller rounds.
   for (const pr of run.projectiles.active()) {
+    const speed = Math.hypot(pr.vx, pr.vy) || 1;
+    const trailLen = Math.min(26, pr.radius * 3.5);
+    const tx = pr.x - (pr.vx / speed) * trailLen;
+    const ty = pr.y - (pr.vy / speed) * trailLen;
+    const trail = ctx.createLinearGradient(pr.x, pr.y, tx, ty);
+    trail.addColorStop(0, pr.color);
+    trail.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.strokeStyle = trail;
+    ctx.lineWidth = pr.radius * 1.1;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(pr.x, pr.y);
+    ctx.lineTo(tx, ty);
+    ctx.stroke();
+
     ctx.fillStyle = pr.color;
     ctx.beginPath();
     ctx.arc(pr.x, pr.y, pr.radius, 0, Math.PI * 2);

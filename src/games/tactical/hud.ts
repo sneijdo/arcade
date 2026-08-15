@@ -50,6 +50,11 @@ export function updateRoomLabel(text: string): void {
   if (el) el.textContent = text;
 }
 
+export function updateWeaponChip(name: string): void {
+  const el = document.getElementById('tacWeaponChip');
+  if (el) el.textContent = name.toUpperCase();
+}
+
 export function showBossBar(show: boolean): void {
   const el = document.getElementById('tacBossBar');
   if (el) el.style.display = show ? 'block' : 'none';

@@ -1,10 +1,24 @@
-import type { WeaponStats } from './types';
+import type { WeaponStats, WeaponId } from './types';
 
-/** Base weapon data — all runtime values are derived from these * the player's BuildStats multipliers. Phase 1 ships one weapon; the table exists so adding more is pure data. */
-export const WEAPONS: Record<string, WeaponStats> = {
+/**
+ * Base weapon data — all runtime values are derived from these * the
+ * player's BuildStats multipliers. Every weapon is pure data; the
+ * burst/knockback/splash/projectileRadius fields on WeaponStats exist
+ * specifically so a new weapon archetype never requires touching
+ * tactical.ts's firing/collision code.
+ *
+ * Rough DPS parity check (fireRate * damage * projectileCount, pre-crit):
+ * every weapon lands in the high-20s/low-30s except Havoc Launcher (lower
+ * single-target DPS, offset by splashRadius against groups) and Breach
+ * Shotgun (higher point-blank DPS, offset by a 220-range/28° spread that
+ * makes most pellets miss past close range). No weapon wins on every axis.
+ */
+export const WEAPONS: Partial<Record<WeaponId, WeaponStats>> = {
   viper_ar: {
     id: 'viper_ar',
     name: 'Viper AR',
+    tagline: 'Alsidig og pålidelig — ingen svagheder',
+    icon: '🔫',
     fireRate: 3.2,
     damage: 9,
     projectileSpeed: 640,
@@ -15,6 +29,157 @@ export const WEAPONS: Record<string, WeaponStats> = {
     range: 480,
     penetration: 0,
   },
+  spectre_smg: {
+    id: 'spectre_smg',
+    name: 'Spectre SMG',
+    tagline: 'Smelter alt på klos hold — ubrugelig på afstand',
+    icon: '💨',
+    fireRate: 6.5,
+    damage: 4,
+    projectileSpeed: 700,
+    projectileCount: 1,
+    spreadDeg: 5,
+    critChance: 0.05,
+    critMultiplier: 1.5,
+    range: 320,
+    penetration: 0,
+    projectileRadius: 3,
+  },
+  breach_shotgun: {
+    id: 'breach_shotgun',
+    name: 'Breach Shotgun',
+    tagline: 'Ødelæggende på klos hold — tomt bagefter den rækkevidde',
+    icon: '💥',
+    fireRate: 1.3,
+    damage: 6,
+    projectileSpeed: 560,
+    projectileCount: 6,
+    spreadDeg: 28,
+    critChance: 0.04,
+    critMultiplier: 1.4,
+    range: 220,
+    penetration: 0,
+    projectileRadius: 5,
+  },
+  longshot_rifle: {
+    id: 'longshot_rifle',
+    name: 'Longshot Rifle',
+    tagline: 'Langsom og dødbringende — belønner tålmodighed',
+    icon: '🎯',
+    fireRate: 0.9,
+    damage: 32,
+    projectileSpeed: 820,
+    projectileCount: 1,
+    spreadDeg: 0.5,
+    critChance: 0.12,
+    critMultiplier: 1.8,
+    range: 700,
+    penetration: 3,
+  },
+  sidekick_pistol: {
+    id: 'sidekick_pistol',
+    name: 'Sidekick Pistol',
+    tagline: 'Hurtig og pålidelig backup — intet loft, ingen svaghed',
+    icon: '🔹',
+    fireRate: 4.0,
+    damage: 7,
+    projectileSpeed: 760,
+    projectileCount: 1,
+    spreadDeg: 2,
+    critChance: 0.16,
+    critMultiplier: 1.6,
+    range: 420,
+    penetration: 0,
+    projectileRadius: 3.5,
+  },
+  talon_burst: {
+    id: 'talon_burst',
+    name: 'Talon Burst',
+    tagline: '3-skuds byger — ram alle tre, eller ram intet',
+    icon: '🔱',
+    fireRate: 1.8,
+    damage: 6,
+    projectileSpeed: 700,
+    projectileCount: 1,
+    spreadDeg: 2,
+    critChance: 0.08,
+    critMultiplier: 1.5,
+    range: 460,
+    penetration: 0,
+    burstCount: 3,
+    burstDelayS: 0.06,
+  },
+  juggernaut_lmg: {
+    id: 'juggernaut_lmg',
+    name: 'Juggernaut LMG',
+    tagline: 'Konstant tryk og tilbageslag — upræcis, men uendelig',
+    icon: '🛡️',
+    fireRate: 5.5,
+    damage: 6,
+    projectileSpeed: 600,
+    projectileCount: 1,
+    spreadDeg: 6,
+    critChance: 0.03,
+    critMultiplier: 1.3,
+    range: 400,
+    penetration: 0,
+    projectileRadius: 5.5,
+    knockbackForce: 10,
+  },
+  wraith_dmr: {
+    id: 'wraith_dmr',
+    name: 'Wraith DMR',
+    tagline: 'Midt mellem riffel og snigskytte — ingen kompromiser',
+    icon: '👻',
+    fireRate: 1.8,
+    damage: 16,
+    projectileSpeed: 720,
+    projectileCount: 1,
+    spreadDeg: 1.5,
+    critChance: 0.09,
+    critMultiplier: 1.6,
+    range: 560,
+    penetration: 1,
+  },
+  havoc_launcher: {
+    id: 'havoc_launcher',
+    name: 'Havoc Launcher',
+    tagline: 'Eksplosivt splash — frygteligt mod ét mål, rædsel mod flere',
+    icon: '☄️',
+    fireRate: 0.75,
+    damage: 22,
+    projectileSpeed: 420,
+    projectileCount: 1,
+    spreadDeg: 2,
+    critChance: 0.04,
+    critMultiplier: 1.4,
+    range: 380,
+    penetration: 0,
+    projectileRadius: 8,
+    knockbackForce: 22,
+    splashRadius: 70,
+  },
+  falcon_carbine: {
+    id: 'falcon_carbine',
+    name: 'Falcon Carbine',
+    tagline: 'Glaskanon — hurtig, skarp, og skrøbelig i skudlinjen',
+    icon: '🦅',
+    fireRate: 5.0,
+    damage: 6,
+    projectileSpeed: 780,
+    projectileCount: 1,
+    spreadDeg: 3,
+    critChance: 0.18,
+    critMultiplier: 1.7,
+    range: 440,
+    penetration: 0,
+    projectileRadius: 3.5,
+  },
 };
 
-export const STARTING_WEAPON_ID = 'viper_ar';
+/** All weapons currently defined, for the selection screen — filters out any WeaponId not yet populated in WEAPONS. */
+export function listWeapons(): WeaponStats[] {
+  return Object.values(WEAPONS).filter((w): w is WeaponStats => !!w);
+}
+
+export const STARTING_WEAPON_ID: WeaponId = 'viper_ar';

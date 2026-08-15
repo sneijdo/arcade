@@ -14,6 +14,7 @@ export const ENEMY_DEFS: Record<EnemyId, EnemyStats> = {
     radius: 14,
     color: '#8d8aa3',
     telegraphMs: 260,
+    shape: 'circle',
   },
   rusher: {
     id: 'rusher',
@@ -28,6 +29,7 @@ export const ENEMY_DEFS: Record<EnemyId, EnemyStats> = {
     radius: 13,
     color: '#ff5d7a',
     telegraphMs: 180, // a real (if brief) warning ring before the lunge lands — "hit because I made a mistake," not "hit because I couldn't see it"
+    shape: 'triangle',
   },
   shotgunner: {
     id: 'shotgunner',
@@ -42,6 +44,7 @@ export const ENEMY_DEFS: Record<EnemyId, EnemyStats> = {
     radius: 15,
     color: '#c9f73e',
     telegraphMs: 300,
+    shape: 'hex',
   },
   sniper: {
     id: 'sniper',
@@ -56,6 +59,7 @@ export const ENEMY_DEFS: Record<EnemyId, EnemyStats> = {
     radius: 14,
     color: '#5cd0ff',
     telegraphMs: 650,
+    shape: 'diamond',
   },
   elite_rifleman: {
     // Display name is "Elite Vanguard" — it's no longer just a rifleman with
@@ -77,6 +81,7 @@ export const ENEMY_DEFS: Record<EnemyId, EnemyStats> = {
     color: '#8b6bff',
     isElite: true,
     telegraphMs: 230,
+    shape: 'hex',
   },
   flanker: {
     // Melee, but doesn't beeline the player like a rusher — it arcs in from
@@ -96,5 +101,6 @@ export const ENEMY_DEFS: Record<EnemyId, EnemyStats> = {
     radius: 13,
     color: '#ff9d4d', // distinct from sniper's cyan — must be readable as a different threat at a glance
     telegraphMs: 200,
+    shape: 'chevron',
   },
 };
