@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ARCADE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================= TOKENS ============================= */
+:root{
+  --void:#08070c;
+  --void-2:#0d0c14;
+  --surface:#131220;
+  --surface-2:#1a1829;
+  --surface-3:#221f35;
+  --border:rgba(255,255,255,.08);
+  --border-2:rgba(255,255,255,.14);
+  --text:#f3f2fa;
+  --text-dim:#8d8aa3;
+  --text-faint:#5b586e;
+  --violet:#8b6bff;
+  --violet-2:#6a4bff;
+  --violet-glow:rgba(139,107,255,.55);
+  --lime:#c9f73e;
+  --lime-glow:rgba(201,247,62,.45);
+  --coral:#ff5d7a;
+  --coral-glow:rgba(255,93,122,.45);
+  --cyan:#5cd0ff;
+  --font-display:'Chakra Petch',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --radius:14px;
+  --radius-lg:22px;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  background:var(--void);
+  color:var(--text);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  min-height:100vh;
+}
+body::before{
+  content:"";
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(139,107,255,.16), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 10%, rgba(201,247,62,.07), transparent 55%),
+    radial-gradient(ellipse 900px 700px at 50% 120%, rgba(139,107,255,.10), transparent 60%);
+  pointer-events:none;
+  z-index:0;
+}
+body::after{
+  content:"";
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(to bottom, rgba(255,255,255,.018) 0px, rgba(255,255,255,.018) 1px, transparent 1px, transparent 3px);
+  mix-blend-mode:overlay;
+  pointer-events:none;
+  z-index:1;
+  opacity:.5;
+}
+#app{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+button:focus-visible, a:focus-visible, [tabindex]:focus-visible{
+  outline:2px solid var(--lime);
+  outline-offset:3px;
+  border-radius:6px;
+}
+::selection{background:var(--violet);color:#fff;}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;}
+.hidden{display:none !important;}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;}
+}
+
+/* ============================= HEADER ============================= */
+#header{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 28px;
+  background:rgba(8,7,12,.72);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.logo{
+  font-family:var(--font-display);
+  font-weight:700;font-size:20px;letter-spacing:.06em;
+  display:flex;align-items:center;gap:8px;
+  cursor:pointer;
+}
+.logo .dot{
+  width:9px;height:9px;border-radius:50%;
+  background:var(--lime);
+  box-shadow:0 0 10px 2px var(--lime-glow);
+  animation:blink 2.4s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.35;}}
+.nav{display:flex;gap:4px;align-items:center;}
+.nav-link{
+  font-family:var(--font-display);
+  font-size:13px;letter-spacing:.08em;font-weight:600;
+  padding:9px 14px;border-radius:9px;color:var(--text-dim);
+  transition:color .18s var(--ease), background .18s var(--ease);
+}
+.nav-link:hover{color:var(--text);background:rgba(255,255,255,.05);}
+.nav-link.active{color:var(--void);background:var(--lime);}
+.header-right{display:flex;align-items:center;gap:14px;}
+.mute-btn{
+  width:34px;height:34px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-dim);border:1px solid var(--border);
+  transition:.15s var(--ease);
+}
+.mute-btn:hover{color:var(--text);border-color:var(--border-2);}
+.player-chip{
+  display:flex;align-items:center;gap:10px;
+  padding:6px 12px 6px 6px;border-radius:30px;
+  background:var(--surface);border:1px solid var(--border);
+  transition:.15s var(--ease);
+}
+.player-chip:hover{border-color:var(--violet);}
+.avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,var(--violet),var(--violet-2));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:700;font-size:13px;
+  flex-shrink:0;
+}
+.player-meta{display:flex;flex-direction:column;line-height:1.15;}
+.player-name{font-size:12.5px;font-weight:600;}
+.player-xp{font-size:10.5px;color:var(--lime);font-family:var(--font-mono);}
+.lvl-badge{
+  font-family:var(--font-display);font-size:10px;font-weight:700;
+  color:var(--void);background:var(--lime);
+  padding:1px 6px;border-radius:5px;letter-spacing:.03em;
+}
+.mobile-nav-toggle{display:none;}
+
+@media (max-width:860px){
+  #header{padding:12px 16px;}
+  .nav{position:fixed;left:0;right:0;bottom:0;top:auto;
+    background:rgba(13,12,20,.96);backdrop-filter:blur(18px);
+    border-top:1px solid var(--border);
+    justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+    z-index:60;
+  }
+  .nav-link{flex:1;text-align:center;font-size:10px;padding:8px 4px;}
+  .player-meta{display:none;}
+  .player-chip{padding:6px;}
+}
+
+/* ============================= LAYOUT ============================= */
+#main{flex:1;padding-bottom:70px;}
+.page{max-width:1180px;margin:0 auto;padding:40px 28px 90px;}
+@media (max-width:860px){.page{padding:24px 16px 110px;}}
+.section-label{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;
+  color:var(--text-faint);text-transform:uppercase;margin-bottom:10px;
+}
+.section-title{
+  font-family:var(--font-display);font-size:22px;font-weight:600;
+  margin-bottom:20px;letter-spacing:.01em;
+}
+
+/* ============================= HERO ============================= */
+.hero{
+  position:relative;padding:64px 8px 48px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+}
+.hero-word{
+  font-family:var(--font-display);font-weight:700;
+  font-size:clamp(48px,10vw,104px);letter-spacing:.02em;line-height:.95;
+  background:linear-gradient(180deg,#fff, #b9aeff 60%, var(--violet));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 40px var(--violet-glow));
+}
+.hero-tag{
+  font-family:var(--font-display);font-size:clamp(13px,2vw,16px);
+  letter-spacing:.35em;color:var(--lime);font-weight:600;
+  text-shadow:0 0 18px var(--lime-glow);
+}
+.hero-sub{color:var(--text-dim);font-size:15px;max-width:440px;line-height:1.6;}
+.hero-ctas{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;justify-content:center;}
+.btn{
+  font-family:var(--font-display);font-weight:600;font-size:14px;letter-spacing:.04em;
+  padding:14px 28px;border-radius:11px;
+  display:inline-flex;align-items:center;gap:8px;
+  transition:transform .15s var(--ease), box-shadow .15s var(--ease), background .15s var(--ease);
+}
+.btn:active{transform:scale(.96);}
+.btn-primary{
+  background:var(--lime);color:var(--void);
+  box-shadow:0 0 0 0 var(--lime-glow), 0 6px 24px -6px var(--lime-glow);
+}
+.btn-primary:hover{box-shadow:0 0 0 4px rgba(201,247,62,.12), 0 10px 30px -6px var(--lime-glow);transform:translateY(-1px);}
+.btn-ghost{
+  background:var(--surface);color:var(--text);border:1px solid var(--border-2);
+}
+.btn-ghost:hover{border-color:var(--violet);background:var(--surface-2);}
+.btn-block{width:100%;justify-content:center;}
+.btn-lg{padding:17px 30px;font-size:15.5px;border-radius:13px;}
+
+/* ============================= FEATURED CARD ============================= */
+.featured{
+  margin-top:36px;
+  display:grid;grid-template-columns:1.1fr .9fr;gap:0;
+  background:linear-gradient(135deg, var(--surface), var(--surface-2));
+  border:1px solid var(--border-2);border-radius:var(--radius-lg);
+  overflow:hidden;position:relative;
+}
+.featured::before{
+  content:"";position:absolute;top:-40%;right:-10%;width:60%;height:180%;
+  background:radial-gradient(circle, var(--violet-glow), transparent 65%);
+  opacity:.5;pointer-events:none;
+}
+.featured-visual{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 50%, rgba(139,107,255,.18), transparent 70%);
+  min-height:220px;border-left:1px solid var(--border);
+}
+.pulse-orb{position:relative;width:120px;height:120px;display:flex;align-items:center;justify-content:center;}
+.pulse-ring{
+  position:absolute;inset:0;border-radius:50%;border:2px solid var(--violet);
+  animation:pulse-ring 2.2s var(--ease) infinite;
+}
+.pulse-ring:nth-child(2){animation-delay:.7s;}
+.pulse-ring:nth-child(3){animation-delay:1.4s;}
+@keyframes pulse-ring{
+  0%{transform:scale(.5);opacity:.9;}
+  100%{transform:scale(1.9);opacity:0;}
+}
+.pulse-core{
+  width:44px;height:44px;border-radius:50%;
+  background:radial-gradient(circle, var(--lime), var(--violet));
+  box-shadow:0 0 40px 8px var(--violet-glow);
+}
+.featured-body{padding:32px;position:relative;display:flex;flex-direction:column;gap:14px;}
+.badge{
+  align-self:flex-start;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;
+  color:var(--lime);border:1px solid rgba(201,247,62,.35);background:rgba(201,247,62,.08);
+  padding:4px 10px;border-radius:20px;text-transform:uppercase;
+}
+.featured-title{font-family:var(--font-display);font-size:30px;font-weight:700;}
+.featured-desc{color:var(--text-dim);font-size:14px;line-height:1.6;max-width:420px;}
+.featured-stats{display:flex;gap:24px;margin:4px 0 8px;}
+.stat-block .stat-num{font-family:var(--font-mono);font-size:22px;font-weight:700;}
+.stat-block .stat-label{font-size:10.5px;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;margin-top:2px;}
+.stat-block.you .stat-num{color:var(--lime);}
+.stat-block.world .stat-num{color:var(--cyan);}
+
+/* ============================= GAME GRID ============================= */
+.game-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin-top:20px;
+}
+.game-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden;
+  transition:transform .18s var(--ease), border-color .18s var(--ease), box-shadow .18s var(--ease);
+}
+.game-card:not(.soon):hover{
+  transform:translateY(-3px);border-color:var(--violet);
+  box-shadow:0 14px 30px -14px var(--violet-glow);
+}
+.game-icon{
+  width:44px;height:44px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  background:linear-gradient(135deg, var(--violet-2), var(--violet));
+}
+.game-card.soon .game-icon{background:var(--surface-3);filter:grayscale(1);opacity:.6;}
+.game-name{font-family:var(--font-display);font-weight:600;font-size:16px;}
+.game-cat{font-size:10.5px;color:var(--text-faint);letter-spacing:.1em;text-transform:uppercase;}
+.game-best{font-family:var(--font-mono);font-size:12.5px;color:var(--text-dim);}
+.game-best b{color:var(--lime);font-weight:600;}
+.game-card .btn{margin-top:auto;}
+.soon-tag{
+  position:absolute;top:16px;right:16px;font-family:var(--font-mono);font-size:9.5px;
+  letter-spacing:.1em;color:var(--text-faint);border:1px dashed var(--border-2);
+  padding:3px 8px;border-radius:20px;
+}
+.game-card.soon{opacity:.55;}
+.game-card.soon:hover{transform:none;}
+
+/* ============================= ACTIVITY FEED ============================= */
+.feed{display:flex;flex-direction:column;gap:2px;margin-top:20px;}
+.feed-item{
+  display:flex;align-items:center;gap:12px;padding:13px 16px;
+  border-bottom:1px solid var(--border);font-size:13.5px;color:var(--text-dim);
+}
+.feed-item:last-child{border-bottom:none;}
+.feed-icon{font-size:15px;flex-shrink:0;}
+.feed-item b{color:var(--text);font-weight:600;}
+.feed-time{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--text-faint);flex-shrink:0;}
+
+/* ============================= CARDS / PANELS (generic) ============================= */
+.panel{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:28px;
+}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media (max-width:760px){.grid-2{grid-template-columns:1fr;}.featured{grid-template-columns:1fr;}.featured-visual{min-height:160px;order:-1;border-left:none;border-bottom:1px solid var(--border);}}
+
+/* ============================= REACTION GAME ============================= */
+.game-shell{
+  display:flex;flex-direction:column;align-items:center;gap:18px;
+}
+.game-topbar{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--font-mono);font-size:12.5px;color:var(--text-dim);
+}
+.round-dots{display:flex;gap:6px;}
+.round-dot{width:8px;height:8px;border-radius:50%;background:var(--surface-3);border:1px solid var(--border-2);}
+.round-dot.done{background:var(--lime);border-color:var(--lime);}
+.round-dot.current{background:var(--violet);border-color:var(--violet);box-shadow:0 0 8px var(--violet-glow);}
+.arena{
+  position:relative;width:100%;max-width:640px;height:min(58vh,440px);
+  background:radial-gradient(circle at 50% 50%, rgba(139,107,255,.09), transparent 70%), var(--void-2);
+  border:1px solid var(--border-2);border-radius:var(--radius-lg);
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  overflow:hidden;touch-action:manipulation;user-select:none;
+}
+.arena.state-target{background:radial-gradient(circle at 50% 50%, rgba(201,247,62,.10), transparent 70%), var(--void-2);}
+.arena.state-early{background:radial-gradient(circle at 50% 50%, rgba(255,93,122,.16), transparent 70%), var(--void-2);}
+.arena-inner{display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px;}
+.arena-title{font-family:var(--font-display);font-size:20px;font-weight:600;}
+.arena-sub{color:var(--text-dim);font-size:13.5px;max-width:280px;line-height:1.5;}
+.arena-msg{font-family:var(--font-mono);font-size:13px;color:var(--text-faint);}
+.target-btn{
+  width:88px;height:88px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #e8ffb0, var(--lime) 55%, #92c928);
+  box-shadow:0 0 0 0 var(--lime-glow), 0 0 60px 10px var(--lime-glow), inset 0 -6px 14px rgba(0,0,0,.2);
+  position:absolute;
+  animation:pop-in .22s var(--ease);
+}
+@keyframes pop-in{from{transform:scale(.3);opacity:0;}to{transform:scale(1);opacity:1;}}
+.result-ms{
+  font-family:var(--font-mono);font-weight:700;font-size:52px;
+  text-shadow:0 0 30px currentColor;
+}
+.rating-label{font-family:var(--font-display);font-weight:700;letter-spacing:.1em;font-size:13px;}
+.too-early-label{
+  font-family:var(--font-display);font-weight:700;font-size:26px;color:var(--coral);
+  text-shadow:0 0 24px var(--coral-glow);
+}
+.instructions-list{text-align:left;color:var(--text-dim);font-size:13px;line-height:2;max-width:300px;}
+.instructions-list li{margin-left:18px;}
+
+/* ============================= FINAL SCORE ============================= */
+.final-wrap{width:100%;max-width:560px;display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center;}
+.final-label{font-family:var(--font-mono);letter-spacing:.2em;font-size:11px;color:var(--text-faint);text-transform:uppercase;}
+.final-score{
+  font-family:var(--font-mono);font-weight:700;font-size:clamp(56px,12vw,80px);color:var(--lime);
+  text-shadow:0 0 46px var(--lime-glow);line-height:1;
+}
+.final-rating{font-family:var(--font-display);font-weight:700;font-size:16px;letter-spacing:.06em;}
+.pb-flag{
+  font-family:var(--font-mono);font-size:11.5px;letter-spacing:.06em;color:var(--void);
+  background:var(--lime);padding:5px 12px;border-radius:20px;font-weight:700;
+  animation:pb-pop .5s var(--ease);
+}
+@keyframes pb-pop{0%{transform:scale(0);}70%{transform:scale(1.15);}100%{transform:scale(1);}}
+.final-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;}
+.fstat{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:14px 8px;}
+.fstat .n{font-family:var(--font-mono);font-weight:700;font-size:19px;}
+.fstat .l{font-size:9.5px;color:var(--text-faint);letter-spacing:.07em;text-transform:uppercase;margin-top:3px;}
+.round-breakdown{width:100%;display:flex;flex-direction:column;gap:6px;text-align:left;}
+.rb-row{display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:12.5px;color:var(--text-dim);padding:6px 2px;}
+.rb-row .rb-idx{width:18px;color:var(--text-faint);}
+.rb-bar-track{flex:1;height:6px;background:var(--surface-3);border-radius:4px;overflow:hidden;}
+.rb-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--violet),var(--lime));}
+.rb-val{width:70px;text-align:right;color:var(--text);}
+.final-ctas{display:flex;gap:10px;width:100%;flex-wrap:wrap;}
+.final-ctas .btn{flex:1;}
+.xp-toast{
+  display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:13px;color:var(--lime);
+}
+
+/* ============================= LEADERBOARD ============================= */
+.tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+.tab-btn{
+  font-family:var(--font-display);font-size:12.5px;font-weight:600;letter-spacing:.05em;
+  padding:9px 16px;border-radius:9px;border:1px solid var(--border);color:var(--text-dim);
+  transition:.15s var(--ease);
+}
+.tab-btn.active{background:var(--violet);border-color:var(--violet);color:#fff;}
+.tab-btn:not(.active):hover{border-color:var(--border-2);color:var(--text);}
+.lb-table{width:100%;border-collapse:collapse;}
+.lb-row{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:12px;
+  padding:13px 16px;border-radius:11px;margin-bottom:4px;border:1px solid transparent;}
+.lb-row.me{background:rgba(139,107,255,.12);border-color:var(--violet);}
+.lb-rank{font-family:var(--font-mono);font-weight:700;font-size:15px;color:var(--text-dim);}
+.lb-rank.medal{font-size:19px;}
+.lb-player{display:flex;align-items:center;gap:10px;}
+.lb-name{font-weight:600;font-size:14px;}
+.lb-you-tag{font-size:9.5px;color:var(--lime);font-family:var(--font-mono);letter-spacing:.06em;margin-left:6px;}
+.lb-score{font-family:var(--font-mono);font-weight:700;font-size:15px;}
+
+/* ============================= PROFILE ============================= */
+.profile-head{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.avatar-lg{
+  width:74px;height:74px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--violet),var(--violet-2));
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-display);
+  font-size:26px;font-weight:700;box-shadow:0 0 30px var(--violet-glow);
+}
+.profile-name{font-family:var(--font-display);font-size:24px;font-weight:700;}
+.xp-bar-track{width:220px;max-width:60vw;height:8px;background:var(--surface-3);border-radius:6px;overflow:hidden;margin-top:8px;}
+.xp-bar-fill{height:100%;background:linear-gradient(90deg,var(--violet),var(--lime));border-radius:6px;transition:width .4s var(--ease);}
+.xp-bar-label{font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);margin-top:4px;}
+.pb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:16px;}
+.pb-card{background:var(--void-2);border:1px solid var(--border);border-radius:11px;padding:14px;}
+.pb-card .g{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;}
+.pb-card .v{font-family:var(--font-mono);font-weight:700;font-size:18px;color:var(--lime);margin-top:2px;}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:16px;}
+.ach-card{
+  background:var(--void-2);border:1px solid var(--border);border-radius:11px;padding:14px;
+  display:flex;gap:10px;align-items:flex-start;
+}
+.ach-card.locked{opacity:.4;filter:grayscale(.6);}
+.ach-icon{font-size:20px;}
+.ach-title{font-family:var(--font-display);font-weight:600;font-size:12.5px;letter-spacing:.03em;}
+.ach-desc{font-size:11px;color:var(--text-faint);margin-top:2px;line-height:1.4;}
+
+/* ============================= FRIENDS ============================= */
+.friend-row{
+  display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border);
+}
+.friend-row:last-child{border-bottom:none;}
+.friend-info{flex:1;}
+.friend-status{font-size:11px;color:var(--text-faint);margin-top:1px;}
+.friend-status.online::before{content:"●";color:var(--lime);margin-right:5px;}
+.friend-best{font-family:var(--font-mono);font-size:13px;color:var(--text-dim);text-align:right;}
+
+/* ============================= NAME MODAL ============================= */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(6,5,10,.75);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;
+}
+.modal{
+  background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-lg);
+  padding:32px;max-width:380px;width:100%;text-align:center;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.6), 0 0 60px -10px var(--violet-glow);
+}
+.modal h2{font-family:var(--font-display);font-size:22px;margin-bottom:8px;}
+.modal p{color:var(--text-dim);font-size:13.5px;margin-bottom:20px;line-height:1.5;}
+.modal input{
+  width:100%;padding:13px 14px;border-radius:10px;border:1px solid var(--border-2);
+  background:var(--void-2);color:var(--text);font-family:var(--font-body);font-size:14px;margin-bottom:14px;
+}
+.modal input:focus{outline:none;border-color:var(--violet);}
+
+/* ============================= TOASTS ============================= */
+#toast-container{position:fixed;top:70px;right:20px;z-index:300;display:flex;flex-direction:column;gap:10px;align-items:flex-end;}
+.toast{
+  background:var(--surface-2);border:1px solid var(--border-2);border-radius:11px;
+  padding:12px 16px;font-size:13px;display:flex;align-items:center;gap:10px;
+  animation:toast-in .3s var(--ease);box-shadow:0 10px 30px -10px rgba(0,0,0,.5);
+  max-width:280px;
+}
+@keyframes toast-in{from{transform:translateX(30px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+.toast.achievement{border-color:var(--lime);}
+.toast-icon{font-size:18px;}
+
+.footer-note{text-align:center;color:var(--text-faint);font-size:11.5px;margin-top:60px;font-family:var(--font-mono);letter-spacing:.05em;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="header">
+    <div class="logo" data-nav="home"><span class="dot"></span>ARCADE</div>
+    <nav class="nav" id="nav">
+      <a class="nav-link" data-nav="home">HOME</a>
+      <a class="nav-link" data-nav="games">GAMES</a>
+      <a class="nav-link" data-nav="leaderboard">LEADERBOARD</a>
+      <a class="nav-link" data-nav="friends">FRIENDS</a>
+    </nav>
+    <div class="header-right">
+      <button class="mute-btn" id="muteBtn" title="Toggle sound"></button>
+      <div class="player-chip" id="playerChip" data-nav="profile">
+        <div class="avatar" id="avatarInitial">?</div>
+        <div class="player-meta">
+          <span class="player-name" id="headerName">Player</span>
+          <span class="player-xp"><span class="lvl-badge" id="headerLevel">1</span> <span id="headerXp">0 XP</span></span>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main id="main"></main>
+</div>
+<div id="toast-container"></div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   STORAGE LAYER
+   ============================================================ */
+async function sGet(key, shared=false){
+  try{ const r = await window.storage.get(key, shared); return r ? JSON.parse(r.value) : null; }
+  catch(e){ return null; }
+}
+async function sSet(key, val, shared=false){
+  try{ await window.storage.set(key, JSON.stringify(val), shared); return true; }
+  catch(e){ console.error('storage set failed', e); return false; }
+}
+async function sList(prefix, shared=false){
+  try{ const r = await window.storage.list(prefix, shared); return r ? r.keys : []; }
+  catch(e){ return []; }
+}
+
+/* ============================================================
+   SOUND ENGINE — lightweight generated tones, no external assets
+   ============================================================ */
+const Sound = (() => {
+  let ctx = null;
+  let muted = false;
+  function ensure(){ if(!ctx){ ctx = new (window.AudioContext||window.webkitAudioContext)(); } return ctx; }
+  function tone(freq, dur, type='sine', gainPeak=.14, delay=0){
+    if(muted) return;
+    try{
+      const c = ensure();
+      const t0 = c.currentTime + delay;
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = type; osc.frequency.setValueAtTime(freq, t0);
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(gainPeak, t0 + .008);
+      gain.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+      osc.connect(gain); gain.connect(c.destination);
+      osc.start(t0); osc.stop(t0 + dur + .02);
+    }catch(e){}
+  }
+  return {
+    setMuted(v){ muted = v; },
+    isMuted(){ return muted; },
+    click(){ tone(320,.06,'square',.06); },
+    countdown(){ tone(440,.09,'sine',.1); },
+    target(){ tone(880,.12,'sine',.13); tone(1320,.10,'sine',.07,.02); },
+    hit(){ tone(660,.09,'triangle',.12); },
+    mistake(){ tone(160,.28,'sawtooth',.12); },
+    complete(){ tone(523,.12,'sine',.12); tone(659,.12,'sine',.1,.1); tone(784,.18,'sine',.1,.2); },
+    pb(){ tone(660,.1,'sine',.13); tone(880,.1,'sine',.12,.09); tone(1108,.16,'sine',.12,.18); tone(1318,.22,'sine',.12,.27); },
+    achievement(){ tone(784,.1,'triangle',.12); tone(988,.1,'triangle',.11,.1); tone(1318,.24,'triangle',.12,.2); },
+  };
+})();
+
+/* ============================================================
+   SCORING ABSTRACTION — reusable across future games
+   ============================================================ */
+const ScoreKinds = {
+  reaction_ms: {
+    direction: 'asc', // lower is better
+    unit: 'ms',
+    format: v => `${Math.round(v)}`,
+    rating: v => {
+      if(v < 150) return {label:'INSANE', color:'var(--lime)'};
+      if(v < 200) return {label:'EXCELLENT', color:'var(--violet)'};
+      if(v < 250) return {label:'GOOD', color:'var(--cyan)'};
+      if(v < 300) return {label:'AVERAGE', color:'var(--text-dim)'};
+      return {label:'NEEDS WORK', color:'var(--coral)'};
+    }
+  }
+};
+
+/* ============================================================
+   GAME REGISTRY — architecture for adding future games cleanly
+   ============================================================ */
+const GAMES = [
+  {
+    id:'reaction', title:'Reaction', category:'REFLEX', icon:'⚡',
+    description:'Five rounds. One job: beat the light. Pure reflex, pure pressure.',
+    scoreKind:'reaction_ms', implemented:true,
+  },
+  {
+    id:'aim', title:'Aim Trainer', category:'PRECISION', icon:'🎯',
+    description:'Hit as many targets as you can in 30 seconds.',
+    scoreKind:null, implemented:false,
+  },
+  {
+    id:'snake', title:'Snake', category:'CLASSIC', icon:'🟩',
+    description:'The one that started it all. Careful not to bite yourself.',
+    scoreKind:null, implemented:false,
+  },
+  {
+    id:'memory', title:'Memory', category:'FOCUS', icon:'🧠',
+    description:'Remember increasingly long sequences.',
+    scoreKind:null, implemented:false,
+  },
+  {
+    id:'numberrush', title:'Number Rush', category:'SPEED MATH', icon:'🔢',
+    description:'Solve as many sums as you can before time runs out.',
+    scoreKind:null, implemented:false,
+  },
+  {
+    id:'color', title:'Color Match', category:'PERCEPTION', icon:'🎨',
+    description:'Match the target color as precisely as possible.',
+    scoreKind:null, implemented:false,
+  },
+];
+
+/* ============================================================
+   ACHIEVEMENTS
+   ============================================================ */
+const ACHIEVEMENTS = [
+  {id:'lightning', icon:'⚡', title:'LIGHTNING', desc:'Score under 150ms.', check:s => s.bestReaction!=null && s.bestReaction < 150},
+  {id:'excellent5', icon:'🎯', title:'DIALED IN', desc:'Average under 200ms in one run.', check:s => s.bestAvg!=null && s.bestAvg < 200},
+  {id:'firstplace', icon:'🏆', title:'CHAMPION', desc:'Hold #1 on the leaderboard.', check:s => s.rank === 1},
+  {id:'grinder', icon:'🔥', title:'ON A ROLL', desc:'Play 5 rounds sets total.', check:s => s.sessionsPlayed >= 5},
+  {id:'dedicated', icon:'💀', title:'ONE MORE', desc:'Play 10 sessions total.', check:s => s.sessionsPlayed >= 10},
+];
+
+/* ============================================================
+   XP / LEVEL SYSTEM
+   ============================================================ */
+const XP_RULES = { complete:10, personalBest:25, top3:15 };
+function levelInfo(xp){
+  let level = 1, req = 100, remaining = xp;
+  while(remaining >= req){ remaining -= req; level++; req = Math.round(req * 1.22); }
+  return { level, into: remaining, need: req, pct: Math.min(100, Math.round((remaining/req)*100)) };
+}
+
+/* ============================================================
+   MOCK SOCIAL DATA
+   ============================================================ */
+const MOCK_LEADERBOARD = [
+  {id:'m1', name:'Anders', score:142},
+  {id:'m2', name:'Mikkel', score:157},
+  {id:'m3', name:'Sofie', score:171},
+  {id:'m4', name:'Jonas', score:198},
+  {id:'m5', name:'Freja', score:205},
+  {id:'m6', name:'Emil', score:223},
+  {id:'m7', name:'Ida', score:241},
+];
+const MOCK_FRIENDS = [
+  {name:'Anders', online:true, best:142},
+  {name:'Mikkel', online:true, best:157},
+  {name:'Sofie', online:false, best:171},
+  {name:'Jonas', online:false, best:198},
+];
+const MOCK_FEED = [
+  {icon:'🟢', html:'<b>Mikkel</b> just played Reaction', time:'2m'},
+  {icon:'🏆', html:'<b>Anders</b> beat your score in Reaction', time:'14m'},
+  {icon:'🔥', html:'<b>Sofie</b> is on a 3-day streak', time:'1h'},
+  {icon:'⚡', html:'<b>Jonas</b> hit a new personal best — 178ms', time:'3h'},
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let profile = null; // {id, name, xp, history:{reaction:[]}, bestReaction, bestAvg, sessionsPlayed, unlockedAchievements:[]}
+let route = 'home';
+
+function initials(name){
+  return (name||'?').trim().split(/\\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase() || '?';
+}
+
+async function loadProfile(){
+  let p = await sGet('profile', false);
+  if(!p){
+    return null;
+  }
+  return p;
+}
+async function saveProfile(){ await sSet('profile', profile, false); }
+
+async function createProfile(name){
+  profile = {
+    id: (crypto.randomUUID ? crypto.randomUUID() : 'p-'+Date.now()+'-'+Math.random().toString(36).slice(2)),
+    name: name.slice(0,18),
+    xp: 0,
+    bestReaction: null,
+    bestAvg: null,
+    sessionsPlayed: 0,
+    history: [],
+    unlockedAchievements: [],
+    muted: false,
+  };
+  await saveProfile();
+}
+
+async function pushLeaderboardEntry(score){
+  if(!profile) return;
+  await sSet('lb:reaction:'+profile.id, {name:profile.name, score, id:profile.id}, true);
+}
+
+async function getCombinedLeaderboard(){
+  const keys = await sList('lb:reaction:', true);
+  const entries = [];
+  for(const k of keys){
+    const r = await sGet(k, true);
+    if(r) entries.push(r);
+  }
+  // dedupe by id keeping best (lowest) score
+  const byId = {};
+  for(const e of entries){
+    if(!byId[e.id] || e.score < byId[e.id].score) byId[e.id] = e;
+  }
+  const real = Object.values(byId);
+  const combined = [...MOCK_LEADERBOARD, ...real];
+  combined.sort((a,b)=>a.score-b.score);
+  return combined;
+}
+
+/* ============================================================
+   RENDER HELPERS
+   ============================================================ */
+const main = document.getElementById('main');
+
+function setActiveNav(){
+  document.querySelectorAll('.nav-link').forEach(el=>{
+    el.classList.toggle('active', el.dataset.nav === route);
+  });
+}
+
+function refreshHeader(){
+  if(!profile) return;
+  const li = levelInfo(profile.xp);
+  document.getElementById('avatarInitial').textContent = initials(profile.name);
+  document.getElementById('headerName').textContent = profile.name;
+  document.getElementById('headerLevel').textContent = li.level;
+  document.getElementById('headerXp').textContent = profile.xp + ' XP';
+  const mb = document.getElementById('muteBtn');
+  mb.innerHTML = Sound.isMuted() ? iconMuted() : iconUnmuted();
+}
+function iconUnmuted(){ return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 9v6h4l5 5V4L7 9H3z" fill="currentColor"/><path d="M16 8a5 5 0 010 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>'; }
+function iconMuted(){ return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 9v6h4l5 5V4L7 9H3z" fill="currentColor"/><path d="M15 9l6 6M21 9l-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'; }
+
+function toast(html, cls=''){
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast ' + cls;
+  el.innerHTML = html;
+  c.appendChild(el);
+  setTimeout(()=>{ el.style.transition='opacity .3s, transform .3s'; el.style.opacity='0'; el.style.transform='translateX(20px)'; setTimeout(()=>el.remove(), 320); }, 3200);
+}
+
+async function awardXP(amount, reasonLabel){
+  profile.xp += amount;
+  await saveProfile();
+  refreshHeader();
+  if(reasonLabel) toast(`<span class="xp-icon">✦</span> +${amount} XP <span style="color:var(--text-dim)">— ${reasonLabel}</span>`);
+}
+
+async function checkAchievements(extra={}){
+  const li = levelInfo(profile.xp);
+  const board = await getCombinedLeaderboard();
+  const myEntry = board.find(e => e.id === profile.id);
+  const rank = myEntry ? board.indexOf(myEntry) + 1 : null;
+  const statObj = {
+    bestReaction: profile.bestReaction,
+    bestAvg: profile.bestAvg,
+    sessionsPlayed: profile.sessionsPlayed,
+    rank,
+    ...extra
+  };
+  let changed = false;
+  for(const a of ACHIEVEMENTS){
+    if(!profile.unlockedAchievements.includes(a.id) && a.check(statObj)){
+      profile.unlockedAchievements.push(a.id);
+      changed = true;
+      Sound.achievement();
+      toast(`<span class="toast-icon">${a.icon}</span><div><b>${a.title}</b><br><span style="color:var(--text-dim);font-size:11.5px">${a.desc}</span></div>`, 'achievement');
+    }
+  }
+  if(changed) await saveProfile();
+}
+
+/* ============================================================
+   ROUTER
+   ============================================================ */
+async function navigate(r){
+  route = r;
+  setActiveNav();
+  window.scrollTo({top:0, behavior:'instant'});
+  if(r === 'home') renderHome();
+  else if(r === 'games') renderGames();
+  else if(r === 'leaderboard') renderLeaderboard();
+  else if(r === 'friends') renderFriends();
+  else if(r === 'profile') renderProfile();
+  else if(r === 'play-reaction') renderReactionGame();
+}
+
+document.addEventListener('click', (e)=>{
+  const navEl = e.target.closest('[data-nav]');
+  if(navEl){ Sound.click(); navigate(navEl.dataset.nav); }
+});
+
+document.getElementById('muteBtn').addEventListener('click', async ()=>{
+  Sound.setMuted(!Sound.isMuted());
+  profile.muted = Sound.isMuted();
+  await saveProfile();
+  refreshHeader();
+});
+
+/* ============================================================
+   HOME PAGE
+   ============================================================ */
+async function renderHome(){
+  const li = levelInfo(profile.xp);
+  main.innerHTML = `
+    <div class="page">
+      <section class="hero">
+        <div class="hero-tag">PLAY · COMPETE · DOMINATE</div>
+        <div class="hero-word">ARCADE</div>
+        <p class="hero-sub">Quick games. Real leaderboards. One more attempt is always one click away.</p>
+        <div class="hero-ctas">
+          <button class="btn btn-primary btn-lg" data-nav="play-reaction">▶ PLAY NOW</button>
+          <button class="btn btn-ghost btn-lg" data-nav="leaderboard">VIEW LEADERBOARD</button>
+        </div>
+      </section>
+
+      <div class="section-label">Featured</div>
+      <div class="featured">
+        <div class="featured-body">
+          <span class="badge">Live now</span>
+          <div class="featured-title">Reaction</div>
+          <p class="featured-desc">Five rounds. The screen goes dark, then lights up — click the instant you see it. Milliseconds decide everything.</p>
+          <div class="featured-stats">
+            <div class="stat-block you"><div class="stat-num mono">${profile.bestReaction!=null ? Math.round(profile.bestReaction) : '—'}</div><div class="stat-label">Your best (ms)</div></div>
+            <div class="stat-block world"><div class="stat-num mono">142</div><div class="stat-label">Global best (ms)</div></div>
+          </div>
+          <button class="btn btn-primary" data-nav="play-reaction" style="align-self:flex-start">PLAY REACTION</button>
+        </div>
+        <div class="featured-visual">
+          <div class="pulse-orb">
+            <div class="pulse-ring"></div><div class="pulse-ring"></div><div class="pulse-ring"></div>
+            <div class="pulse-core"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:44px">Quick play</div>
+      <div class="section-title">Games</div>
+      <div class="game-grid" id="homeGameGrid"></div>
+
+      <div class="section-label" style="margin-top:44px">Activity</div>
+      <div class="section-title">Friends</div>
+      <div class="panel feed" id="homeFeed"></div>
+
+      <div class="footer-note">ARCADE · MILESTONE 1 · BUILT FOR ONE MORE ATTEMPT</div>
+    </div>
+  `;
+  renderGameGrid(document.getElementById('homeGameGrid'));
+  const feed = document.getElementById('homeFeed');
+  feed.innerHTML = MOCK_FEED.map(f => `<div class="feed-item"><span class="feed-icon">${f.icon}</span><span>${f.html}</span><span class="feed-time">${f.time}</span></div>`).join('');
+}
+
+function renderGameGrid(container){
+  container.innerHTML = GAMES.map(g => {
+    const bestHtml = g.id==='reaction'
+      ? (profile.bestReaction!=null ? `Best: <b>${Math.round(profile.bestReaction)}ms</b>` : 'Not played yet')
+      : 'Coming soon';
+    return `
+      <div class="game-card ${g.implemented?'':'soon'}" ${g.implemented?`data-nav="play-${g.id}"`:''}>
+        ${!g.implemented ? '<span class="soon-tag">COMING SOON</span>' : ''}
+        <div class="game-icon">${g.icon}</div>
+        <div>
+          <div class="game-name">${g.title}</div>
+          <div class="game-cat">${g.category}</div>
+        </div>
+        <div class="game-best">${bestHtml}</div>
+        ${g.implemented ? `<button class="btn btn-ghost btn-block" data-nav="play-${g.id}">PLAY</button>` : `<button class="btn btn-ghost btn-block" disabled style="opacity:.5;cursor:not-allowed">LOCKED</button>`}
+      </div>
+    `;
+  }).join('');
+}
+
+/* ============================================================
+   GAMES PAGE
+   ============================================================ */
+function renderGames(){
+  main.innerHTML = `
+    <div class="page">
+      <div class="section-label">All games</div>
+      <div class="section-title">Games</div>
+      <div class="game-grid" id="gamesGrid"></div>
+    </div>
+  `;
+  renderGameGrid(document.getElementById('gamesGrid'));
+}
+
+/* ============================================================
+   LEADERBOARD PAGE
+   ============================================================ */
+let lbTab = 'global';
+async function renderLeaderboard(){
+  main.innerHTML = `
+    <div class="page">
+      <div class="section-label">Rankings</div>
+      <div class="section-title">Leaderboard — Reaction</div>
+      <div class="tabs">
+        <button class="tab-btn ${lbTab==='global'?'active':''}" data-tab="global">GLOBAL</button>
+        <button class="tab-btn ${lbTab==='friends'?'active':''}" data-tab="friends">FRIENDS</button>
+      </div>
+      <div class="panel" id="lbPanel"><div style="color:var(--text-faint);font-family:var(--font-mono);font-size:13px">Loading…</div></div>
+    </div>
+  `;
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{ lbTab = b.dataset.tab; renderLeaderboard(); });
+  });
+  const board = lbTab==='global' ? await getCombinedLeaderboard() : buildFriendsBoard();
+  const panel = document.getElementById('lbPanel');
+  if(board.length === 0){
+    panel.innerHTML = `<div style="color:var(--text-dim);font-size:13.5px">No scores yet. Be the first.</div>`;
+    return;
+  }
+  const medals = ['🥇','🥈','🥉'];
+  panel.innerHTML = board.map((e,i)=>{
+    const isMe = e.id === profile.id;
+    return `
+      <div class="lb-row ${isMe?'me':''}">
+        <div class="lb-rank ${i<3?'medal':''}">${i<3?medals[i]:('#'+(i+1))}</div>
+        <div class="lb-player">
+          <div class="avatar" style="width:28px;height:28px;font-size:11px">${initials(e.name)}</div>
+          <span class="lb-name">${e.name}${isMe?'<span class="lb-you-tag">YOU</span>':''}</span>
+        </div>
+        <div class="lb-score mono">${Math.round(e.score)}<span style="color:var(--text-faint);font-size:11px"> ms</span></div>
+      </div>
+    `;
+  }).join('');
+}
+function buildFriendsBoard(){
+  const board = MOCK_FRIENDS.map(f=>({id:'f-'+f.name, name:f.name, score:f.best}));
+  if(profile.bestReaction!=null) board.push({id:profile.id, name:profile.name, score:profile.bestReaction});
+  board.sort((a,b)=>a.score-b.score);
+  return board;
+}
+
+/* ============================================================
+   FRIENDS PAGE
+   ============================================================ */
+function renderFriends(){
+  main.innerHTML = `
+    <div class="page">
+      <div class="section-label">Your circle</div>
+      <div class="section-title">Friends</div>
+      <div class="panel" style="padding:8px 0">
+        ${MOCK_FRIENDS.map(f => `
+          <div class="friend-row">
+            <div class="avatar" style="width:38px;height:38px;font-size:14px">${initials(f.name)}</div>
+            <div class="friend-info">
+              <div style="font-weight:600;font-size:14px">${f.name}</div>
+              <div class="friend-status ${f.online?'online':''}">${f.online?'Online now':'Offline'}</div>
+            </div>
+            <div>
+              <div class="friend-best">${f.best} ms</div>
+              <button class="btn btn-ghost" style="padding:6px 12px;font-size:11px;margin-top:4px" disabled>CHALLENGE</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <p style="color:var(--text-faint);font-size:12px;margin-top:14px;font-family:var(--font-mono)">Friend requests & real invites arrive in a later milestone.</p>
+    </div>
+  `;
+}
+
+/* ============================================================
+   PROFILE PAGE
+   ============================================================ */
+async function renderProfile(){
+  const li = levelInfo(profile.xp);
+  const board = await getCombinedLeaderboard();
+  const myEntry = board.find(e=>e.id===profile.id);
+  const rank = myEntry ? board.indexOf(myEntry)+1 : null;
+  main.innerHTML = `
+    <div class="page">
+      <div class="panel">
+        <div class="profile-head">
+          <div class="avatar-lg">${initials(profile.name)}</div>
+          <div>
+            <div class="profile-name">${profile.name}</div>
+            <div class="xp-bar-track"><div class="xp-bar-fill" style="width:${li.pct}%"></div></div>
+            <div class="xp-bar-label">LEVEL ${li.level} · ${li.into} / ${li.need} XP ${rank?`· RANK #${rank} GLOBAL`:''}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:32px">Personal bests</div>
+      <div class="pb-grid">
+        <div class="pb-card"><div class="g">Reaction</div><div class="v">${profile.bestReaction!=null?Math.round(profile.bestReaction)+' ms':'—'}</div></div>
+        <div class="pb-card"><div class="g">Best average</div><div class="v">${profile.bestAvg!=null?Math.round(profile.bestAvg)+' ms':'—'}</div></div>
+        <div class="pb-card"><div class="g">Sessions played</div><div class="v">${profile.sessionsPlayed}</div></div>
+        <div class="pb-card"><div class="g">Total XP</div><div class="v">${profile.xp}</div></div>
+      </div>
+
+      <div class="section-title" style="margin-top:32px">Achievements</div>
+      <div class="ach-grid">
+        ${ACHIEVEMENTS.map(a => {
+          const unlocked = profile.unlockedAchievements.includes(a.id);
+          return `<div class="ach-card ${unlocked?'':'locked'}">
+            <div class="ach-icon">${a.icon}</div>
+            <div><div class="ach-title">${a.title}</div><div class="ach-desc">${a.desc}</div></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   REACTION GAME
+   ============================================================ */
+const REACTION_ROUNDS = 5;
+let reactionState = null; // {round, results:[], phase, timeoutId, targetShownAt}
+
+function resetReactionState(){
+  reactionState = { round: 0, results: [], phase: 'idle', timeoutId: null, targetShownAt: 0 };
+}
+
+function renderReactionGame(){
+  resetReactionState();
+  drawReactionShell();
+}
+
+function roundDotsHtml(){
+  let html = '';
+  for(let i=0;i<REACTION_ROUNDS;i++){
+    const cls = i < reactionState.results.length ? 'done' : (i === reactionState.round && reactionState.phase!=='idle' ? 'current' : '');
+    html += `<div class="round-dot ${cls}"></div>`;
+  }
+  return html;
+}
+
+function drawReactionShell(){
+  main.innerHTML = `
+    <div class="page">
+      <div class="game-shell">
+        <div class="game-topbar">
+          <span>REACTION — ROUND ${Math.min(reactionState.round+1, REACTION_ROUNDS)} / ${REACTION_ROUNDS}</span>
+          <div class="round-dots">${roundDotsHtml()}</div>
+        </div>
+        <div class="arena" id="arena"></div>
+      </div>
+    </div>
+  `;
+  drawArenaContent();
+  document.getElementById('arena').addEventListener('click', handleArenaClick);
+  document.getElementById('arena').addEventListener('touchstart', (e)=>{ e.preventDefault(); handleArenaClick(); }, {passive:false});
+}
+
+function arenaEl(){ return document.getElementById('arena'); }
+
+function drawArenaContent(){
+  const a = arenaEl();
+  a.className = 'arena';
+  if(reactionState.phase === 'idle'){
+    a.innerHTML = `
+      <div class="arena-inner">
+        <div class="arena-title">Ready?</div>
+        <ul class="instructions-list">
+          <li>Wait for the screen to light up green</li>
+          <li>Click / tap the instant you see it</li>
+          <li>5 rounds — clicking early costs you the round</li>
+        </ul>
+        <button class="btn btn-primary btn-lg" id="startBtn">START ROUND 1</button>
+      </div>
+    `;
+    document.getElementById('startBtn').addEventListener('click', (e)=>{ e.stopPropagation(); startRound(); });
+  } else if(reactionState.phase === 'waiting'){
+    a.classList.add('state-wait');
+    a.innerHTML = `<div class="arena-inner"><div class="arena-msg">wait for it…</div></div>`;
+  } else if(reactionState.phase === 'target'){
+    a.classList.add('state-target');
+    const size = 88;
+    const pad = 14;
+    const w = a.clientWidth || 600, h = a.clientHeight || 400;
+    const maxX = Math.max(0, w - size - pad*2), maxY = Math.max(0, h - size - pad*2);
+    const x = pad + Math.random()*maxX, y = pad + Math.random()*maxY;
+    a.innerHTML = `<button class="target-btn" id="targetBtn" style="left:${x}px; top:${y}px;"></button>`;
+    reactionState.targetShownAt = performance.now();
+    Sound.target();
+  } else if(reactionState.phase === 'early'){
+    a.classList.add('state-early');
+    a.innerHTML = `<div class="arena-inner"><div class="too-early-label">TOO EARLY</div><div class="arena-sub">Wait for the green light next time.</div></div>`;
+  } else if(reactionState.phase === 'roundresult'){
+    const ms = reactionState.results[reactionState.results.length-1];
+    const rating = ScoreKinds.reaction_ms.rating(ms);
+    a.innerHTML = `
+      <div class="arena-inner">
+        <div class="result-ms" style="color:${rating.color}">${Math.round(ms)}<span style="font-size:22px">ms</span></div>
+        <div class="rating-label" style="color:${rating.color}">${rating.label}</div>
+      </div>
+    `;
+  }
+}
+
+function startRound(){
+  reactionState.phase = 'waiting';
+  updateTopbar();
+  drawArenaContent();
+  Sound.countdown();
+  const delay = 900 + Math.random()*2600;
+  reactionState.timeoutId = setTimeout(()=>{
+    reactionState.phase = 'target';
+    drawArenaContent();
+  }, delay);
+}
+
+function updateTopbar(){
+  const bar = document.querySelector('.game-topbar span');
+  const dots = document.querySelector('.round-dots');
+  if(bar) bar.textContent = `REACTION — ROUND ${Math.min(reactionState.round+1, REACTION_ROUNDS)} / ${REACTION_ROUNDS}`;
+  if(dots) dots.innerHTML = roundDotsHtml();
+}
+
+function handleArenaClick(){
+  if(reactionState.phase === 'idle' || reactionState.phase === 'roundresult') return;
+  if(reactionState.phase === 'waiting'){
+    clearTimeout(reactionState.timeoutId);
+    reactionState.phase = 'early';
+    drawArenaContent();
+    Sound.mistake();
+    setTimeout(()=>{ advanceAfterRound(1200); }, 1100);
+    return;
+  }
+  if(reactionState.phase === 'target'){
+    const ms = performance.now() - reactionState.targetShownAt;
+    reactionState.results.push(ms);
+    reactionState.phase = 'roundresult';
+    updateTopbar();
+    drawArenaContent();
+    Sound.hit();
+    setTimeout(()=>{ advanceAfterRound(650); }, 50);
+  }
+}
+
+function advanceAfterRound(delay){
+  setTimeout(async ()=>{
+    reactionState.round++;
+    if(reactionState.round >= REACTION_ROUNDS){
+      await finishReactionSession();
+    } else {
+      reactionState.phase = 'idle';
+      updateTopbar();
+      drawArenaContent();
+      // auto-continue to keep flow snappy
+      const arena = arenaEl();
+      arena.innerHTML = `
+        <div class="arena-inner">
+          <div class="arena-title">Round ${reactionState.round+1}</div>
+          <button class="btn btn-primary btn-lg" id="nextBtn">CONTINUE</button>
+        </div>
+      `;
+      document.getElementById('nextBtn').addEventListener('click', (e)=>{ e.stopPropagation(); startRound(); });
+    }
+  }, delay);
+}
+
+async function finishReactionSession(){
+  const results = reactionState.results; // 1000ms penalty already-free — early clicks don't push a value, so pad if fewer than rounds
+  while(results.length < REACTION_ROUNDS) results.push(600); // safety fallback, shouldn't normally trigger
+  const avg = results.reduce((a,b)=>a+b,0) / results.length;
+  const best = Math.min(...results);
+  const isNewBest = profile.bestReaction == null || best < profile.bestReaction;
+  const isNewAvgBest = profile.bestAvg == null || avg < profile.bestAvg;
+
+  profile.sessionsPlayed++;
+  if(isNewBest) profile.bestReaction = best;
+  if(isNewAvgBest) profile.bestAvg = avg;
+  profile.history.unshift({ date: Date.now(), results, avg, best });
+  profile.history = profile.history.slice(0, 20);
+  await saveProfile();
+  await pushLeaderboardEntry(profile.bestReaction);
+
+  let xpGain = XP_RULES.complete;
+  if(isNewBest) xpGain += XP_RULES.personalBest;
+  const board = await getCombinedLeaderboard();
+  const myRank = board.findIndex(e=>e.id===profile.id) + 1;
+  if(myRank > 0 && myRank <= 3) xpGain += XP_RULES.top3;
+
+  profile.xp += xpGain;
+  await saveProfile();
+  refreshHeader();
+
+  Sound.complete();
+  if(isNewBest) setTimeout(()=>Sound.pb(), 250);
+
+  drawFinalScreen(results, avg, best, isNewBest, xpGain, myRank);
+  await checkAchievements();
+}
+
+function drawFinalScreen(results, avg, best, isNewBest, xpGain, rank){
+  const rating = ScoreKinds.reaction_ms.rating(avg);
+  main.innerHTML = `
+    <div class="page">
+      <div class="game-shell">
+        <div class="final-wrap">
+          <div class="final-label">Your score</div>
+          <div class="final-score">${Math.round(avg)}<span style="font-size:26px">ms</span></div>
+          <div class="final-rating" style="color:${rating.color}">${rating.label}</div>
+          ${isNewBest ? '<div class="pb-flag">★ NEW PERSONAL BEST</div>' : ''}
+          <div class="xp-toast">✦ +${xpGain} XP earned${rank && rank<=3 ? ' · TOP 3 BONUS' : ''}</div>
+
+          <div class="final-stats">
+            <div class="fstat"><div class="n">${Math.round(best)}</div><div class="l">Best round</div></div>
+            <div class="fstat"><div class="n">${Math.round(avg)}</div><div class="l">Average</div></div>
+            <div class="fstat"><div class="n">${rank ? '#'+rank : '—'}</div><div class="l">Rank</div></div>
+            <div class="fstat"><div class="n">+${xpGain}</div><div class="l">XP earned</div></div>
+          </div>
+
+          <div class="panel" style="width:100%;text-align:left;padding:18px">
+            <div class="section-label" style="margin-bottom:12px">Round breakdown</div>
+            <div class="round-breakdown">
+              ${results.map((r,i)=>{
+                const pct = Math.max(6, 100 - Math.min(100, (r/500)*100));
+                return `<div class="rb-row"><span class="rb-idx">${i+1}</span><div class="rb-bar-track"><div class="rb-bar-fill" style="width:${pct}%"></div></div><span class="rb-val">${Math.round(r)} ms</span></div>`;
+              }).join('')}
+            </div>
+          </div>
+
+          <div class="final-ctas">
+            <button class="btn btn-primary btn-lg" id="playAgainBtn">PLAY AGAIN</button>
+            <button class="btn btn-ghost btn-lg" data-nav="leaderboard">LEADERBOARD</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('playAgainBtn').addEventListener('click', ()=>{ Sound.click(); renderReactionGame(); });
+}
+
+/* ============================================================
+   NAME / ONBOARDING MODAL
+   ============================================================ */
+function showOnboarding(){
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <div class="hero-tag" style="margin-bottom:10px">WELCOME TO</div>
+      <h2>ARCADE</h2>
+      <p>Pick a name — this is how you'll show up on leaderboards and to friends.</p>
+      <input type="text" id="nameInput" maxlength="18" placeholder="Your name" autocomplete="off">
+      <button class="btn btn-primary btn-block btn-lg" id="enterBtn">ENTER ARCADE</button>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  const input = document.getElementById('nameInput');
+  input.focus();
+  const enter = async ()=>{
+    const name = input.value.trim();
+    if(!name) { input.style.borderColor = 'var(--coral)'; return; }
+    await createProfile(name);
+    backdrop.remove();
+    refreshHeader();
+    navigate('home');
+  };
+  document.getElementById('enterBtn').addEventListener('click', enter);
+  input.addEventListener('keydown', e => { if(e.key==='Enter') enter(); });
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+async function init(){
+  profile = await loadProfile();
+  if(!profile){
+    // minimal placeholder profile object pre-onboarding just for header rendering safety
+    document.getElementById('headerName').textContent = 'Guest';
+    showOnboarding();
+    return;
+  }
+  Sound.setMuted(!!profile.muted);
+  refreshHeader();
+  navigate('home');
+}
+init();
+</script>
+</body>
+</html>

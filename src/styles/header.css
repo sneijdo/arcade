@@ -1,0 +1,179 @@
+#header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  padding-top: calc(14px + env(safe-area-inset-top));
+  background: rgba(8, 7, 12, 0.72);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.logo .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 10px 2px var(--lime-glow);
+  animation: blink 2.4s ease-in-out infinite;
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.nav {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.nav-link {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  padding: 9px 14px;
+  border-radius: 9px;
+  color: var(--text-dim);
+  transition: color 0.18s var(--ease), background 0.18s var(--ease);
+}
+.nav-link:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+.nav-link.active {
+  color: var(--void);
+  background: var(--lime);
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.mute-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  transition: 0.15s var(--ease);
+}
+.mute-btn:hover {
+  color: var(--text);
+  border-color: var(--border-2);
+}
+.player-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 6px;
+  border-radius: 30px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: 0.15s var(--ease);
+}
+.player-chip:hover {
+  border-color: var(--violet);
+}
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--violet), var(--violet-2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.player-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.player-name {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.player-xp {
+  font-size: 10.5px;
+  color: var(--lime);
+  font-family: var(--font-mono);
+}
+.lvl-badge {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--void);
+  background: var(--lime);
+  padding: 1px 6px;
+  border-radius: 5px;
+  letter-spacing: 0.03em;
+}
+.mobile-nav-toggle {
+  display: none;
+}
+/* Mobile bottom tab bar is a sibling of #header, not a descendant — #header's
+   backdrop-filter would otherwise establish a containing block for a fixed-
+   position descendant, pinning it under the header instead of the viewport. */
+.nav-mobile {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  #header {
+    padding: 12px 16px;
+    padding-top: calc(12px + env(safe-area-inset-top));
+  }
+  #header .nav {
+    display: none;
+  }
+  .nav-mobile {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(13, 12, 20, 0.96);
+    backdrop-filter: blur(18px);
+    border-top: 1px solid var(--border);
+    justify-content: space-around;
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+    z-index: 60;
+    /* Bottom nav must never let a game's touch handling swallow its taps. */
+    touch-action: manipulation;
+  }
+  .nav-mobile .nav-link {
+    flex: 1;
+    text-align: center;
+    font-size: 10px;
+    padding: 8px 4px;
+  }
+  .player-meta {
+    display: none;
+  }
+  .player-chip {
+    padding: 6px;
+  }
+}

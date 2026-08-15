@@ -1,0 +1,276 @@
+/* ============================= REACTION GAME ============================= */
+.game-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.game-topbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.round-dots {
+  display: flex;
+  gap: 6px;
+}
+.round-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  border: 1px solid var(--border-2);
+}
+.round-dot.done {
+  background: var(--lime);
+  border-color: var(--lime);
+}
+.round-dot.current {
+  background: var(--violet);
+  border-color: var(--violet);
+  box-shadow: 0 0 8px var(--violet-glow);
+}
+.arena {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  height: min(58vh, 440px);
+  background: radial-gradient(circle at 50% 50%, rgba(139, 107, 255, 0.09), transparent 70%), var(--void-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  /* Gameplay owns all touch gestures here: no browser pan/zoom/double-tap. */
+  touch-action: none;
+}
+.arena.state-target {
+  background: radial-gradient(circle at 50% 50%, rgba(201, 247, 62, 0.1), transparent 70%), var(--void-2);
+}
+.arena.state-early {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 93, 122, 0.16), transparent 70%), var(--void-2);
+}
+.arena-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+}
+.arena-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+}
+.arena-sub {
+  color: var(--text-dim);
+  font-size: 13.5px;
+  max-width: 280px;
+  line-height: 1.5;
+}
+.arena-msg {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+/* Outer hit zone is larger than the visible target for forgiving mobile taps. */
+.target-hit {
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  touch-action: none;
+  animation: pop-in 0.22s var(--ease);
+}
+.target-btn {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e8ffb0, var(--lime) 55%, #92c928);
+  box-shadow: 0 0 0 0 var(--lime-glow), 0 0 60px 10px var(--lime-glow), inset 0 -6px 14px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+@keyframes pop-in {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.result-ms {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 52px;
+  text-shadow: 0 0 30px currentColor;
+}
+.rating-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  font-size: 13px;
+}
+.too-early-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--coral);
+  text-shadow: 0 0 24px var(--coral-glow);
+}
+.instructions-list {
+  text-align: left;
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 2;
+  max-width: 300px;
+}
+.instructions-list li {
+  margin-left: 18px;
+}
+
+/* ============================= FINAL SCORE ============================= */
+.final-wrap {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+.final-label {
+  font-family: var(--font-mono);
+  letter-spacing: 0.2em;
+  font-size: 11px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+.final-score {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: clamp(56px, 12vw, 80px);
+  color: var(--lime);
+  text-shadow: 0 0 46px var(--lime-glow);
+  line-height: 1;
+}
+.final-rating {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+}
+.pb-flag {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  color: var(--void);
+  background: var(--lime);
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  animation: pb-pop 0.5s var(--ease);
+}
+@keyframes pb-pop {
+  0% {
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.final-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+.fstat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 14px 8px;
+}
+.fstat .n {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 19px;
+}
+.fstat .l {
+  font-size: 9.5px;
+  color: var(--text-faint);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+.round-breakdown {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+.rb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-dim);
+  padding: 6px 2px;
+}
+.rb-row .rb-idx {
+  width: 18px;
+  color: var(--text-faint);
+}
+.rb-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--surface-3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.rb-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--violet), var(--lime));
+}
+.rb-val {
+  width: 70px;
+  text-align: right;
+  color: var(--text);
+}
+.final-ctas {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+.final-ctas .btn {
+  flex: 1;
+}
+.xp-toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--lime);
+}

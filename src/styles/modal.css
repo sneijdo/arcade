@@ -1,0 +1,94 @@
+/* ============================= NAME MODAL ============================= */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 5, 10, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+.modal {
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.6), 0 0 60px -10px var(--violet-glow);
+}
+.modal h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+.modal p {
+  color: var(--text-dim);
+  font-size: 13.5px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.modal input {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-2);
+  background: var(--void-2);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+.modal input:focus {
+  outline: none;
+  border-color: var(--violet);
+}
+
+/* ============================= TOASTS ============================= */
+#toast-container {
+  position: fixed;
+  top: calc(70px + env(safe-area-inset-top));
+  right: 20px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+  max-width: calc(100vw - 40px);
+  /* Toasts are informational only — never let a stack of them steal taps
+     meant for the game/UI underneath, especially on small screens. */
+  pointer-events: none;
+}
+.toast {
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: 11px;
+  padding: 12px 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: toast-in 0.3s var(--ease);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  max-width: 280px;
+}
+@keyframes toast-in {
+  from {
+    transform: translateX(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.toast.achievement {
+  border-color: var(--lime);
+}
+.toast-icon {
+  font-size: 18px;
+}
