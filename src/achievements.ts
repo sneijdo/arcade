@@ -47,6 +47,10 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'merge_512', icon: '🔢', title: 'TALKNUSER', desc: 'Nå 512 i Merge.', check: (s) => (s.bestScores.merge ?? 0) >= 512 },
   { id: 'merge_1024', icon: '🌟', title: 'TALGENI', desc: 'Nå 1024 i Merge.', check: (s) => (s.bestScores.merge ?? 0) >= 1024 },
 
+  // Daily streak
+  { id: 'streak_starter', icon: '🔥', title: 'I ILD', desc: 'Nå en 3-dages spillestime.', check: (s) => s.longestStreak >= 3 },
+  { id: 'streak_legend', icon: '🌋', title: 'UUDSLUKKELIG', desc: 'Nå en 30-dages spillestime.', check: (s) => s.longestStreak >= 30 },
+
   // Cross-game
   { id: 'firstplace', icon: '🏆', title: 'MESTER', desc: 'Indtag #1-pladsen på et leaderboard.', check: (s) => Object.values(s.ranks).some((r) => r === 1) },
   { id: 'allrounder', icon: '🎮', title: 'ALLROUNDER', desc: 'Sæt en rekord i alle spil.', check: (s) => s.gamesPlayed >= 10 },

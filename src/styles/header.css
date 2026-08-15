@@ -81,6 +81,19 @@
   color: var(--text);
   border-color: var(--border-2);
 }
+.streak-chip {
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 13px;
+  color: #ffb347;
+  background: rgba(255, 179, 71, 0.1);
+  border: 1px solid rgba(255, 179, 71, 0.3);
+  border-radius: 999px;
+  padding: 5px 10px;
+  line-height: 1;
+}
 .player-chip {
   display: flex;
   align-items: center;

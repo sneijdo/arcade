@@ -86,3 +86,46 @@ export async function signOut(): Promise<void> {
   if (!supabase) return;
   await supabase.auth.signOut();
 }
+
+/** Unambiguous alphabet — no 0/O/1/I/l — so a hand-copied or hand-typed code doesn't fail from a misread character. */
+const RECOVERY_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+export function generateRecoveryCode(): string {
+  let code = '';
+  for (let i = 0; i < 10; i++) {
+    if (i === 5) code += '-';
+    code += RECOVERY_CODE_ALPHABET[Math.floor(Math.random() * RECOVERY_CODE_ALPHABET.length)];
+  }
+  return code;
+}
+
+/** Requires an active session — call right after signup, and again after a successful redeemRecoveryCode() so the user always has a fresh, unused code. */
+export async function setRecoveryCode(code: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase.rpc('set_recovery_code', { p_code: code });
+  if (error) {
+    console.error('setRecoveryCode failed', error);
+    return false;
+  }
+  return true;
+}
+
+/** The logged-out "forgot password" path — see schema_recovery.sql for what this actually does server-side. */
+export async function redeemRecoveryCode(username: string, code: string, newPassword: string): Promise<{ error: string | null }> {
+  if (!supabase) return { error: 'Ikke tilgængeligt.' };
+  const { data, error } = await supabase.rpc('redeem_recovery_code', {
+    p_username: username,
+    p_code: code,
+    p_new_password: newPassword,
+  });
+  if (error) return { error: translateAuthError(error.message) };
+  if (!data) return { error: 'Forkert brugernavn eller gendannelseskode.' };
+  return { error: null };
+}
+
+/** Requires an active session — used by the "change password" section in Profile. */
+export async function changePassword(newPassword: string): Promise<{ error: string | null }> {
+  if (!supabase) return { error: 'Ikke tilgængeligt.' };
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  return { error: error ? translateAuthError(error.message) : null };
+}

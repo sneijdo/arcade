@@ -2,7 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { XP_RULES } from '../../xp';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
-import { profile, saveProfile, getCombinedLeaderboard, pushLeaderboardEntry, checkAchievements } from '../../state';
+import { profile, saveProfile, getCombinedLeaderboard, pushLeaderboardEntry, checkAchievements, updateStreak, checkDailyChallenge } from '../../state';
 import { refreshHeader } from '../../header';
 
 const REACTION_ROUNDS = 5;
@@ -226,6 +226,8 @@ async function finishReactionSession(): Promise<void> {
 
   profile.xp += xpGain;
   await saveProfile();
+  await updateStreak();
+  await checkDailyChallenge('reaction', best);
   refreshHeader();
 
   Sound.complete();

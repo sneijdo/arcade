@@ -116,6 +116,55 @@
 }
 
 /* ============================= FEATURED CARD ============================= */
+.daily-challenge {
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, rgba(201, 247, 62, 0.08), var(--surface-2));
+  border: 1px solid rgba(201, 247, 62, 0.3);
+  border-radius: var(--radius-lg);
+}
+.daily-challenge.completed {
+  background: var(--surface-2);
+  border-color: var(--border-2);
+  opacity: 0.75;
+}
+.daily-challenge-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+.daily-challenge-body {
+  flex: 1;
+  min-width: 0;
+}
+.daily-challenge-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--lime);
+}
+.daily-challenge-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  margin-top: 2px;
+}
+.daily-challenge-reward {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+@media (max-width: 480px) {
+  .daily-challenge {
+    flex-wrap: wrap;
+  }
+  .daily-challenge .btn {
+    width: 100%;
+  }
+}
+
 .featured {
   margin-top: 36px;
   display: grid;

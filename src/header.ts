@@ -17,9 +17,19 @@ export function refreshHeader(): void {
   const levelEl = document.getElementById('headerLevel');
   const xpEl = document.getElementById('headerXp');
   const muteBtn = document.getElementById('muteBtn');
+  const streakChip = document.getElementById('streakChip');
   if (avatarEl) avatarEl.textContent = initials(profile.name);
   if (nameEl) nameEl.textContent = profile.name;
   if (levelEl) levelEl.textContent = String(li.level);
   if (xpEl) xpEl.textContent = profile.xp + ' XP';
   if (muteBtn) muteBtn.innerHTML = Sound.isMuted() ? iconMuted() : iconUnmuted();
+  if (streakChip) {
+    if (profile.currentStreak > 0) {
+      streakChip.style.display = 'flex';
+      streakChip.innerHTML = `🔥 <span>${profile.currentStreak}</span>`;
+      streakChip.title = `${profile.currentStreak} dages stime — længste: ${profile.longestStreak}`;
+    } else {
+      streakChip.style.display = 'none';
+    }
+  }
 }

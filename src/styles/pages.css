@@ -181,3 +181,47 @@
   line-height: 1.4;
 }
 
+/* ============================= ACCOUNT SETTINGS ============================= */
+.settings-panel {
+  margin-top: 16px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.settings-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.settings-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+}
+.settings-hint {
+  color: var(--text-dim);
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin: 0;
+}
+.settings-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-2);
+  background: var(--void-2);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+.settings-input:focus {
+  outline: none;
+  border-color: var(--violet);
+}
+.settings-msg {
+  font-size: 12px;
+  margin: 0;
+}
+

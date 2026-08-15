@@ -7,6 +7,7 @@ import { toast } from './toast';
 import { Sound } from './sound';
 import { refreshHeader } from './header';
 import type { AchievementStats, LeaderboardEntry, Profile } from './types';
+import { getTodayChallenge, meetsChallengeTarget } from './dailyChallenge';
 
 export let profile: Profile | null = null;
 
@@ -32,6 +33,10 @@ export async function loadProfile(): Promise<Profile | null> {
   const p = await storage.get<Profile>('profile', false);
   if (p) {
     if (!p.bestScores) p.bestScores = {};
+    if (p.currentStreak == null) p.currentStreak = 0;
+    if (p.longestStreak == null) p.longestStreak = 0;
+    if (p.lastPlayedDate === undefined) p.lastPlayedDate = null;
+    if (p.dailyChallengeDate === undefined) p.dailyChallengeDate = null;
     profile = p;
   }
   return profile;
@@ -64,8 +69,70 @@ export async function createProfile(name: string, id?: string): Promise<void> {
     bestScores: {},
     unlockedAchievements: [],
     muted: false,
+    currentStreak: 0,
+    longestStreak: 0,
+    lastPlayedDate: null,
+    dailyChallengeDate: null,
   };
   await saveProfile();
+}
+
+const STREAK_MILESTONE_XP: Record<number, number> = { 3: 30, 7: 75, 14: 150, 30: 400 };
+
+export function todayLocalDateString(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/**
+ * Called once per finished session (see finishGameSession). No-ops if
+ * today's session was already counted. Otherwise: consecutive day since
+ * lastPlayedDate → streak+1, any gap (or first-ever session) → streak
+ * resets to 1. Awards a one-time XP bonus + toast the moment the streak
+ * newly reaches a milestone value.
+ */
+export async function updateStreak(): Promise<void> {
+  if (!profile) return;
+  const today = todayLocalDateString();
+  if (profile.lastPlayedDate === today) return; // already counted today
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+  profile.currentStreak = profile.lastPlayedDate === yesterdayStr ? profile.currentStreak + 1 : 1;
+  profile.lastPlayedDate = today;
+  profile.longestStreak = Math.max(profile.longestStreak, profile.currentStreak);
+  await saveProfile();
+
+  const bonusXp = STREAK_MILESTONE_XP[profile.currentStreak];
+  if (bonusXp) {
+    profile.xp += bonusXp;
+    await saveProfile();
+    toast(`<span class="toast-icon">🔥</span> +${bonusXp} XP <span style="color:var(--text-dim)">— ${profile.currentStreak} dages stime</span>`, 'achievement');
+    Sound.achievement();
+  }
+}
+
+/**
+ * Called once per finished session (see finishGameSession / reaction.ts).
+ * No-ops unless this session's game+score actually satisfies today's
+ * challenge AND it hasn't already been claimed today — so replaying the
+ * same game after completing it doesn't re-award the bonus.
+ */
+export async function checkDailyChallenge(gameId: string, score: number): Promise<void> {
+  if (!profile) return;
+  const today = todayLocalDateString();
+  if (profile.dailyChallengeDate === today) return; // already claimed today
+  const challenge = getTodayChallenge(today);
+  if (!challenge || challenge.gameId !== gameId) return;
+  if (!meetsChallengeTarget(challenge, score)) return;
+
+  profile.dailyChallengeDate = today;
+  profile.xp += challenge.xpReward;
+  await saveProfile();
+  toast(`<span class="toast-icon">🎯</span> +${challenge.xpReward} XP <span style="color:var(--text-dim)">— Dagens udfordring gennemført</span>`, 'achievement');
+  Sound.achievement();
 }
 
 export async function pushLeaderboardEntry(gameId: string, score: number): Promise<void> {
@@ -120,6 +187,7 @@ export async function checkAchievements(extra: Partial<AchievementStats> = {}): 
     bestScores: profile.bestScores,
     ranks,
     gamesPlayed,
+    longestStreak: profile.longestStreak,
     ...extra,
   };
   let changed = false;
@@ -169,6 +237,8 @@ export async function finishGameSession(gameId: string, score: number, extraAchi
 
   profile.xp += xpGain;
   await saveProfile();
+  await updateStreak();
+  await checkDailyChallenge(gameId, score);
   refreshHeader();
   await checkAchievements(extraAchievementStats);
 

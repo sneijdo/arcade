@@ -1,5 +1,28 @@
-import { profile, getCombinedLeaderboard } from '../state';
+import { profile, getCombinedLeaderboard, todayLocalDateString } from '../state';
 import { renderGameGrid } from './gameGrid';
+import { getTodayChallenge } from '../dailyChallenge';
+import { GAMES } from '../games/registry';
+import { ScoreKinds } from '../scoring';
+
+function renderDailyChallengeCard(): string {
+  const challenge = getTodayChallenge(todayLocalDateString());
+  if (!challenge || !profile) return '';
+  const game = GAMES.find((g) => g.id === challenge.gameId);
+  const kind = game?.scoreKind ? ScoreKinds[game.scoreKind] : null;
+  const completed = profile.dailyChallengeDate === todayLocalDateString();
+  const targetText = kind ? `${kind.format(challenge.target)}${kind.unit}` : challenge.target;
+  return `
+    <div class="daily-challenge ${completed ? 'completed' : ''}">
+      <div class="daily-challenge-icon">${completed ? '✅' : game?.icon ?? '🎯'}</div>
+      <div class="daily-challenge-body">
+        <div class="daily-challenge-label">DAGENS UDFORDRING</div>
+        <div class="daily-challenge-title">${completed ? 'Gennemført!' : `${challenge.gameTitle} — nå ${targetText}`}</div>
+        <div class="daily-challenge-reward">${completed ? `+${challenge.xpReward} XP optjent` : `Belønning: +${challenge.xpReward} XP`}</div>
+      </div>
+      ${completed ? '' : `<button class="btn btn-primary" data-nav="play-${challenge.gameId}">SPIL</button>`}
+    </div>
+  `;
+}
 
 export async function renderHome(): Promise<void> {
   const main = document.getElementById('main')!;
@@ -17,6 +40,8 @@ export async function renderHome(): Promise<void> {
           <button class="btn btn-ghost btn-lg" data-nav="leaderboard">SE LEADERBOARD</button>
         </div>
       </section>
+
+      ${renderDailyChallengeCard()}
 
       <div class="section-label">I fokus</div>
       <div class="featured">
