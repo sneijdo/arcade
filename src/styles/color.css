@@ -120,3 +120,80 @@
 .color-slider.slider-b::-moz-range-thumb {
   border-color: #6bb8ff;
 }
+
+/* A bit of tactile "weight" while actively dragging a slider. */
+.color-slider::-webkit-slider-thumb {
+  transition: transform 0.12s var(--ease, ease);
+}
+.color-slider::-moz-range-thumb {
+  transition: transform 0.12s var(--ease, ease);
+}
+.color-slider.is-dragging::-webkit-slider-thumb {
+  transform: scale(1.18);
+}
+.color-slider.is-dragging::-moz-range-thumb {
+  transform: scale(1.18);
+}
+
+/* Live "getting warmer" feedback — --glow (0-100) is set from JS on every
+   slider move, tracking the same distance formula the final score uses, so
+   the swatch itself telegraphs proximity before BEKRÆFT is ever pressed. */
+#guessSwatch {
+  --glow: 0;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 calc(var(--glow) * 0.35px) rgba(201, 247, 62, calc(var(--glow) / 140)),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: box-shadow 0.08s linear, background 0.05s linear;
+}
+#guessSwatch.is-hot {
+  border-color: var(--lime);
+}
+
+/* Round-result reveal — a quick scale+fade so the outcome reads as a beat, not an instant text swap. */
+@keyframes color-reveal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.reveal-pop {
+  animation: color-reveal-pop 0.22s var(--ease, ease) both;
+}
+
+/* Top-tier (90%+) rounds get a brief radial flash behind the swatches. */
+.result-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 38%, rgba(201, 247, 62, 0.28), transparent 62%);
+  animation: color-flash-fade 0.6s ease-out both;
+}
+@keyframes color-flash-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Final-screen round-breakdown: staggered fade-in-up (animation-delay set inline per row). */
+.rb-stagger {
+  opacity: 0;
+  animation: color-rb-in 0.32s var(--ease, ease) both;
+}
+@keyframes color-rb-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

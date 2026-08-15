@@ -29,12 +29,15 @@ interface Current {
   hue: number;
 }
 
+const MILESTONE_EVERY = 10;
+
 interface StackState {
   phase: Phase;
   blocks: Block[];
   current: Current | null;
   score: number;
   perfectCount: number;
+  perfectStreak: number;
   rafId: number | null;
   lastT: number;
   arenaW: number;
@@ -52,6 +55,7 @@ function makeInitialState(): StackState {
     current: null,
     score: 0,
     perfectCount: 0,
+    perfectStreak: 0,
     rafId: null,
     lastT: 0,
     arenaW: 0,
@@ -113,9 +117,11 @@ function startGame(): void {
   const arena = document.getElementById('stackArena')!;
   arena.classList.add('playing');
   arena.innerHTML = `
+    <div class="stack-flash" id="stackFlash"></div>
     <div class="stack-tower" id="stackTower"></div>
     <div class="stack-block stack-current" id="stackCurrent"></div>
     <div class="stack-perfect" id="stackPerfect">PERFEKT!</div>
+    <div class="stack-milestone" id="stackMilestone"></div>
   `;
 
   state.arenaW = arena.clientWidth;
@@ -232,14 +238,22 @@ function dropBlock(): void {
 
   if (isPerfect) {
     state.perfectCount++;
-    showPerfectCallout();
+    state.perfectStreak++;
+    showPerfectCallout(state.perfectStreak);
     flashBlock(state.blocks.length - 1);
     Sound.pb();
     Haptics.personalBest();
   } else {
+    state.perfectStreak = 0;
+    // A landing that barely survived (most of the block sliced off) gets a
+    // sharp little camera jolt — landing precision reads as different from
+    // a comfortable overlap, not just as the same "thud" every time.
+    if (overlapWidth < current.width * 0.4) triggerTowerJolt();
     Sound.hit();
     Haptics.hit();
   }
+
+  if (state.score % MILESTONE_EVERY === 0) triggerMilestone(state.score);
 
   spawnCurrent();
 }
@@ -251,8 +265,9 @@ function missDrop(current: Current): void {
   state.rafId = null;
 
   const dropBottom = Math.min(state.blocks.length * BLOCK_HEIGHT, state.arenaH * VISIBLE_TOP_FRACTION);
-  spawnFallingPiece(current.x, current.width, current.hue, dropBottom);
+  spawnFallingPiece(current.x, current.width, current.hue, dropBottom, true);
   document.getElementById('stackCurrent')?.remove();
+  triggerFlash('death');
 
   Sound.mistake();
   Haptics.miss();
@@ -281,28 +296,38 @@ function updateCameraAndCurrentBottom(): void {
   if (currentEl) currentEl.style.bottom = `${currentBottom}px`;
 }
 
-function spawnFallingPiece(x: number, width: number, hue: number, bottom: number): void {
+function spawnFallingPiece(x: number, width: number, hue: number, bottom: number, isDeath = false): void {
   const arena = document.getElementById('stackArena');
   if (!arena) return;
   const el = document.createElement('div');
-  el.className = 'stack-block stack-falling';
+  el.className = isDeath ? 'stack-block stack-falling death' : 'stack-block stack-falling';
   el.style.left = `${x}px`;
   el.style.width = `${width}px`;
   el.style.height = `${BLOCK_HEIGHT}px`;
   el.style.bottom = `${bottom}px`;
   el.style.background = `hsl(${hue}, 82%, 60%)`;
+  // Slight random rotation/direction variance so debris doesn't all fall
+  // identically — reads as physical, not like the same UI animation repeating.
+  const spin = isDeath ? 55 + Math.random() * 25 : 16 + Math.random() * 12;
+  const spinDir = Math.random() < 0.5 ? -1 : 1;
+  el.style.setProperty('--stack-fall-rot', `${spin * spinDir}deg`);
   arena.appendChild(el);
   requestAnimationFrame(() => el.classList.add('falling-active'));
-  setTimeout(() => {
-    if (el.parentNode) el.remove();
-  }, 550);
+  setTimeout(
+    () => {
+      if (el.parentNode) el.remove();
+    },
+    isDeath ? 820 : 550,
+  );
 }
 
-function showPerfectCallout(): void {
+function showPerfectCallout(streak: number): void {
   const el = document.getElementById('stackPerfect');
   if (!el) return;
-  el.classList.remove('show');
+  el.textContent = streak >= 2 ? `PERFEKT! ×${streak}` : 'PERFEKT!';
+  el.classList.remove('show', 'streak-hot');
   void el.offsetWidth; // restart the CSS animation even on back-to-back perfects
+  if (streak >= 3) el.classList.add('streak-hot');
   el.classList.add('show');
 }
 
@@ -312,6 +337,38 @@ function flashBlock(index: number): void {
   if (!el) return;
   el.classList.add('perfect-flash');
   setTimeout(() => el.classList.remove('perfect-flash'), 420);
+}
+
+/** A quick shake on the whole arena — reserved for landings that barely survived, so precision itself feels different from a comfortable overlap. Targets the arena rather than the tower: the tower's own inline transform already drives the camera-follow translateY every drop, and a CSS animation on the same property would fight it. */
+function triggerTowerJolt(): void {
+  const arena = document.getElementById('stackArena');
+  if (!arena) return;
+  arena.classList.remove('jolt');
+  void arena.offsetWidth;
+  arena.classList.add('jolt');
+  setTimeout(() => arena.classList.remove('jolt'), 260);
+}
+
+/** Height milestone every MILESTONE_EVERY blocks — an escalating reward beat independent of whether the triggering drop happened to be perfect. */
+function triggerMilestone(score: number): void {
+  const el = document.getElementById('stackMilestone');
+  if (el) {
+    el.textContent = `${score} HØJT!`;
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+  }
+  triggerFlash('milestone');
+  Sound.achievement();
+  Haptics.personalBest();
+}
+
+function triggerFlash(kind: 'milestone' | 'death'): void {
+  const el = document.getElementById('stackFlash');
+  if (!el) return;
+  el.classList.remove('flash-milestone', 'flash-death');
+  void el.offsetWidth;
+  el.classList.add(kind === 'milestone' ? 'flash-milestone' : 'flash-death');
 }
 
 function updateScore(): void {

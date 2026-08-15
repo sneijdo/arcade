@@ -5,6 +5,9 @@ import { finishGameSession } from '../../state';
 
 const SIZE = 4;
 const SWIPE_THRESHOLD = 24;
+const SLIDE_MS = 150;
+/** Merges into a tile at/above this value get the bigger "big" pop treatment instead of the standard one. */
+const BIG_MERGE_THRESHOLD = 128;
 
 type Direction = 'up' | 'down' | 'left' | 'right';
 type Phase = 'idle' | 'playing' | 'gameover';
@@ -29,6 +32,8 @@ let nextId = 1;
 let state: MergeState = makeInitialState();
 let swipeStart: { x: number; y: number } | null = null;
 let swipeTriggered = false;
+/** Persistent DOM elements keyed by tile id — lets a slide read as motion (CSS transform transition) instead of destroy/rebuild every move. */
+let tileEls: Map<number, HTMLElement> = new Map();
 
 function emptyGrid(): Grid {
   return Array.from({ length: SIZE }, () => Array<Cell>(SIZE).fill(null));
@@ -75,20 +80,41 @@ function putLine(g: Grid, dir: Direction, idx: number, line: Cell[]): void {
   else for (let r = 0; r < SIZE; r++) g[r][idx] = arr[r];
 }
 
-function processLine(line: Cell[]): { line: Cell[]; moved: boolean; mergedAny: boolean } {
+/** Converts a (line index, in-line result slot) pair back to grid (row, col) — mirrors putLine's reversal-for-right/down rule, needed so animated tiles know where to slide TO. */
+function resolveGridPos(dir: Direction, idx: number, lineIdx: number): { row: number; col: number } {
+  const actualLineIdx = dir === 'right' || dir === 'down' ? SIZE - 1 - lineIdx : lineIdx;
+  return dir === 'left' || dir === 'right' ? { row: idx, col: actualLineIdx } : { row: actualLineIdx, col: idx };
+}
+
+interface LineResult {
+  line: Cell[];
+  moved: boolean;
+  mergedAny: boolean;
+  /** Tiles that survived unmerged, now at result slot lineIdx (same id — the DOM element just needs repositioning). */
+  moves: { id: number; lineIdx: number }[];
+  /** Two consumed tiles merging into a brand-new tile id at result slot lineIdx. */
+  merges: { fromIds: [number, number]; toId: number; lineIdx: number; value: number }[];
+}
+
+function processLine(line: Cell[]): LineResult {
   const tiles = line.filter((c): c is Tile => c != null);
   const result: Cell[] = [];
+  const moves: LineResult['moves'] = [];
+  const merges: LineResult['merges'] = [];
   let mergedAny = false;
   let i = 0;
   while (i < tiles.length) {
     const cur = tiles[i];
     const next = tiles[i + 1];
     if (next && next.value === cur.value) {
-      result.push({ id: nextId++, value: cur.value * 2, merged: true, isNew: false });
+      const toId = nextId++;
+      result.push({ id: toId, value: cur.value * 2, merged: true, isNew: false });
+      merges.push({ fromIds: [cur.id, next.id], toId, lineIdx: result.length - 1, value: cur.value * 2 });
       mergedAny = true;
       i += 2;
     } else {
       result.push({ ...cur, merged: false, isNew: false });
+      moves.push({ id: cur.id, lineIdx: result.length - 1 });
       i += 1;
     }
   }
@@ -96,22 +122,40 @@ function processLine(line: Cell[]): { line: Cell[]; moved: boolean; mergedAny: b
   const origVals = line.map((c) => (c ? c.value : 0));
   const newVals = result.map((c) => (c ? c.value : 0));
   const moved = origVals.some((v, idx) => v !== newVals[idx]);
-  return { line: result, moved, mergedAny };
+  return { line: result, moved, mergedAny, moves, merges };
 }
 
-function moveGrid(g: Grid, dir: Direction): { grid: Grid; moved: boolean; mergedAny: boolean } {
+interface MoveResult {
+  grid: Grid;
+  moved: boolean;
+  mergedAny: boolean;
+  tileMoves: { id: number; row: number; col: number }[];
+  tileMerges: { fromIds: [number, number]; toId: number; row: number; col: number; value: number }[];
+}
+
+function moveGrid(g: Grid, dir: Direction): MoveResult {
   const next = emptyGrid();
   for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) next[r][c] = g[r][c];
   let moved = false;
   let mergedAny = false;
+  const tileMoves: MoveResult['tileMoves'] = [];
+  const tileMerges: MoveResult['tileMerges'] = [];
   for (let idx = 0; idx < SIZE; idx++) {
     const line = getLine(next, dir, idx);
     const res = processLine(line);
     if (res.moved) moved = true;
     if (res.mergedAny) mergedAny = true;
     putLine(next, dir, idx, res.line);
+    for (const m of res.moves) {
+      const pos = resolveGridPos(dir, idx, m.lineIdx);
+      tileMoves.push({ id: m.id, row: pos.row, col: pos.col });
+    }
+    for (const mg of res.merges) {
+      const pos = resolveGridPos(dir, idx, mg.lineIdx);
+      tileMerges.push({ fromIds: mg.fromIds, toId: mg.toId, row: pos.row, col: pos.col, value: mg.value });
+    }
   }
-  return { grid: next, moved, mergedAny };
+  return { grid: next, moved, mergedAny, tileMoves, tileMerges };
 }
 
 function hasMovesLeft(g: Grid): boolean {
@@ -135,6 +179,7 @@ export function renderMergeGame(): void {
   state = makeInitialState();
   swipeStart = null;
   swipeTriggered = false;
+  tileEls = new Map();
   drawShell();
 }
 
@@ -182,7 +227,8 @@ function drawArea(): void {
         </div>
       </div>
     `;
-    renderTiles();
+    tileEls = new Map();
+    renderInitialTiles();
     wireControls();
   }
 }
@@ -204,41 +250,95 @@ function tileLenClass(value: number): string {
   return 'len-4';
 }
 
-function renderTiles(): void {
-  const holder = document.getElementById('mergeTiles');
-  if (!holder) return;
-  const cells: string[] = [];
+function valueClass(value: number): string {
+  return `v${value > 2048 ? 'super' : value}`;
+}
+
+/** Builds a fresh tile element positioned via transform (not left/top) so later moves can animate it with a single transition-friendly property change. */
+function createTileEl(id: number, row: number, col: number, value: number, extraClass?: string): HTMLElement {
+  const el = document.createElement('div');
+  el.className = 'merge-tile';
+  el.style.transform = `translate(${col * 100}%, ${row * 100}%)`;
+  const inner = document.createElement('div');
+  inner.className = ['merge-tile-inner', valueClass(value), tileLenClass(value), extraClass].filter(Boolean).join(' ');
+  inner.textContent = String(value);
+  el.appendChild(inner);
+  document.getElementById('mergeTiles')!.appendChild(el);
+  tileEls.set(id, el);
+  return el;
+}
+
+/** First render of a fresh game (the two starting tiles) — no prior DOM to diff against, so just place them with the spawn pop. */
+function renderInitialTiles(): void {
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
       const tile = state.grid[r][c];
-      if (!tile) continue;
-      const cls = ['merge-tile-inner', `v${tile.value > 2048 ? 'super' : tile.value}`, tileLenClass(tile.value)];
-      if (tile.isNew) cls.push('is-new');
-      if (tile.merged) cls.push('is-merged');
-      cells.push(
-        `<div class="merge-tile" style="left:${(c * 100) / SIZE}%;top:${(r * 100) / SIZE}%"><div class="${cls.join(' ')}">${tile.value}</div></div>`,
-      );
+      if (tile) createTileEl(tile.id, r, c, tile.value, 'is-new');
     }
   }
-  holder.innerHTML = cells.join('');
 }
 
 function attemptMove(dir: Direction): void {
   if (state.phase !== 'playing') return;
   const result = moveGrid(state.grid, dir);
   if (!result.moved) return;
+
+  const prevBest = state.best;
   state.grid = result.grid;
   state.moves++;
-  if (result.mergedAny) {
+
+  // Surviving tiles just reposition — same DOM element, transform transition animates the slide.
+  for (const m of result.tileMoves) {
+    const el = tileEls.get(m.id);
+    if (el) el.style.transform = `translate(${m.col * 100}%, ${m.row * 100}%)`;
+  }
+
+  // Merges: both consumed tiles slide into the target cell and fade out while a brand-new tile
+  // pops in at that same spot — reads as "two tiles collide and become one" instead of a swap.
+  let biggestMergeValue = 0;
+  for (const mg of result.tileMerges) {
+    biggestMergeValue = Math.max(biggestMergeValue, mg.value);
+    for (const fromId of mg.fromIds) {
+      const el = tileEls.get(fromId);
+      tileEls.delete(fromId);
+      if (!el) continue;
+      el.style.transform = `translate(${mg.col * 100}%, ${mg.row * 100}%)`;
+      el.classList.add('fading-out');
+      setTimeout(() => el.remove(), SLIDE_MS + 40);
+    }
+    const isBig = mg.value >= BIG_MERGE_THRESHOLD;
+    createTileEl(mg.toId, mg.row, mg.col, mg.value, isBig ? 'is-merged big' : 'is-merged');
+  }
+
+  spawnTile(state.grid);
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      const tile = state.grid[r][c];
+      if (tile && tile.isNew && !tileEls.has(tile.id)) createTileEl(tile.id, r, c, tile.value, 'is-new');
+    }
+  }
+
+  state.best = Math.max(state.best, highestValue(state.grid));
+  updateScoreLabel();
+
+  if (result.tileMerges.length === 0) {
+    Sound.click();
+  } else {
     Sound.hit();
     Haptics.hit();
-  } else {
-    Sound.click();
+    if (result.tileMerges.length >= 2) {
+      // A multi-merge swipe reads as a combo — a second, slightly delayed beat on top of the
+      // normal merge feedback, using the same existing cue rather than inventing new audio.
+      setTimeout(() => Sound.hit(), 90);
+    }
+    if (biggestMergeValue > prevBest && biggestMergeValue >= BIG_MERGE_THRESHOLD) {
+      setTimeout(() => {
+        Sound.pb();
+        Haptics.personalBest();
+      }, 120);
+    }
   }
-  spawnTile(state.grid);
-  state.best = Math.max(state.best, highestValue(state.grid));
-  renderTiles();
-  updateScoreLabel();
+
   if (!hasMovesLeft(state.grid)) {
     endGame();
   }
@@ -274,6 +374,12 @@ async function endGame(): Promise<void> {
   state.phase = 'gameover';
   Sound.mistake();
   Haptics.miss();
+  const board = document.getElementById('mergeBoard');
+  board?.classList.add('game-over-flourish');
+  await new Promise((r) => setTimeout(r, 320));
+  // Bails if the player left this game entirely (nav to another page) during the flourish delay —
+  // checking DOM presence, not just state.phase, since phase alone doesn't reset on navigation.
+  if (state.phase !== 'gameover' || !document.getElementById('mergeBoard')) return;
   const { isNewBest, xpGain, rank } = await finishGameSession('merge', state.best);
   Sound.complete();
   if (isNewBest) {

@@ -181,33 +181,3 @@
   line-height: 1.4;
 }
 
-/* ============================= FRIENDS ============================= */
-.friend-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-}
-.friend-row:last-child {
-  border-bottom: none;
-}
-.friend-info {
-  flex: 1;
-}
-.friend-status {
-  font-size: 11px;
-  color: var(--text-faint);
-  margin-top: 1px;
-}
-.friend-status.online::before {
-  content: '●';
-  color: var(--lime);
-  margin-right: 5px;
-}
-.friend-best {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--text-dim);
-  text-align: right;
-}

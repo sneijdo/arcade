@@ -23,6 +23,32 @@
   transition: transform 0.32s var(--ease);
 }
 
+/* Jolt applies to the arena, not the tower — the tower's own transform is
+   already driving the camera-follow translateY every drop, and layering a
+   second `animation` shorthand on the same element/property would fight
+   that inline transform for the animation's duration (a visible snap-back
+   glitch). Shaking the whole arena reads as a bigger impact anyway. */
+.stack-arena.jolt {
+  animation: stack-arena-jolt 0.26s var(--ease);
+}
+@keyframes stack-arena-jolt {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px) rotate(-0.3deg);
+  }
+  55% {
+    transform: translateX(4px) rotate(0.2deg);
+  }
+  80% {
+    transform: translateX(-2px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 .stack-block {
   position: absolute;
   border-radius: 5px;
@@ -45,13 +71,25 @@
 .stack-falling {
   opacity: 1;
   pointer-events: none;
+  --stack-fall-rot: 22deg;
   transition:
     transform 0.55s cubic-bezier(0.5, 0, 1, 0.5),
     opacity 0.5s ease-out 0.05s;
 }
 .stack-falling.falling-active {
-  transform: translateY(180px) rotate(22deg);
+  transform: translateY(180px) rotate(var(--stack-fall-rot));
   opacity: 0;
+}
+/* The block that actually ends the run falls further, spins harder, and
+   takes noticeably longer than a routine sliced-off overhang — it should
+   read as "the run is over," not as the same trim animation as every drop. */
+.stack-falling.death {
+  transition:
+    transform 0.82s cubic-bezier(0.5, 0, 1, 0.5),
+    opacity 0.75s ease-out 0.08s;
+}
+.stack-falling.death.falling-active {
+  transform: translateY(420px) rotate(var(--stack-fall-rot));
 }
 
 .perfect-flash {
@@ -108,5 +146,75 @@
   100% {
     opacity: 0;
     transform: translate(-50%, -55%) scale(1);
+  }
+}
+/* Three-plus perfects in a row get a hotter coral-tinged glow instead of the
+   standard lime one — a visible reward for skilled play beyond the width
+   bonus that already exists, without needing a numeric combo UI. */
+.stack-perfect.streak-hot {
+  color: var(--coral);
+  text-shadow: 0 0 30px var(--coral-glow), 0 0 12px var(--lime-glow);
+}
+
+.stack-milestone {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.4);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.05em;
+  color: var(--cyan);
+  text-shadow: 0 0 22px rgba(92, 208, 255, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.stack-milestone.show {
+  animation: stack-milestone-callout 0.9s var(--ease);
+}
+@keyframes stack-milestone-callout {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  35% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -58%) scale(1);
+  }
+}
+
+.stack-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 4;
+}
+.stack-flash.flash-milestone {
+  background: radial-gradient(circle at 50% 40%, rgba(92, 208, 255, 0.22), transparent 70%);
+  animation: stack-flash-pulse 0.5s ease-out;
+}
+.stack-flash.flash-death {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 93, 122, 0.28), transparent 70%);
+  animation: stack-flash-pulse 0.45s ease-out;
+}
+@keyframes stack-flash-pulse {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }

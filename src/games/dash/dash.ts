@@ -18,8 +18,17 @@ interface Obstacle {
   gapCenterFrac: number;
   gapSizeFrac: number;
   passed: boolean;
+  nearMissDone: boolean;
+  hueShift: number;
   top: HTMLElement;
   bottom: HTMLElement;
+}
+
+const TRAIL_LENGTH = 7;
+
+interface TrailPoint {
+  x: number;
+  y: number;
 }
 
 interface DashState {
@@ -34,6 +43,8 @@ interface DashState {
   lastT: number | null;
   arenaW: number;
   arenaH: number;
+  trail: TrailPoint[];
+  trailEls: HTMLElement[];
 }
 
 let state: DashState = makeInitialState();
@@ -51,6 +62,8 @@ function makeInitialState(): DashState {
     lastT: null,
     arenaW: 0,
     arenaH: 0,
+    trail: [],
+    trailEls: [],
   };
 }
 
@@ -133,13 +146,26 @@ function startRun(): void {
   state.obstacles = [];
   state.nextSpawnMeters = 4;
   state.lastT = null;
+  state.trail = [];
 
   arena.innerHTML = `
     <div class="dash-field" id="dashField">
+      <div class="dash-bg-far" id="dashBgFar"></div>
+      <div class="dash-bg-near" id="dashBgNear"></div>
       <div class="dash-live-score" id="dashLiveScore">0 m</div>
+      <div class="dash-trail" id="dashTrail"></div>
       <div class="dash-player" id="dashPlayer"></div>
     </div>
   `;
+
+  const trailHolder = document.getElementById('dashTrail')!;
+  state.trailEls = [];
+  for (let i = 0; i < TRAIL_LENGTH; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dash-trail-dot';
+    trailHolder.appendChild(dot);
+    state.trailEls.push(dot);
+  }
 
   state.rafId = requestAnimationFrame(loop);
 }
@@ -168,10 +194,14 @@ function spawnObstacle(): void {
   const gapSizeFrac = gapFracForDistance(state.distance);
   const gapCenterFrac = GAP_MARGIN_FRAC + gapSizeFrac / 2 + Math.random() * (1 - 2 * GAP_MARGIN_FRAC - gapSizeFrac);
 
+  // Deterministic (not per-frame-random) so each pipe's tint is stable — a
+  // few discrete variants read as "different obstacles," not visual noise.
+  const hueShift = Math.floor(state.nextSpawnMeters * 37) % 3;
+
   const top = document.createElement('div');
-  top.className = 'dash-pipe dash-pipe-top';
+  top.className = `dash-pipe dash-pipe-top dash-pipe-v${hueShift}`;
   const bottom = document.createElement('div');
-  bottom.className = 'dash-pipe dash-pipe-bottom';
+  bottom.className = `dash-pipe dash-pipe-bottom dash-pipe-v${hueShift}`;
   field.appendChild(top);
   field.appendChild(bottom);
 
@@ -180,6 +210,8 @@ function spawnObstacle(): void {
     gapCenterFrac,
     gapSizeFrac,
     passed: false,
+    nearMissDone: false,
+    hueShift,
     top,
     bottom,
   });
@@ -219,6 +251,14 @@ function loop(t: number): void {
   const speed = speedForDistance(state.distance);
   state.distance += speed * dt;
 
+  // Parallax depth: the far layer drifts slowly, the near layer faster —
+  // both tied to actual distance traveled (not a fixed timer), so higher
+  // speed later in a run visibly reads as faster, not just feels it.
+  const bgFar = document.getElementById('dashBgFar');
+  const bgNear = document.getElementById('dashBgNear');
+  if (bgFar) bgFar.style.backgroundPositionX = `${-(state.distance * ppm() * 0.12) % 480}px`;
+  if (bgNear) bgNear.style.backgroundPositionX = `${-(state.distance * ppm() * 0.35) % 240}px`;
+
   while (state.nextSpawnMeters < state.distance + VIEW_WIDTH_M + 1) {
     spawnObstacle();
   }
@@ -257,8 +297,19 @@ function loop(t: number): void {
     if (!dead) {
       const overlapsX = left < playerXpx + playerRadiusPx && left + pipeWidthPx > playerXpx - playerRadiusPx;
       if (overlapsX) {
-        if (state.playerY - playerRadiusPx < gapTop || state.playerY + playerRadiusPx > gapBottom) {
+        const clearanceTop = state.playerY - playerRadiusPx - gapTop;
+        const clearanceBottom = gapBottom - (state.playerY + playerRadiusPx);
+        if (clearanceTop < 0 || clearanceBottom < 0) {
           dead = true;
+        } else if (!o.nearMissDone) {
+          // A genuine "that was close" — small clearance on either edge of
+          // the gap while still alive. Positive reinforcement, separate from
+          // the death path, and only fires once per pipe so it can't spam.
+          const clearance = Math.min(clearanceTop, clearanceBottom);
+          if (clearance < state.arenaH * 0.05) {
+            o.nearMissDone = true;
+            triggerNearMissFlash();
+          }
         }
       }
     }
@@ -274,17 +325,83 @@ function loop(t: number): void {
     player.style.transform = `rotate(${angle}deg)`;
   }
 
+  // Trail: pooled dots (created once in startRun) reused every frame instead
+  // of allocating new elements — each one renders the player's position from
+  // N frames ago, shrinking/fading with age, so motion reads as a streak
+  // instead of a bare dot even on a flat void background.
+  state.trail.push({ x: playerXpx, y: state.playerY });
+  if (state.trail.length > TRAIL_LENGTH) state.trail.shift();
+  for (let i = 0; i < state.trailEls.length; i++) {
+    const pt = state.trail[state.trail.length - 1 - i];
+    const dot = state.trailEls[i];
+    if (!pt) {
+      dot.style.opacity = '0';
+      continue;
+    }
+    const age = i / TRAIL_LENGTH;
+    const size = playerRadiusPx * 2 * (1 - age * 0.6);
+    dot.style.width = `${size}px`;
+    dot.style.height = `${size}px`;
+    dot.style.left = `${pt.x - size / 2}px`;
+    dot.style.top = `${pt.y - size / 2}px`;
+    dot.style.opacity = `${(1 - age) * 0.32}`;
+  }
+
   const liveScore = document.getElementById('dashLiveScore');
   if (liveScore) liveScore.textContent = `${Math.floor(state.distance)} m`;
   const topbarDistance = document.getElementById('dashDistance');
   if (topbarDistance) topbarDistance.textContent = `${Math.floor(state.distance)} m`;
 
   if (dead) {
-    endRun();
+    triggerDeathImpact(playerXpx, state.playerY);
+    setTimeout(() => {
+      // The player may have navigated away during this brief death-impact
+      // delay — bail instead of clobbering whatever page they're on now.
+      if (!fieldEl()) return;
+      void endRun();
+    }, 180);
     return;
   }
 
   state.rafId = requestAnimationFrame(loop);
+}
+
+/** Fires once per pipe, the first time clearance to either gap edge drops below a threshold while still alive — positive reinforcement, entirely separate from the death path. */
+function triggerNearMissFlash(): void {
+  const player = document.getElementById('dashPlayer');
+  if (player) {
+    player.classList.remove('near-miss');
+    // Force reflow so re-adding the class restarts the animation even if
+    // the previous near-miss's animation hasn't finished yet.
+    void player.offsetWidth;
+    player.classList.add('near-miss');
+  }
+  Sound.target();
+  Haptics.tap();
+}
+
+/** Screen flash + a small burst of debris particles at the collision point, plus the brief delay in loop() before the results screen — a death should register visually before it cuts away, not vanish instantly. */
+function triggerDeathImpact(x: number, y: number): void {
+  const field = fieldEl();
+  if (!field) return;
+  const flash = document.createElement('div');
+  flash.className = 'dash-death-flash';
+  field.appendChild(flash);
+  setTimeout(() => flash.remove(), 300);
+
+  const burstCount = 10;
+  for (let i = 0; i < burstCount; i++) {
+    const p = document.createElement('div');
+    p.className = 'dash-death-particle';
+    const angle = (i / burstCount) * Math.PI * 2 + Math.random() * 0.4;
+    const dist = 30 + Math.random() * 40;
+    p.style.left = `${x}px`;
+    p.style.top = `${y}px`;
+    p.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+    p.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
+    field.appendChild(p);
+    setTimeout(() => p.remove(), 450);
+  }
 }
 
 async function endRun(): Promise<void> {

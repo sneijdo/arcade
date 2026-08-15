@@ -1,5 +1,5 @@
 import { storage } from '../../storage';
-import type { BuildStats, WeaponId } from './types';
+import type { BuildStats, WeaponId, BossId } from './types';
 
 /**
  * Persistent progression, separate from a single run's BuildStats. Stored
@@ -11,13 +11,17 @@ export interface TacticalMeta {
   currency: number;
   unlockedWeapons: WeaponId[];
   unlockedPerks: string[];
+  /** Cross-run cumulative counters, fed into checkAchievements() as extra stats — see finishAndShowResults() in tactical.ts. */
+  eliteKills: number;
+  vaultsUsed: number;
+  bossesDefeated: BossId[];
 }
 
 const META_KEY = 'tactical_meta';
 export const STARTING_UNLOCKED_WEAPON: WeaponId = 'viper_ar';
 
 function defaultMeta(): TacticalMeta {
-  return { currency: 0, unlockedWeapons: [STARTING_UNLOCKED_WEAPON], unlockedPerks: [] };
+  return { currency: 0, unlockedWeapons: [STARTING_UNLOCKED_WEAPON], unlockedPerks: [], eliteKills: 0, vaultsUsed: 0, bossesDefeated: [] };
 }
 
 export async function loadMeta(): Promise<TacticalMeta> {
@@ -26,6 +30,10 @@ export async function loadMeta(): Promise<TacticalMeta> {
   // guard against a meta blob saved before the starting weapon existed
   if (!stored.unlockedWeapons.includes(STARTING_UNLOCKED_WEAPON)) stored.unlockedWeapons.push(STARTING_UNLOCKED_WEAPON);
   if (!stored.unlockedPerks) stored.unlockedPerks = [];
+  // guard against a meta blob saved before achievement-tracking counters existed
+  if (stored.eliteKills == null) stored.eliteKills = 0;
+  if (stored.vaultsUsed == null) stored.vaultsUsed = 0;
+  if (!stored.bossesDefeated) stored.bossesDefeated = [];
   return stored;
 }
 

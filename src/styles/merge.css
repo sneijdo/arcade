@@ -10,6 +10,23 @@
   aspect-ratio: 1 / 1;
   margin: 0 auto;
 }
+.merge-board.game-over-flourish {
+  animation: board-dim 0.32s ease forwards;
+}
+@keyframes board-dim {
+  0% {
+    filter: brightness(1);
+    transform: scale(1);
+  }
+  50% {
+    filter: brightness(0.5);
+    transform: scale(0.985);
+  }
+  100% {
+    filter: brightness(0.75);
+    transform: scale(0.98);
+  }
+}
 
 .merge-bg-grid {
   position: absolute;
@@ -33,11 +50,19 @@
 
 .merge-tile {
   position: absolute;
+  left: 0;
+  top: 0;
   width: 25%;
   height: 25%;
   box-sizing: border-box;
   padding: calc(1.5% + 1.5px);
-  transition: none;
+  transition: transform 150ms cubic-bezier(0.2, 0.85, 0.3, 1.05), opacity 150ms ease;
+  will-change: transform;
+  z-index: 1;
+}
+.merge-tile.fading-out {
+  opacity: 0;
+  z-index: 0;
 }
 
 .merge-tile-inner {
@@ -65,20 +90,26 @@
 }
 
 .merge-tile-inner.is-new {
-  animation: tile-spawn 0.18s var(--ease);
+  animation: tile-spawn 0.22s var(--ease);
 }
 .merge-tile-inner.is-merged {
   animation: tile-pop 0.18s var(--ease);
 }
+.merge-tile-inner.is-merged.big {
+  animation: tile-pop-big 0.3s var(--ease);
+}
 
 @keyframes tile-spawn {
-  from {
-    transform: scale(0.35);
+  0% {
+    transform: scale(0.3);
     opacity: 0;
   }
-  to {
-    transform: scale(1);
+  70% {
+    transform: scale(1.08);
     opacity: 1;
+  }
+  100% {
+    transform: scale(1);
   }
 }
 @keyframes tile-pop {
@@ -90,6 +121,20 @@
   }
   100% {
     transform: scale(1);
+  }
+}
+@keyframes tile-pop-big {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  40% {
+    transform: scale(1.32);
+    filter: brightness(1.4);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
   }
 }
 

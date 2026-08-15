@@ -2,7 +2,6 @@ import { createProfile } from './state';
 import { refreshHeader } from './header';
 import { navigate } from './router';
 import { signUpWithUsername, signInWithUsername, validateUsername } from './auth';
-import { syncPublicProfile } from './social';
 
 function mountModal(html: string): HTMLElement {
   const backdrop = document.createElement('div');
@@ -114,7 +113,6 @@ export function showAuthModal(mode: AuthMode = 'signup'): void {
         return;
       }
       await createProfile(username, userId);
-      await syncPublicProfile(username);
       backdrop.remove();
       refreshHeader();
       navigate('home');

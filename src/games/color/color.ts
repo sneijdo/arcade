@@ -92,6 +92,16 @@ function accuracyFor(a: RGB, b: RGB): number {
   return Math.max(0, 100 * (1 - d / MAX_DIST));
 }
 
+/** Live "getting warmer" feedback while dragging — the glow intensity (a CSS custom property, see #guessSwatch in color.css) tracks the same distance formula the final score uses, so the swatch itself telegraphs how close you are before you ever hit BEKRÆFT. */
+function updateGuessSwatch(): void {
+  const swatch = document.getElementById('guessSwatch');
+  if (!swatch) return;
+  swatch.style.background = rgbCss(colorState.guess);
+  const liveAcc = accuracyFor(colorState.target, colorState.guess);
+  swatch.style.setProperty('--glow', String(Math.round(liveAcc)));
+  swatch.classList.toggle('is-hot', liveAcc >= 85);
+}
+
 function sliderHtml(ch: 'r' | 'g' | 'b', label: string, value: number): string {
   return `
     <div class="slider-row">
@@ -148,9 +158,16 @@ function drawArenaContent(): void {
       input.addEventListener('input', () => {
         colorState.guess[ch] = Number(input.value);
         document.getElementById(`val-${ch}`)!.textContent = input.value;
-        document.getElementById('guessSwatch')!.style.background = rgbCss(colorState.guess);
+        updateGuessSwatch();
       });
+      // A visible "weight" while actively dragging — see .color-slider.is-dragging in color.css.
+      const startDrag = () => input.classList.add('is-dragging');
+      const endDrag = () => input.classList.remove('is-dragging');
+      input.addEventListener('pointerdown', startDrag);
+      input.addEventListener('pointerup', endDrag);
+      input.addEventListener('pointercancel', endDrag);
     });
+    updateGuessSwatch();
     document.getElementById('confirmBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
       handleConfirm();
@@ -159,8 +176,10 @@ function drawArenaContent(): void {
     const acc = colorState.results[colorState.results.length - 1];
     const rating = ScoreKinds.color_accuracy.rating(acc);
     const isLast = colorState.round >= COLOR_ROUNDS - 1;
+    const isTopTier = acc >= 90;
     a.innerHTML = `
-      <div class="arena-inner">
+      <div class="arena-inner reveal-pop">
+        ${isTopTier ? '<div class="result-flash"></div>' : ''}
         <div class="swatch-row">
           <div class="swatch-block">
             <div class="swatch" style="background:${rgbCss(colorState.target)}"></div>
@@ -171,16 +190,31 @@ function drawArenaContent(): void {
             <div class="swatch-label">Din farve</div>
           </div>
         </div>
-        <div class="result-ms" style="color:${rating.color}">${Math.round(acc)}<span style="font-size:22px">%</span></div>
+        <div class="result-ms" style="color:${rating.color}"><span id="accCountUp">0</span><span style="font-size:22px">%</span></div>
         <div class="rating-label" style="color:${rating.color}">${rating.label}</div>
         <button class="btn btn-primary btn-lg" id="nextBtn">${isLast ? 'SE RESULTAT' : 'NÆSTE RUNDE'}</button>
       </div>
     `;
+    animateCountUp(document.getElementById('accCountUp')!, Math.round(acc));
     document.getElementById('nextBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
       advanceAfterRound();
     });
   }
+}
+
+/** Counts a number element up from 0 to `target` over ~450ms — the reveal reads as a genuine moment rather than an instant text swap. Guards against the player having navigated away mid-count. */
+function animateCountUp(el: HTMLElement, target: number): void {
+  const start = performance.now();
+  const durationMs = 450;
+  function tick(now: number): void {
+    if (!document.body.contains(el)) return; // navigated away — stop silently
+    const t = Math.min(1, (now - start) / durationMs);
+    const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+    el.textContent = String(Math.round(target * eased));
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
 }
 
 function startRound(): void {
@@ -272,7 +306,7 @@ function drawFinalScreen(score: number, isNewBest: boolean, xpGain: number, rank
               ${results
                 .map((r, i) => {
                   const pct = Math.max(6, r);
-                  return `<div class="rb-row"><span class="rb-idx">${i + 1}</span><div class="rb-bar-track"><div class="rb-bar-fill" style="width:${pct}%"></div></div><span class="rb-val">${Math.round(r)}%</span></div>`;
+                  return `<div class="rb-row rb-stagger" style="animation-delay:${i * 90}ms"><span class="rb-idx">${i + 1}</span><div class="rb-bar-track"><div class="rb-bar-fill" style="width:${pct}%"></div></div><span class="rb-val">${Math.round(r)}%</span></div>`;
                 })
                 .join('')}
             </div>

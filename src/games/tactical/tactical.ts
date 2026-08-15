@@ -80,7 +80,7 @@ interface RunState {
 }
 
 let run: RunState | null = null;
-let meta: TacticalMeta = { currency: 0, unlockedWeapons: [STARTING_UNLOCKED_WEAPON], unlockedPerks: [] };
+let meta: TacticalMeta = { currency: 0, unlockedWeapons: [STARTING_UNLOCKED_WEAPON], unlockedPerks: [], eliteKills: 0, vaultsUsed: 0, bossesDefeated: [] };
 let metaLoaded = false;
 
 /** Loaded once per session (not on every run) — mutated in place and saved on every currency/unlock change, so repeat loads can't race a save still in flight. */
@@ -443,6 +443,7 @@ function update(dt: number): void {
       r.vfx.shake(16);
       TacticalSound.waveClear();
       r.roomsCleared = TOTAL_ROOMS;
+      if (!meta.bossesDefeated.includes(r.boss.bossId)) meta.bossesDefeated.push(r.boss.bossId);
       endRun(true);
       return;
     }
@@ -483,6 +484,8 @@ function showVaultScreen(nextIndex: number): void {
   TacticalSound.levelUp();
   hud.showVaultModal((choice) => {
     if (!run) return;
+    meta.vaultsUsed++;
+    void saveMeta(meta);
     if (choice === 'heal') {
       run.player.heal(run.player.maxHp);
       toast('❤️ Fuldt helbredt');
@@ -490,7 +493,6 @@ function showVaultScreen(nextIndex: number): void {
       startRoom(nextIndex);
     } else if (choice === 'currency') {
       meta.currency += 40;
-      void saveMeta(meta);
       toast('🔷 +40 Fragmenter');
       run.phase = 'playing';
       startRoom(nextIndex);
@@ -741,6 +743,7 @@ function applyDamageToEnemy(e: EnemyInstance, dmg: number, crit: boolean): void 
     grantXp(xpReward);
     run.enemies = run.enemies.filter((x) => x.id !== e.id);
     run.enemiesKilled++;
+    if (e.eliteMod) meta.eliteKills++;
     if (run.build.healOnKillChance > 0 && Math.random() < run.build.healOnKillChance) run.player.heal(8);
   }
 }
@@ -1089,7 +1092,11 @@ function endRun(victory: boolean): void {
 }
 
 async function finishAndShowResults(score: number, victory: boolean, reward: number): Promise<void> {
-  const { isNewBest, xpGain, rank } = await finishGameSession('tactical', score);
+  const { isNewBest, xpGain, rank } = await finishGameSession('tactical', score, {
+    tacticalEliteKills: meta.eliteKills,
+    tacticalVaultsUsed: meta.vaultsUsed,
+    tacticalBossesDefeated: meta.bossesDefeated,
+  });
   Sound.complete();
   if (isNewBest) {
     setTimeout(() => Sound.pb(), 250);

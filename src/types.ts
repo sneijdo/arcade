@@ -61,6 +61,10 @@ export interface AchievementStats {
   ranks: Record<string, number | null>;
   /** How many distinct implemented games this player has a recorded score in. */
   gamesPlayed: number;
+  /** Breach Protocol cross-run counters — passed in as extra stats from finishGameSession's optional param, not derived from Profile like the fields above. Optional since only tactical.ts ever supplies them. */
+  tacticalEliteKills?: number;
+  tacticalVaultsUsed?: number;
+  tacticalBossesDefeated?: string[];
 }
 
 export interface LeaderboardEntry {
@@ -69,4 +73,4 @@ export interface LeaderboardEntry {
   score: number;
 }
 
-export type Route = 'home' | 'games' | 'leaderboard' | 'friends' | 'profile' | `play-${string}`;
+export type Route = 'home' | 'games' | 'leaderboard' | 'profile' | `play-${string}`;

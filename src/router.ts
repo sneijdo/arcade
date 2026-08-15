@@ -2,7 +2,6 @@ import { Sound } from './sound';
 import { renderHome } from './pages/home';
 import { renderGames } from './pages/games';
 import { renderLeaderboard } from './pages/leaderboard';
-import { renderFriends } from './pages/friends';
 import { renderProfile } from './pages/profile';
 import { GAME_RENDERERS } from './games';
 import type { Route } from './types';
@@ -22,7 +21,6 @@ export async function navigate(r: string): Promise<void> {
   if (r === 'home') await renderHome();
   else if (r === 'games') renderGames();
   else if (r === 'leaderboard') await renderLeaderboard();
-  else if (r === 'friends') renderFriends();
   else if (r === 'profile') await renderProfile();
   else if (r.startsWith('play-')) GAME_RENDERERS[r.slice(5)]?.();
 }

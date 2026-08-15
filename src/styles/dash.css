@@ -9,6 +9,43 @@
     linear-gradient(0deg, rgba(255, 93, 122, 0.05), transparent 25%);
 }
 
+/* Parallax depth — two dot-grid layers scrolling at different rates (driven
+   from JS, tied to actual distance traveled) so the void behind the pipes
+   reads as depth instead of a flat backdrop. Far layer: sparse + dim. Near
+   layer: denser + brighter, drifts faster to sell speed. */
+.dash-bg-far,
+.dash-bg-near {
+  position: absolute;
+  inset: -20px;
+  z-index: 0;
+  pointer-events: none;
+  background-repeat: repeat;
+}
+.dash-bg-far {
+  background-image: radial-gradient(rgba(139, 107, 255, 0.16) 1.5px, transparent 1.5px);
+  background-size: 48px 48px;
+  opacity: 0.5;
+}
+.dash-bg-near {
+  background-image: radial-gradient(rgba(201, 247, 62, 0.14) 1.5px, transparent 1.5px);
+  background-size: 32px 32px;
+  opacity: 0.4;
+}
+
+.dash-trail {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.dash-trail-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--lime);
+  opacity: 0;
+  will-change: transform, opacity, left, top;
+}
+
 .dash-live-score {
   position: absolute;
   top: 14px;
@@ -46,4 +83,68 @@
 }
 .dash-pipe-bottom {
   bottom: 0;
+}
+/* Deterministic per-pipe tint (picked from xMeters, not per-frame random) —
+   a few discrete variants so the arena doesn't read as one texture repeating
+   endlessly, without touching collision geometry at all. */
+.dash-pipe-v1 {
+  background: linear-gradient(90deg, #ff9d6c, #ff5d7a 55%, #c93a52);
+}
+.dash-pipe-v2 {
+  background: linear-gradient(90deg, #ff7a4c, var(--coral) 50%, #b8394f);
+  box-shadow: 0 0 16px rgba(255, 93, 122, 0.35);
+}
+
+.dash-player.near-miss {
+  animation: dash-near-miss 0.35s var(--ease);
+}
+@keyframes dash-near-miss {
+  0% {
+    box-shadow: 0 0 24px 4px var(--lime-glow), inset 0 -4px 10px rgba(0, 0, 0, 0.22);
+  }
+  35% {
+    box-shadow: 0 0 40px 14px rgba(92, 208, 255, 0.75), inset 0 -4px 10px rgba(0, 0, 0, 0.22);
+  }
+  100% {
+    box-shadow: 0 0 24px 4px var(--lime-glow), inset 0 -4px 10px rgba(0, 0, 0, 0.22);
+  }
+}
+
+.dash-death-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: rgba(255, 93, 122, 0.4);
+  pointer-events: none;
+  animation: dash-flash-fade 0.3s ease-out forwards;
+}
+@keyframes dash-flash-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.dash-death-particle {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--coral);
+  z-index: 4;
+  pointer-events: none;
+  animation: dash-particle-burst 0.45s ease-out forwards;
+}
+@keyframes dash-particle-burst {
+  from {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--dx), var(--dy)) scale(0.2);
+    opacity: 0;
+  }
 }

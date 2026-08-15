@@ -150,7 +150,7 @@ export interface SessionResult {
  * personal-best + top-3 bonuses, same XP_RULES reaction uses), and checks
  * achievements. One place to keep this consistent across games.
  */
-export async function finishGameSession(gameId: string, score: number): Promise<SessionResult> {
+export async function finishGameSession(gameId: string, score: number, extraAchievementStats?: Partial<AchievementStats>): Promise<SessionResult> {
   if (!profile) return { isNewBest: false, xpGain: 0, rank: null };
   const dir = directionForGame(gameId);
   const prevBest = profile.bestScores[gameId];
@@ -170,7 +170,7 @@ export async function finishGameSession(gameId: string, score: number): Promise<
   profile.xp += xpGain;
   await saveProfile();
   refreshHeader();
-  await checkAchievements();
+  await checkAchievements(extraAchievementStats);
 
   return { isNewBest, xpGain, rank };
 }

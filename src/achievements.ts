@@ -24,6 +24,12 @@ export const ACHIEVEMENTS: Achievement[] = [
   // Breach Protocol
   { id: 'tactical_operator', icon: '🪖', title: 'OPERATØR', desc: 'Ryd 3+ rum i Breach Protocol.', check: (s) => (s.bestScores.tactical ?? 0) >= 3 },
   { id: 'tactical_commander', icon: '🎖️', title: 'BEFALINGSMAND', desc: 'Fuldfør hele missionen i Breach Protocol.', check: (s) => (s.bestScores.tactical ?? 0) >= 10 },
+  { id: 'tactical_boss_slayer', icon: '💀', title: 'BOSS-DRÆBER', desc: 'Besejr en boss i Breach Protocol.', check: (s) => (s.tacticalBossesDefeated?.length ?? 0) >= 1 },
+  { id: 'tactical_boss_master', icon: '👹', title: 'BOSS-MESTER', desc: 'Besejr begge bosses i Breach Protocol.', check: (s) => (s.tacticalBossesDefeated?.length ?? 0) >= 2 },
+  { id: 'tactical_elite_hunter', icon: '🟣', title: 'ELITEJÆGER', desc: 'Nedkæmp 5+ elite-fjender i Breach Protocol.', check: (s) => (s.tacticalEliteKills ?? 0) >= 5 },
+  { id: 'tactical_elite_exterminator', icon: '☠️', title: 'ELITEUDRYDDER', desc: 'Nedkæmp 25+ elite-fjender i Breach Protocol.', check: (s) => (s.tacticalEliteKills ?? 0) >= 25 },
+  { id: 'tactical_vault_finder', icon: '🔷', title: 'HVÆLVFINDER', desc: 'Brug et hvælv i Breach Protocol.', check: (s) => (s.tacticalVaultsUsed ?? 0) >= 1 },
+  { id: 'tactical_vault_master', icon: '💎', title: 'HVÆLVMESTER', desc: 'Brug 10+ hvælve i Breach Protocol.', check: (s) => (s.tacticalVaultsUsed ?? 0) >= 10 },
 
   // Color Match
   { id: 'color_eye', icon: '🎨', title: 'SKARPT ØJE', desc: '85%+ nøjagtighed i Color Match.', check: (s) => (s.bestScores.color ?? 0) >= 85 },
