@@ -15,11 +15,11 @@ function mountModal(html: string): HTMLElement {
 export function showOnboarding(): void {
   const backdrop = mountModal(`
     <div class="modal">
-      <div class="hero-tag" style="margin-bottom:10px">WELCOME TO</div>
+      <div class="hero-tag" style="margin-bottom:10px">VELKOMMEN TIL</div>
       <h2>ARCADE</h2>
-      <p>Pick a name — this is how you'll show up on leaderboards and to friends.</p>
-      <input type="text" id="nameInput" maxlength="18" placeholder="Your name" autocomplete="off">
-      <button class="btn btn-primary btn-block btn-lg" id="enterBtn">ENTER ARCADE</button>
+      <p>Vælg et navn — sådan viser du dig på leaderboards og til venner.</p>
+      <input type="text" id="nameInput" maxlength="18" placeholder="Dit navn" autocomplete="off">
+      <button class="btn btn-primary btn-block btn-lg" id="enterBtn">GÅ TIL ARCADE</button>
     </div>
   `);
   const input = document.getElementById('nameInput') as HTMLInputElement;
@@ -113,7 +113,7 @@ export function showNameModal(userId: string): void {
       <h2>Vælg et navn</h2>
       <p>Sådan viser du dig på leaderboards og til venner.</p>
       <input type="text" id="nameInput" maxlength="18" placeholder="Dit navn" autocomplete="off">
-      <button class="btn btn-primary btn-block btn-lg" id="enterBtn">ENTER ARCADE</button>
+      <button class="btn btn-primary btn-block btn-lg" id="enterBtn">GÅ TIL ARCADE</button>
     </div>
   `);
   const input = document.getElementById('nameInput') as HTMLInputElement;

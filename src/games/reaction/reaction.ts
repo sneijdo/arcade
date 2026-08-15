@@ -55,7 +55,7 @@ function drawReactionShell(): void {
     <div class="page">
       <div class="game-shell">
         <div class="game-topbar">
-          <span>REACTION — ROUND ${Math.min(reactionState.round + 1, REACTION_ROUNDS)} / ${REACTION_ROUNDS}</span>
+          <span>REACTION — RUNDE ${Math.min(reactionState.round + 1, REACTION_ROUNDS)} / ${REACTION_ROUNDS}</span>
           <div class="round-dots">${roundDotsHtml()}</div>
         </div>
         <div class="arena" id="arena"></div>
@@ -75,13 +75,13 @@ function drawArenaContent(): void {
   if (reactionState.phase === 'idle') {
     a.innerHTML = `
       <div class="arena-inner">
-        <div class="arena-title">Ready?</div>
+        <div class="arena-title">Klar?</div>
         <ul class="instructions-list">
-          <li>Wait for the screen to light up green</li>
-          <li>Click / tap the instant you see it</li>
-          <li>5 rounds — clicking early costs you the round</li>
+          <li>Vent til skærmen lyser grønt</li>
+          <li>Klik / tap i samme øjeblik du ser det</li>
+          <li>5 runder — klikker du for tidligt, koster det runden</li>
         </ul>
-        <button class="btn btn-primary btn-lg" id="startBtn">START ROUND 1</button>
+        <button class="btn btn-primary btn-lg" id="startBtn">START RUNDE 1</button>
       </div>
     `;
     document.getElementById('startBtn')!.addEventListener('click', (e) => {
@@ -90,7 +90,7 @@ function drawArenaContent(): void {
     });
   } else if (reactionState.phase === 'waiting') {
     a.classList.add('state-wait');
-    a.innerHTML = `<div class="arena-inner"><div class="arena-msg">wait for it…</div></div>`;
+    a.innerHTML = `<div class="arena-inner"><div class="arena-msg">vent på det…</div></div>`;
   } else if (reactionState.phase === 'target') {
     a.classList.add('state-target');
     const w = a.clientWidth || 600;
@@ -108,7 +108,7 @@ function drawArenaContent(): void {
     Sound.target();
   } else if (reactionState.phase === 'early') {
     a.classList.add('state-early');
-    a.innerHTML = `<div class="arena-inner"><div class="too-early-label">TOO EARLY</div><div class="arena-sub">Wait for the green light next time.</div></div>`;
+    a.innerHTML = `<div class="arena-inner"><div class="too-early-label">FOR TIDLIGT</div><div class="arena-sub">Vent på det grønne lys næste gang.</div></div>`;
   } else if (reactionState.phase === 'roundresult') {
     const ms = reactionState.results[reactionState.results.length - 1];
     const rating = ScoreKinds.reaction_ms.rating(ms);
@@ -136,7 +136,7 @@ function startRound(): void {
 function updateTopbar(): void {
   const bar = document.querySelector('.game-topbar span');
   const dots = document.querySelector('.round-dots');
-  if (bar) bar.textContent = `REACTION — ROUND ${Math.min(reactionState.round + 1, REACTION_ROUNDS)} / ${REACTION_ROUNDS}`;
+  if (bar) bar.textContent = `REACTION — RUNDE ${Math.min(reactionState.round + 1, REACTION_ROUNDS)} / ${REACTION_ROUNDS}`;
   if (dots) dots.innerHTML = roundDotsHtml();
 }
 
@@ -173,6 +173,10 @@ function handleArenaPointerDown(e: PointerEvent): void {
 
 function advanceAfterRound(delay: number): void {
   setTimeout(async () => {
+    // The player may have navigated away mid-round — nothing else cancels
+    // this timer on route change, so bail out instead of silently
+    // resuming/scoring a game nobody is looking at anymore.
+    if (!document.getElementById('arena')) return;
     reactionState.round++;
     if (reactionState.round >= REACTION_ROUNDS) {
       await finishReactionSession();
@@ -184,8 +188,8 @@ function advanceAfterRound(delay: number): void {
       const arena = arenaEl();
       arena.innerHTML = `
         <div class="arena-inner">
-          <div class="arena-title">Round ${reactionState.round + 1}</div>
-          <button class="btn btn-primary btn-lg" id="nextBtn">CONTINUE</button>
+          <div class="arena-title">Runde ${reactionState.round + 1}</div>
+          <button class="btn btn-primary btn-lg" id="nextBtn">FORTSÆT</button>
         </div>
       `;
       document.getElementById('nextBtn')!.addEventListener('click', (e) => {
@@ -212,11 +216,11 @@ async function finishReactionSession(): Promise<void> {
   profile.history = profile.history.slice(0, 20);
   const currentBest = profile.bestReaction; // guaranteed non-null: either just set, or already existed
   await saveProfile();
-  await pushLeaderboardEntry(currentBest!);
+  await pushLeaderboardEntry('reaction', currentBest!);
 
   let xpGain = XP_RULES.complete;
   if (isNewBest) xpGain += XP_RULES.personalBest;
-  const board = await getCombinedLeaderboard();
+  const board = await getCombinedLeaderboard('reaction');
   const myRank = board.findIndex((e) => e.id === profile!.id) + 1;
   if (myRank > 0 && myRank <= 3) xpGain += XP_RULES.top3;
 
@@ -240,21 +244,21 @@ function drawFinalScreen(results: number[], avg: number, best: number, isNewBest
     <div class="page">
       <div class="game-shell">
         <div class="final-wrap">
-          <div class="final-label">Your score</div>
+          <div class="final-label">Din score</div>
           <div class="final-score">${Math.round(avg)}<span style="font-size:26px">ms</span></div>
           <div class="final-rating" style="color:${rating.color}">${rating.label}</div>
-          ${isNewBest ? '<div class="pb-flag">★ NEW PERSONAL BEST</div>' : ''}
-          <div class="xp-toast">✦ +${xpGain} XP earned${rank && rank <= 3 ? ' · TOP 3 BONUS' : ''}</div>
+          ${isNewBest ? '<div class="pb-flag">★ NY PERSONLIG REKORD</div>' : ''}
+          <div class="xp-toast">✦ +${xpGain} XP optjent${rank && rank <= 3 ? ' · TOP 3-BONUS' : ''}</div>
 
           <div class="final-stats">
-            <div class="fstat"><div class="n">${Math.round(best)}</div><div class="l">Best round</div></div>
-            <div class="fstat"><div class="n">${Math.round(avg)}</div><div class="l">Average</div></div>
-            <div class="fstat"><div class="n">${rank ? '#' + rank : '—'}</div><div class="l">Rank</div></div>
-            <div class="fstat"><div class="n">+${xpGain}</div><div class="l">XP earned</div></div>
+            <div class="fstat"><div class="n">${Math.round(best)}</div><div class="l">Bedste runde</div></div>
+            <div class="fstat"><div class="n">${Math.round(avg)}</div><div class="l">Gennemsnit</div></div>
+            <div class="fstat"><div class="n">${rank ? '#' + rank : '—'}</div><div class="l">Placering</div></div>
+            <div class="fstat"><div class="n">+${xpGain}</div><div class="l">XP optjent</div></div>
           </div>
 
           <div class="panel" style="width:100%;text-align:left;padding:18px">
-            <div class="section-label" style="margin-bottom:12px">Round breakdown</div>
+            <div class="section-label" style="margin-bottom:12px">Runde for runde</div>
             <div class="round-breakdown">
               ${results
                 .map((r, i) => {
@@ -266,7 +270,7 @@ function drawFinalScreen(results: number[], avg: number, best: number, isNewBest
           </div>
 
           <div class="final-ctas">
-            <button class="btn btn-primary btn-lg" id="playAgainBtn">PLAY AGAIN</button>
+            <button class="btn btn-primary btn-lg" id="playAgainBtn">SPIL IGEN</button>
             <button class="btn btn-ghost btn-lg" data-nav="leaderboard">LEADERBOARD</button>
           </div>
         </div>

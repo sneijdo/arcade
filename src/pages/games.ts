@@ -4,8 +4,8 @@ export function renderGames(): void {
   const main = document.getElementById('main')!;
   main.innerHTML = `
     <div class="page">
-      <div class="section-label">All games</div>
-      <div class="section-title">Games</div>
+      <div class="section-label">Alle spil</div>
+      <div class="section-title">Spil</div>
       <div class="game-grid" id="gamesGrid"></div>
     </div>
   `;

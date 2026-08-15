@@ -1,18 +1,23 @@
 import { GAMES } from '../games/registry';
-import { profile } from '../state';
+import { profile, bestScoreForGame } from '../state';
+import { ScoreKinds } from '../scoring';
 
 export function renderGameGrid(container: HTMLElement): void {
   if (!profile) return;
   container.innerHTML = GAMES.map((g) => {
-    const bestHtml =
-      g.id === 'reaction'
-        ? profile!.bestReaction != null
-          ? `Best: <b>${Math.round(profile!.bestReaction)}ms</b>`
-          : 'Not played yet'
-        : 'Coming soon';
+    let bestHtml = 'Kommer snart';
+    if (g.implemented) {
+      const best = bestScoreForGame(g.id);
+      if (best != null && g.scoreKind) {
+        const kind = ScoreKinds[g.scoreKind];
+        bestHtml = `Rekord: <b>${kind.format(best)}${kind.unit}</b>`;
+      } else {
+        bestHtml = 'Ikke spillet endnu';
+      }
+    }
     return `
       <div class="game-card ${g.implemented ? '' : 'soon'}" ${g.implemented ? `data-nav="play-${g.id}"` : ''}>
-        ${!g.implemented ? '<span class="soon-tag">COMING SOON</span>' : ''}
+        ${!g.implemented ? '<span class="soon-tag">KOMMER SNART</span>' : ''}
         <div class="game-icon">${g.icon}</div>
         <div>
           <div class="game-name">${g.title}</div>
@@ -21,8 +26,8 @@ export function renderGameGrid(container: HTMLElement): void {
         <div class="game-best">${bestHtml}</div>
         ${
           g.implemented
-            ? `<button class="btn btn-ghost btn-block" data-nav="play-${g.id}">PLAY</button>`
-            : `<button class="btn btn-ghost btn-block" disabled style="opacity:.5;cursor:not-allowed">LOCKED</button>`
+            ? `<button class="btn btn-ghost btn-block" data-nav="play-${g.id}">SPIL</button>`
+            : `<button class="btn btn-ghost btn-block" disabled style="opacity:.5;cursor:not-allowed">LÅST</button>`
         }
       </div>
     `;

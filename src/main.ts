@@ -20,7 +20,7 @@ function wireMuteButton(): void {
 
 function markGuest(): void {
   const nameEl = document.getElementById('headerName');
-  if (nameEl) nameEl.textContent = 'Guest';
+  if (nameEl) nameEl.textContent = 'Gæst';
 }
 
 /** No Supabase configured — original name-only flow, localStorage-backed. */

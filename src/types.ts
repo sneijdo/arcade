@@ -6,6 +6,8 @@ export interface Profile {
   bestAvg: number | null;
   sessionsPlayed: number;
   history: ReactionSession[];
+  /** Personal-best score per game id, for every game besides reaction (which keeps its own dedicated fields above for backward compatibility with already-live data). */
+  bestScores: Record<string, number>;
   unlockedAchievements: string[];
   muted: boolean;
 }
@@ -60,4 +62,4 @@ export interface LeaderboardEntry {
   score: number;
 }
 
-export type Route = 'home' | 'games' | 'leaderboard' | 'friends' | 'profile' | 'play-reaction';
+export type Route = 'home' | 'games' | 'leaderboard' | 'friends' | 'profile' | `play-${string}`;

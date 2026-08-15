@@ -3,5 +3,9 @@
 @import './header.css';
 @import './layout.css';
 @import './game.css';
+@import './aim.css';
+@import './memory.css';
+@import './numberrush.css';
+@import './snake.css';
 @import './pages.css';
 @import './modal.css';

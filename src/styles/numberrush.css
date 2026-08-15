@@ -1,0 +1,27 @@
+/* Number Rush — game-specific styles */
+.rush-problem {
+  font-size: clamp(36px, 9vw, 52px);
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+.rush-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(96px, 1fr));
+  gap: 14px;
+  width: 100%;
+  max-width: 340px;
+}
+.rush-choice {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  padding: 20px 10px;
+  min-height: 64px;
+  border-radius: 14px;
+  touch-action: manipulation;
+  transition: transform 0.1s var(--ease), border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+.rush-choice:active {
+  transform: scale(0.96);
+}

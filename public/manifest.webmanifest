@@ -1,7 +1,7 @@
 {
   "name": "ARCADE",
   "short_name": "ARCADE",
-  "description": "Quick games, real leaderboards. One more attempt is always one click away.",
+  "description": "Hurtige spil, rigtige leaderboards. Ét forsøg mere er altid ét klik væk.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -4,7 +4,7 @@ import { renderGames } from './pages/games';
 import { renderLeaderboard } from './pages/leaderboard';
 import { renderFriends } from './pages/friends';
 import { renderProfile } from './pages/profile';
-import { renderReactionGame } from './games/reaction/reaction';
+import { GAME_RENDERERS } from './games';
 import type { Route } from './types';
 
 export let route: Route = 'home';
@@ -24,7 +24,7 @@ export async function navigate(r: string): Promise<void> {
   else if (r === 'leaderboard') await renderLeaderboard();
   else if (r === 'friends') renderFriends();
   else if (r === 'profile') await renderProfile();
-  else if (r === 'play-reaction') renderReactionGame();
+  else if (r.startsWith('play-')) GAME_RENDERERS[r.slice(5)]?.();
 }
 
 export function initRouter(): void {

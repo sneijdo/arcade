@@ -198,15 +198,24 @@
 }
 .final-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* minmax(0, 1fr), not 1fr — a long label's intrinsic min-content width
+     (e.g. "XP OPTJENT") would otherwise force the grid wider than its
+     container and overflow the viewport on narrow phones. */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   width: 100%;
+}
+@media (max-width: 380px) {
+  .final-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .fstat {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 11px;
   padding: 14px 8px;
+  min-width: 0;
 }
 .fstat .n {
   font-family: var(--font-mono);
