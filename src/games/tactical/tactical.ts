@@ -206,7 +206,7 @@ function renderIntroOverlayContent(overlay: HTMLElement): void {
         })
         .join('')}
     </div>
-    <p style="flex-shrink:0;color:var(--text-faint);font-size:11px;text-align:center;line-height:1.4;margin:0">Stop for automatisk at skyde. Ryd rum, level op, overlev bossen.</p>
+    <p class="tac-intro-hint">Stop for automatisk at skyde. Ryd rum, level op, overlev bossen.</p>
     <div style="display:flex;gap:8px;width:100%;max-width:340px;flex-shrink:0">
       <button class="btn btn-ghost" id="tacPerksBtn" style="flex:1">PERKS</button>
       <button class="btn btn-primary" id="tacStartBtn" style="flex:2">START MISSION</button>

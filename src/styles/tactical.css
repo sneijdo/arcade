@@ -1,8 +1,15 @@
 /* ============================= TACTICAL ============================= */
 
 .weapon-select-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* Flexbox wrap, not CSS Grid — Grid's row auto-sizing measured each
+     .weapon-card (a nested flex column with dynamic-height text content)
+     using its min-height instead of its actual rendered height, so every
+     row ended up sized for the shortest possible card and taller neighbors
+     visually overflowed into the row below. Flexbox's line-wrapping sizes
+     each line from the real rendered heights of the items in it, which
+     doesn't have that discrepancy. */
+  display: flex;
+  flex-wrap: wrap;
   align-content: start;
   gap: 9px;
   width: 100%;
@@ -21,6 +28,7 @@
   flex-direction: column;
   gap: 4px;
   min-height: 44px;
+  flex: 1 1 calc(50% - 4.5px);
   touch-action: manipulation;
   transition: border-color 0.12s var(--ease), box-shadow 0.12s var(--ease), transform 0.1s var(--ease);
   position: relative;
@@ -51,21 +59,30 @@
 .weapon-card .icon {
   font-size: 19px;
   line-height: 1;
+  flex-shrink: 0;
 }
 .weapon-card .name {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 12.5px;
   padding-right: 16px; /* room for the selected checkmark so the name never runs under it */
+  flex-shrink: 0;
 }
 .weapon-card .tagline {
   font-size: 10px;
   color: var(--text-faint);
   line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  /* Plain max-height clamp, not -webkit-line-clamp: the -webkit-box display
+     mode this card grid used previously reports an unreliable intrinsic
+     size to CSS Grid's row auto-sizing, which left every row too short —
+     the tagline either collapsed to 0 height (invisible) or visually spilled
+     into the row below it, depending on other flex/stretch settings nearby.
+     A deterministic max-height in em units sidesteps that class of bug
+     entirely, at the minor cost of no "…" on truncated text (taglines are
+     short enough that this only matters in rare edge cases). */
+  max-height: 2.7em;
   overflow: hidden;
+  flex-shrink: 0;
 }
 .weapon-card.locked {
   opacity: 0.85;
@@ -74,6 +91,25 @@
   color: var(--lime);
   font-weight: 600;
   -webkit-line-clamp: 1;
+}
+
+.tac-intro-hint {
+  flex-shrink: 0;
+  color: var(--text-faint);
+  font-size: 11px;
+  text-align: center;
+  line-height: 1.4;
+  margin: 0;
+}
+/* On short viewports (older/smaller phones), this flavor-text line was
+   eating vertical space the weapon grid needed far more — the grid was
+   left with as little as ~40px of visible height before any scrolling.
+   Dropping the hint here gives that room back specifically where it's
+   tightest; taller screens keep it since there's no such pressure there. */
+@media (max-height: 700px) {
+  .tac-intro-hint {
+    display: none;
+  }
 }
 
 .tac-currency-chip {
