@@ -42,7 +42,7 @@ export interface WeaponStats {
   penetration: number; // number of enemies a projectile can pass through
 }
 
-export type EnemyId = 'rifleman' | 'rusher' | 'shotgunner' | 'sniper' | 'elite_rifleman';
+export type EnemyId = 'rifleman' | 'rusher' | 'shotgunner' | 'sniper' | 'elite_rifleman' | 'flanker';
 
 export interface EnemyStats {
   id: EnemyId;

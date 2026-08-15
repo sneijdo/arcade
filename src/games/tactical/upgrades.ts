@@ -1,6 +1,17 @@
 import type { UpgradeDef, BuildStats } from './types';
 
-/** Every upgrade only mutates BuildStats — the weapon/player systems read those multipliers, so adding an upgrade never touches gameplay code. */
+/**
+ * Every upgrade only mutates BuildStats — the weapon/player systems read
+ * those multipliers, so adding an upgrade never touches gameplay code.
+ *
+ * Rebalance pass: merged the old separate crit-chance/crit-damage cards
+ * into one (they were always taken together anyway), added a card for
+ * `healOnKillChance` (a BuildStats field the runtime already reads in
+ * tactical.ts but that no upgrade had ever granted — a dead mechanic
+ * until now), and added one real risk/reward build-definer
+ * (Adrenalinstød) so the pool isn't just flat stat sticks with a few
+ * projectile-behavior cards on top.
+ */
 export const UPGRADES: UpgradeDef[] = [
   {
     id: 'dmg_up',
@@ -27,27 +38,16 @@ export const UPGRADES: UpgradeDef[] = [
     },
   },
   {
-    id: 'crit_chance_up',
-    name: 'Præcisionstræning',
+    id: 'crit_master',
+    name: 'Snigskytteøje',
     icon: '🎯',
     rarity: 'rare',
     tag: 'offense',
-    desc: '+12% kritisk chance',
+    desc: '+10% kritisk chance og +25% kritisk skade',
     maxStacks: 5,
     apply: (b: BuildStats) => {
-      b.critChance = Math.min(1, b.critChance + 0.12);
-    },
-  },
-  {
-    id: 'crit_dmg_up',
-    name: 'Dødbringende Præcision',
-    icon: '💥',
-    rarity: 'rare',
-    tag: 'offense',
-    desc: '+35% kritisk skade',
-    maxStacks: 5,
-    apply: (b: BuildStats) => {
-      b.critMultiplier += 0.35;
+      b.critChance = Math.min(1, b.critChance + 0.1);
+      b.critMultiplier += 0.25;
     },
   },
   {
@@ -56,7 +56,7 @@ export const UPGRADES: UpgradeDef[] = [
     icon: '➕',
     rarity: 'epic',
     tag: 'projectile',
-    desc: '+1 projektil pr. skud',
+    desc: '+1 projektil pr. skud — hvert ekstra projektil kan selv ramme kritisk og rikochettere',
     maxStacks: 3,
     apply: (b: BuildStats) => {
       b.projectileCountBonus += 1;
@@ -68,7 +68,7 @@ export const UPGRADES: UpgradeDef[] = [
     icon: '🗲',
     rarity: 'rare',
     tag: 'projectile',
-    desc: 'Projektiler gennemtrænger 1 fjende mere',
+    desc: 'Gennemtrænger 1 fjende mere, før et projektil kan rikochettere videre',
     maxStacks: 3,
     apply: (b: BuildStats) => {
       b.penetrationBonus += 1;
@@ -80,7 +80,7 @@ export const UPGRADES: UpgradeDef[] = [
     icon: '↩️',
     rarity: 'epic',
     tag: 'projectile',
-    desc: '25% chance for at ramte skud rikochetterer til en ny fjende',
+    desc: '25% chance for at et projektil rikochetterer til en ny fjende, når det er færdig med at gennemtrænge',
     maxStacks: 3,
     apply: (b: BuildStats) => {
       b.ricochetChance = Math.min(1, b.ricochetChance + 0.25);
@@ -93,7 +93,7 @@ export const UPGRADES: UpgradeDef[] = [
     rarity: 'common',
     tag: 'offense',
     desc: '+20% rækkevidde',
-    maxStacks: 4,
+    maxStacks: 3,
     apply: (b: BuildStats) => {
       b.rangeMult *= 1.2;
     },
@@ -144,6 +144,32 @@ export const UPGRADES: UpgradeDef[] = [
     maxStacks: 3,
     apply: (b: BuildStats) => {
       b.lifestealPct += 0.03;
+    },
+  },
+  {
+    id: 'heal_on_kill',
+    name: 'Feltkirurgi',
+    icon: '💊',
+    rarity: 'common',
+    tag: 'survival',
+    desc: '20% chance for at heale 8 HP, når du nedkæmper en fjende',
+    maxStacks: 3,
+    apply: (b: BuildStats) => {
+      b.healOnKillChance = Math.min(1, b.healOnKillChance + 0.2);
+    },
+  },
+  {
+    id: 'adrenaline',
+    name: 'Adrenalinstød',
+    icon: '🩸',
+    rarity: 'epic',
+    tag: 'offense',
+    desc: '-20 max HP, men +35% skade og +10% skudhastighed — alt-ind-build for dem der tør',
+    maxStacks: 2,
+    apply: (b: BuildStats) => {
+      b.maxHpBonus -= 20;
+      b.damageMult *= 1.35;
+      b.fireRateMult *= 1.1;
     },
   },
 ];

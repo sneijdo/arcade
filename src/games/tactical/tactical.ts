@@ -15,6 +15,8 @@ import { spawnBoss, updateBoss, BOSS_MAX_HP, type BossInstance } from './boss';
 import { ENCOUNTERS, TOTAL_ROOMS } from './encounters';
 import { pickUpgradeChoices } from './upgrades';
 import { makeDefaultBuild, vAngle, vSub, vDist, type BuildStats, type EnemyId } from './types';
+import { toPixelRects, resolveCircleVsObstacles, hasLineOfSight, type ObstacleRect } from './obstacles';
+import { BALANCE } from './balance';
 import * as hud from './hud';
 
 type RunPhase = 'intro' | 'playing' | 'levelup' | 'roomclear' | 'gameover';
@@ -41,6 +43,10 @@ interface RunState {
   roomTransitionTimer: number;
   arenaW: number;
   arenaH: number;
+  obstacles: ObstacleRect[];
+  lockedTargetId: number | null;
+  lockTimeRemaining: number;
+  hitStopRemaining: number;
   input: InputController;
   projectiles: ProjectilePool;
   vfx: VfxSystem;
@@ -53,7 +59,7 @@ interface RunState {
 let run: RunState | null = null;
 
 function xpForLevel(level: number): number {
-  return 18 + (level - 1) * 13;
+  return BALANCE.xp.baseForLevel + (level - 1) * BALANCE.xp.perLevelGrowth;
 }
 
 function makeRunState(): RunState {
@@ -74,6 +80,10 @@ function makeRunState(): RunState {
     roomTransitionTimer: 0,
     arenaW: 760,
     arenaH: 570,
+    obstacles: [],
+    lockedTargetId: null,
+    lockTimeRemaining: 0,
+    hitStopRemaining: 0,
     input: new InputController(),
     projectiles: new ProjectilePool(),
     vfx: new VfxSystem(),
@@ -156,6 +166,8 @@ function startRoom(index: number): void {
   run.roomIndex = index;
   run.enemies = [];
   run.boss = null;
+  run.lockedTargetId = null;
+  run.lockTimeRemaining = 0;
   hud.showBossBar(false);
 
   if (index >= ENCOUNTERS.length) {
@@ -164,10 +176,14 @@ function startRoom(index: number): void {
     hud.showBossBar(true);
     hud.updateBossBar(run.boss.hp, BOSS_MAX_HP);
     run.spawnQueue = [];
+    run.obstacles = []; // open arena for the boss fight
+    run.vfx.warningBanner('boss', { x: run.arenaW / 2, y: run.arenaH / 2 });
+    TacticalSound.bossWarning();
     return;
   }
 
   const wave = ENCOUNTERS[index];
+  run.obstacles = toPixelRects(wave.obstacles ?? [], run.arenaW, run.arenaH);
   hud.updateRoomLabel(`RUM ${index + 1}/${TOTAL_ROOMS} · ${wave.label.toUpperCase()}`);
   const tickets: SpawnTicket[] = [];
   for (const group of wave.enemies) {
@@ -192,6 +208,10 @@ function spawnAtEdge(defId: EnemyId): void {
   else if (edge === 2) { x = Math.random() * run.arenaW; y = pad; }
   else { x = Math.random() * run.arenaW; y = run.arenaH - pad; }
   run.enemies.push(spawnEnemy(defId, { x, y }));
+  if (ENEMY_DEFS[defId].isElite) {
+    run.vfx.warningBanner('elite', { x: run.arenaW / 2, y: run.arenaH / 2 });
+    TacticalSound.eliteWarning();
+  }
 }
 
 function loop(now: number): void {
@@ -201,7 +221,11 @@ function loop(now: number): void {
   }
   const dt = Math.min(0.05, (now - run.lastTime) / 1000);
   run.lastTime = now;
-  if (run.phase === 'playing') update(dt);
+  if (run.hitStopRemaining > 0) {
+    run.hitStopRemaining -= dt;
+  } else if (run.phase === 'playing') {
+    update(dt);
+  }
   render();
   run.rafId = requestAnimationFrame(loop);
 }
@@ -223,8 +247,10 @@ function update(dt: number): void {
   const isMoving = r.input.isMoving();
   r.player.update(dt, moveVec, r.build);
   r.player.clampToArena(r.arenaW, r.arenaH);
+  resolveCircleVsObstacles(r.player.pos, r.player.radius, r.obstacles);
   if (isMoving) r.player.facing = vAngle({ x: moveVec.x, y: moveVec.y }) || r.player.facing;
 
+  if (r.lockTimeRemaining > 0) r.lockTimeRemaining -= dt;
   if (!isMoving && r.player.canFire()) tryFire();
 
   r.projectiles.update(dt);
@@ -232,6 +258,7 @@ function update(dt: number): void {
 
   for (const e of r.enemies) {
     const result = updateEnemy(e, r.player.pos, dt, r.arenaW, r.arenaH);
+    resolveCircleVsObstacles(e.pos, ENEMY_DEFS[e.defId].radius, r.obstacles);
     if (result.meleeAttack) {
       const dmg = r.player.takeDamage(result.meleeAttack.damage, r.build);
       if (dmg > 0) onPlayerHit(dmg);
@@ -241,6 +268,8 @@ function update(dt: number): void {
 
   if (r.boss) {
     const bossResult = updateBoss(r.boss, r.player.pos, dt, r.arenaW, r.arenaH);
+    resolveCircleVsObstacles(r.boss.pos, r.boss.radius, r.obstacles);
+    if (bossResult.enteredBurstWindup) TacticalSound.bossWindup();
     if (bossResult.fireShot) fireBossProjectile(r.boss, bossResult.fireShot.angleRad, bossResult.fireShot.damage);
     if (bossResult.slamNowResolving) {
       const { center, radius, damage } = bossResult.slamNowResolving;
@@ -297,13 +326,34 @@ function computeWeaponRange(): number {
   return WEAPONS[STARTING_WEAPON_ID].range * run.build.rangeMult;
 }
 
+/** Finds/keeps a target to fire at. Once locked, the same target is reused for BALANCE.juice.targetLockSeconds (or until it dies/leaves range/LOS) instead of re-selecting every shot — stops visible flicker between two similarly-placed enemies. */
+function resolveFireTarget(): TargetCandidate | null {
+  if (!run) return null;
+  const r = run;
+  const range = computeWeaponRange();
+  const candidates: TargetCandidate[] = r.enemies.map((e) => ({ id: e.id, pos: e.pos, isElite: ENEMY_DEFS[e.defId].isElite }));
+  if (r.boss) candidates.push({ id: -1, pos: r.boss.pos, isElite: true });
+
+  if (r.lockedTargetId != null && r.lockTimeRemaining > 0) {
+    const stillValid = candidates.find((c) => c.id === r.lockedTargetId);
+    if (stillValid && vDist(r.player.pos, stillValid.pos) <= range) return stillValid;
+    r.lockedTargetId = null;
+  }
+
+  const los = (c: TargetCandidate) => hasLineOfSight(r.player.pos, c.pos, r.obstacles);
+  const picked = selectTarget(r.player.pos, candidates, range, los);
+  if (picked) {
+    r.lockedTargetId = picked.id;
+    r.lockTimeRemaining = BALANCE.juice.targetLockSeconds;
+  }
+  return picked;
+}
+
 function tryFire(): void {
   if (!run) return;
   const r = run;
   const weapon = WEAPONS[STARTING_WEAPON_ID];
-  const candidates: TargetCandidate[] = r.enemies.map((e) => ({ id: e.id, pos: e.pos, isElite: ENEMY_DEFS[e.defId].isElite }));
-  if (r.boss) candidates.push({ id: -1, pos: r.boss.pos, isElite: true });
-  const target = selectTarget(r.player.pos, candidates, computeWeaponRange());
+  const target = resolveFireTarget();
   if (!target) return;
 
   const angle = vAngle(vSub(target.pos, r.player.pos));
@@ -346,13 +396,13 @@ function fireEnemyProjectile(e: EnemyInstance, angleRad: number, damage: number)
     run.projectiles.spawn({
       x: e.pos.x,
       y: e.pos.y,
-      vx: Math.cos(a) * 380,
-      vy: Math.sin(a) * 380,
+      vx: Math.cos(a) * BALANCE.enemyProjectile.speed,
+      vy: Math.sin(a) * BALANCE.enemyProjectile.speed,
       damage: damage / (pelletCount > 1 ? 2 : 1),
       crit: false,
       penetration: 0,
       ricochetChance: 0,
-      maxRange: 700,
+      maxRange: BALANCE.enemyProjectile.maxRange,
       fromPlayer: false,
       radius: 4,
       color: '#ff5d7a',
@@ -366,13 +416,13 @@ function fireBossProjectile(b: BossInstance, angleRad: number, damage: number): 
   run.projectiles.spawn({
     x: b.pos.x,
     y: b.pos.y,
-    vx: Math.cos(angleRad) * 420,
-    vy: Math.sin(angleRad) * 420,
+    vx: Math.cos(angleRad) * BALANCE.enemyProjectile.bossSpeed,
+    vy: Math.sin(angleRad) * BALANCE.enemyProjectile.bossSpeed,
     damage,
     crit: false,
     penetration: 0,
     ricochetChance: 0,
-    maxRange: 800,
+    maxRange: BALANCE.enemyProjectile.bossMaxRange,
     fromPlayer: false,
     radius: 5,
     color: '#8b6bff',
@@ -435,15 +485,22 @@ function applyDamageToEnemy(e: EnemyInstance, dmg: number, crit: boolean): void 
   e.hitFlash = 0.08;
   run.vfx.impactSpark(e.pos, ENEMY_DEFS[e.defId].color);
   run.vfx.damageNumber(e.pos, dmg, crit);
-  if (crit) TacticalSound.crit();
-  else TacticalSound.hit();
-  if (crit) Haptics.hit();
+  if (crit) {
+    run.vfx.critBurst(e.pos);
+    TacticalSound.crit();
+    Haptics.hit();
+    run.hitStopRemaining = Math.max(run.hitStopRemaining, BALANCE.juice.hitStopCritS);
+  } else {
+    TacticalSound.hit();
+  }
   if (run.build.lifestealPct > 0) run.player.heal(dmg * run.build.lifestealPct);
 
   if (e.hp <= 0) {
     run.vfx.deathBurst(e.pos, ENEMY_DEFS[e.defId].color);
+    run.vfx.xpPop(e.pos, ENEMY_DEFS[e.defId].xpReward);
     TacticalSound.enemyDeath();
     Haptics.hit();
+    run.hitStopRemaining = Math.max(run.hitStopRemaining, BALANCE.juice.hitStopKillS);
     grantXp(ENEMY_DEFS[e.defId].xpReward);
     run.enemies = run.enemies.filter((x) => x.id !== e.id);
     run.enemiesKilled++;
@@ -457,8 +514,14 @@ function applyDamageToBoss(b: BossInstance, dmg: number, crit: boolean): void {
   b.hitFlash = 0.08;
   run.vfx.impactSpark(b.pos, '#ff5d7a');
   run.vfx.damageNumber(b.pos, dmg, crit);
-  if (crit) TacticalSound.crit();
-  else TacticalSound.hit();
+  if (crit) {
+    run.vfx.critBurst(b.pos);
+    TacticalSound.crit();
+    run.hitStopRemaining = Math.max(run.hitStopRemaining, BALANCE.juice.hitStopCritS);
+  } else {
+    TacticalSound.hit();
+    run.hitStopRemaining = Math.max(run.hitStopRemaining, BALANCE.juice.hitStopBossHitS);
+  }
   if (run.build.lifestealPct > 0) run.player.heal(dmg * run.build.lifestealPct);
 }
 
@@ -516,6 +579,24 @@ function render(): void {
     ctx.stroke();
   }
 
+  // obstacles / cover
+  for (const o of run.obstacles) {
+    ctx.fillStyle = '#1c1a2b';
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+    ctx.strokeRect(o.x, o.y, o.w, o.h);
+  }
+
+  // boss burst wind-up tell
+  if (run.boss && run.boss.phase === 'burstWindup') {
+    ctx.beginPath();
+    ctx.arc(run.boss.pos.x, run.boss.pos.y, run.boss.radius + 8, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,93,122,0.7)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
+
   // boss slam telegraph
   if (run.boss && run.boss.phase === 'slamTelegraph') {
     const t = 1 - Math.max(0, run.boss.phaseTimer) / 1.1;
@@ -528,12 +609,22 @@ function render(): void {
     ctx.fill();
   }
 
-  // enemy sniper/ranged telegraph lines
+  // enemy attack telegraphs — ranged types show an aim line, melee types show a closing warning ring (works for any enemy that sets telegraphRemaining/telegraphTotal, so new archetypes get this for free)
   for (const e of run.enemies) {
-    if (e.telegraphRemaining > 0 && !e.isMelee) {
+    if (e.telegraphRemaining <= 0) continue;
+    const progress = e.telegraphTotal > 0 ? 1 - e.telegraphRemaining / e.telegraphTotal : 0;
+    if (e.isMelee) {
       const def = ENEMY_DEFS[e.defId];
       ctx.save();
-      ctx.strokeStyle = `rgba(255,93,122,${0.25 + 0.35 * (1 - e.telegraphRemaining / (def.telegraphMs! / 1000))})`;
+      ctx.beginPath();
+      ctx.arc(e.pos.x, e.pos.y, def.radius + 4 + progress * 8, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255,93,122,${0.5 + 0.3 * Math.sin(progress * 25)})`;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      ctx.save();
+      ctx.strokeStyle = `rgba(255,93,122,${0.25 + 0.35 * progress})`;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(e.pos.x, e.pos.y);
@@ -589,7 +680,7 @@ function render(): void {
   ctx.save();
   ctx.translate(p.pos.x, p.pos.y);
   ctx.rotate(p.facing);
-  ctx.fillStyle = p.invulnRemaining > 0.06 ? 'rgba(201,247,62,0.55)' : 'var(--lime)'.startsWith('var') ? '#c9f73e' : '#c9f73e';
+  ctx.fillStyle = p.invulnRemaining > 0.06 ? 'rgba(201,247,62,0.55)' : '#c9f73e';
   ctx.beginPath();
   ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
   ctx.fill();
@@ -608,7 +699,7 @@ function render(): void {
     ctx.fill();
   }
 
-  run.vfx.render(ctx);
+  run.vfx.render(ctx, arenaW, arenaH);
   ctx.restore();
 }
 

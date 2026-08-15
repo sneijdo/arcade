@@ -27,6 +27,7 @@ export const ENEMY_DEFS: Record<EnemyId, EnemyStats> = {
     xpReward: 7,
     radius: 13,
     color: '#ff5d7a',
+    telegraphMs: 180, // a real (if brief) warning ring before the lunge lands — "hit because I made a mistake," not "hit because I couldn't see it"
   },
   shotgunner: {
     id: 'shotgunner',
@@ -57,18 +58,43 @@ export const ENEMY_DEFS: Record<EnemyId, EnemyStats> = {
     telegraphMs: 650,
   },
   elite_rifleman: {
+    // Display name is "Elite Vanguard" — it's no longer just a rifleman with
+    // more HP. See enemyRuntime.ts: any def.isElite enemy strafes
+    // perpendicular to its approach/hold vector instead of standing still
+    // at preferredRange, so it's a genuinely harder target to land shots on
+    // rather than just a bigger health bar. Faster attack cadence too, for
+    // sustained pressure instead of one bigger hit.
     id: 'elite_rifleman',
-    name: 'Elite Rifleman',
+    name: 'Elite Vanguard',
     hp: 90,
-    moveSpeed: 85,
-    damage: 9,
-    attackCooldown: 1.0,
+    moveSpeed: 95,
+    damage: 11,
+    attackCooldown: 0.8,
     attackRange: 340,
     preferredRange: 240,
     xpReward: 40,
     radius: 19,
     color: '#8b6bff',
     isElite: true,
-    telegraphMs: 220,
+    telegraphMs: 230,
+  },
+  flanker: {
+    // Melee, but doesn't beeline the player like a rusher — it arcs in from
+    // the side (see enemyRuntime.ts movement), so a player who's turned to
+    // face one threat can get hit from an angle they weren't watching. That's
+    // a different decision than a rusher: you have to track your flanks, not
+    // just tank-and-spank whatever's closest in front of you.
+    id: 'flanker',
+    name: 'Flanker',
+    hp: 14,
+    moveSpeed: 135,
+    damage: 9,
+    attackCooldown: 1.0,
+    attackRange: 32,
+    preferredRange: 0,
+    xpReward: 9,
+    radius: 13,
+    color: '#ff9d4d', // distinct from sniper's cyan — must be readable as a different threat at a glance
+    telegraphMs: 200,
   },
 };

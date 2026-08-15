@@ -79,15 +79,28 @@ export function updateEnemy(e: EnemyInstance, playerPos: Vec2, dt: number, arena
     return result; // holding position while telegraphing
   }
 
-  // Movement: melee rushers close distance; ranged types try to hold preferredRange.
+  // Movement: melee closes distance, ranged types try to hold preferredRange —
+  // with two per-archetype twists layered on top of that shared base:
+  //   - flanker arcs in from the side instead of beelining, so it can hit a
+  //     player who's turned to face a different threat.
+  //   - any elite strafes side-to-side once roughly at its preferred range,
+  //     so it's a harder target to land shots on rather than just more HP.
   const dir = vNorm(toPlayer);
+  const perp: Vec2 = { x: -dir.y, y: dir.x };
+  // Deterministic (not random-per-frame) so the strafe/arc direction doesn't jitter.
+  const sideSign = e.id % 2 === 0 ? 1 : -1;
   let moveDir: Vec2 = { x: 0, y: 0 };
-  if (e.isMelee) {
+  if (e.defId === 'flanker') {
+    const arcWeight = Math.min(1, Math.max(0, (dist - 70) / 220)); // fades out as it closes in for the hit
+    moveDir = vNorm({ x: dir.x + perp.x * sideSign * arcWeight * 1.3, y: dir.y + perp.y * sideSign * arcWeight * 1.3 });
+  } else if (e.isMelee) {
     moveDir = dir;
   } else {
     const rangeError = dist - def.preferredRange;
     if (Math.abs(rangeError) > 24) {
       moveDir = rangeError > 0 ? dir : { x: -dir.x, y: -dir.y };
+    } else if (def.isElite) {
+      moveDir = { x: perp.x * sideSign, y: perp.y * sideSign };
     }
   }
   e.pos.x += moveDir.x * def.moveSpeed * dt;
