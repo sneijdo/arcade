@@ -21,9 +21,13 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'snake_grower', icon: '🐍', title: 'SLANGETÆMMER', desc: '10+ point i Snake.', check: (s) => (s.bestScores.snake ?? 0) >= 10 },
   { id: 'snake_legend', icon: '👑', title: 'SLANGEKONGE', desc: '20+ point i Snake.', check: (s) => (s.bestScores.snake ?? 0) >= 20 },
 
+  // Breach Protocol
+  { id: 'tactical_operator', icon: '🪖', title: 'OPERATØR', desc: 'Ryd 3+ rum i Breach Protocol.', check: (s) => (s.bestScores.tactical ?? 0) >= 3 },
+  { id: 'tactical_commander', icon: '🎖️', title: 'BEFALINGSMAND', desc: 'Fuldfør hele missionen i Breach Protocol.', check: (s) => (s.bestScores.tactical ?? 0) >= 7 },
+
   // Cross-game
   { id: 'firstplace', icon: '🏆', title: 'MESTER', desc: 'Indtag #1-pladsen på et leaderboard.', check: (s) => Object.values(s.ranks).some((r) => r === 1) },
-  { id: 'allrounder', icon: '🎮', title: 'ALLROUNDER', desc: 'Sæt en rekord i alle spil.', check: (s) => s.gamesPlayed >= 5 },
+  { id: 'allrounder', icon: '🎮', title: 'ALLROUNDER', desc: 'Sæt en rekord i alle spil.', check: (s) => s.gamesPlayed >= 6 },
   { id: 'grinder', icon: '🔥', title: 'I GANG', desc: 'Spil 5 runder i alt.', check: (s) => s.sessionsPlayed >= 5 },
   { id: 'dedicated', icon: '💀', title: 'ÉN MERE', desc: 'Spil 10 runder i alt.', check: (s) => s.sessionsPlayed >= 10 },
 ];

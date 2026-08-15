@@ -53,6 +53,15 @@ export const GAMES: GameDef[] = [
     implemented: true,
   },
   {
+    id: 'tactical',
+    title: 'Breach Protocol',
+    category: 'ROGUELITE',
+    icon: '🪖',
+    description: 'Ryd rum, byg dit loadout, overlev bossen. Auto-sigte roguelite i taktisk stil.',
+    scoreKind: 'tactical_rooms',
+    implemented: true,
+  },
+  {
     id: 'color',
     title: 'Color Match',
     category: 'PERCEPTION',

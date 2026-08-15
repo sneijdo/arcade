@@ -3,6 +3,7 @@ import { renderAimGame } from './aim/aim';
 import { renderMemoryGame } from './memory/memory';
 import { renderNumberRushGame } from './numberrush/numberrush';
 import { renderSnakeGame } from './snake/snake';
+import { renderTacticalGame } from './tactical/tactical';
 
 /** Maps a GAMES registry id to its render function. router.ts dispatches `play-<id>` routes through this. */
 export const GAME_RENDERERS: Record<string, () => void> = {
@@ -11,4 +12,5 @@ export const GAME_RENDERERS: Record<string, () => void> = {
   memory: renderMemoryGame,
   numberrush: renderNumberRushGame,
   snake: renderSnakeGame,
+  tactical: renderTacticalGame,
 };

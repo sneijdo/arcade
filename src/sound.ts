@@ -11,7 +11,8 @@ class SoundEngine {
     return this.ctx;
   }
 
-  private tone(freq: number, dur: number, type: OscillatorType = 'sine', gainPeak = 0.14, delay = 0): void {
+  /** Public so per-game audio modules (see games/tactical/audio.ts) can compose their own palette without duplicating AudioContext setup. */
+  tone(freq: number, dur: number, type: OscillatorType = 'sine', gainPeak = 0.14, delay = 0): void {
     if (this.muted) return;
     try {
       const c = this.ensureCtx();

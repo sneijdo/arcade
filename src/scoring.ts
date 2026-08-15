@@ -62,4 +62,16 @@ export const ScoreKinds: Record<string, ScoreKind> = {
       return { label: 'SKAL ØVES', color: 'var(--coral)' };
     },
   },
+  tactical_rooms: {
+    direction: 'desc',
+    unit: ' rum',
+    format: (v) => `${Math.round(v)}`,
+    rating: (v) => {
+      if (v >= 7) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 5) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 3) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 1) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
 };

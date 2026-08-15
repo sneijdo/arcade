@@ -1,0 +1,226 @@
+/* ============================= TACTICAL ============================= */
+.tactical-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.tactical-hud-top {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+.tactical-room-label {
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.tactical-bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.tactical-bar-track {
+  height: 9px;
+  border-radius: 6px;
+  background: var(--surface-3);
+  overflow: hidden;
+  border: 1px solid var(--border-2);
+}
+.tactical-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.15s var(--ease);
+}
+.tactical-bar-fill.hp {
+  background: linear-gradient(90deg, #ff5d7a, #ff9d7a);
+}
+.tactical-bar-fill.xp {
+  background: linear-gradient(90deg, var(--violet), var(--lime));
+}
+.tactical-bar-label {
+  color: var(--text-faint);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 400px) {
+  .tactical-hud-top {
+    font-size: 10px;
+    gap: 8px;
+  }
+  .tactical-bar-label {
+    font-size: 9px;
+  }
+}
+
+.tactical-canvas-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  aspect-ratio: 4 / 3;
+  max-height: 62vh;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #0a0b10;
+  touch-action: none;
+}
+#tacticalCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.tactical-joystick {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-2);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.04);
+  touch-action: none;
+  display: none;
+}
+.tactical-joystick.visible {
+  display: block;
+}
+.tactical-joystick-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;
+  margin-top: -22px;
+  border-radius: 50%;
+  background: rgba(201, 247, 62, 0.35);
+  border: 1px solid var(--lime);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.tactical-weapon-chip {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  background: rgba(8, 7, 12, 0.72);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.tactical-boss-bar-wrap {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  max-width: 420px;
+}
+.tactical-boss-name {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--coral);
+  margin-bottom: 4px;
+  text-shadow: 0 0 12px var(--coral-glow);
+}
+.tactical-boss-bar-track {
+  height: 10px;
+  border-radius: 6px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-2);
+  overflow: hidden;
+}
+.tactical-boss-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--coral), #ff9d7a);
+  transition: width 0.15s var(--ease);
+}
+
+/* ---- Level-up modal ---- */
+.upgrade-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 6px;
+}
+@media (min-width: 560px) {
+  .upgrade-grid {
+    flex-direction: row;
+  }
+}
+.upgrade-card {
+  flex: 1;
+  background: var(--void-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.12s var(--ease), border-color 0.12s var(--ease);
+  min-height: 44px;
+}
+.upgrade-card:active {
+  transform: scale(0.97);
+}
+.upgrade-card.rarity-rare {
+  border-color: rgba(92, 208, 255, 0.4);
+}
+.upgrade-card.rarity-epic {
+  border-color: rgba(139, 107, 255, 0.55);
+  box-shadow: 0 0 24px -8px var(--violet-glow);
+}
+.upgrade-card .icon {
+  font-size: 22px;
+}
+.upgrade-card .name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14.5px;
+}
+.upgrade-card .desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+.upgrade-card .rarity-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.tactical-intro-list {
+  text-align: left;
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.9;
+  max-width: 340px;
+  margin: 0 auto;
+}
+.tactical-intro-list li {
+  margin-left: 18px;
+}
