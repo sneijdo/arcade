@@ -104,14 +104,22 @@ export async function awardXP(amount: number, reasonLabel?: string): Promise<voi
 
 export async function checkAchievements(extra: Partial<AchievementStats> = {}): Promise<void> {
   if (!profile) return;
-  const board = await getCombinedLeaderboard('reaction');
-  const myEntry = board.find((e) => e.id === profile!.id);
-  const rank = myEntry ? board.indexOf(myEntry) + 1 : null;
+  const implementedGameIds = GAMES.filter((g) => g.implemented).map((g) => g.id);
+  const ranks: Record<string, number | null> = {};
+  for (const gameId of implementedGameIds) {
+    const board = await getCombinedLeaderboard(gameId);
+    const idx = board.findIndex((e) => e.id === profile!.id);
+    ranks[gameId] = idx >= 0 ? idx + 1 : null;
+  }
+  const gamesPlayed = Object.keys(profile.bestScores).length + (profile.bestReaction != null ? 1 : 0);
   const statObj: AchievementStats = {
     bestReaction: profile.bestReaction,
     bestAvg: profile.bestAvg,
     sessionsPlayed: profile.sessionsPlayed,
-    rank,
+    rank: ranks.reaction ?? null,
+    bestScores: profile.bestScores,
+    ranks,
+    gamesPlayed,
     ...extra,
   };
   let changed = false;

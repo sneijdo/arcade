@@ -1,14 +1,17 @@
 import { profile, getCombinedLeaderboard, initials } from '../state';
 import { GAMES } from '../games/registry';
 import { ScoreKinds } from '../scoring';
+import { socialAvailable, listFriendsAndRequests } from '../social';
 
 let lbGameId = 'reaction';
+let lbScope: 'global' | 'friends' = 'global';
 
 export async function renderLeaderboard(): Promise<void> {
   const main = document.getElementById('main')!;
   if (!profile) return;
   const implementedGames = GAMES.filter((g) => g.implemented);
   const activeGame = implementedGames.find((g) => g.id === lbGameId) ?? implementedGames[0];
+  const showScopeToggle = socialAvailable();
   main.innerHTML = `
     <div class="page">
       <div class="section-label">Ranglister</div>
@@ -18,21 +21,44 @@ export async function renderLeaderboard(): Promise<void> {
           .map((g) => `<button class="tab-btn ${g.id === activeGame.id ? 'active' : ''}" data-game="${g.id}">${g.title.toUpperCase()}</button>`)
           .join('')}
       </div>
+      ${
+        showScopeToggle
+          ? `<div class="tabs" style="margin-bottom:18px">
+              <button class="tab-btn ${lbScope === 'global' ? 'active' : ''}" data-scope="global">GLOBALT</button>
+              <button class="tab-btn ${lbScope === 'friends' ? 'active' : ''}" data-scope="friends">VENNER</button>
+            </div>`
+          : ''
+      }
       <div class="panel" id="lbPanel"><div style="color:var(--text-faint);font-family:var(--font-mono);font-size:13px">Indlæser…</div></div>
     </div>
   `;
-  document.querySelectorAll<HTMLElement>('.tab-btn').forEach((b) => {
+  document.querySelectorAll<HTMLElement>('[data-game]').forEach((b) => {
     b.addEventListener('click', () => {
       lbGameId = b.dataset.game!;
       renderLeaderboard();
     });
   });
+  document.querySelectorAll<HTMLElement>('[data-scope]').forEach((b) => {
+    b.addEventListener('click', () => {
+      lbScope = b.dataset.scope as 'global' | 'friends';
+      renderLeaderboard();
+    });
+  });
 
-  const board = await getCombinedLeaderboard(activeGame.id);
+  let board = await getCombinedLeaderboard(activeGame.id);
+  if (lbScope === 'friends' && showScopeToggle) {
+    const { friends } = await listFriendsAndRequests(profile.id);
+    const allowedIds = new Set([profile.id, ...friends.map((f) => f.userId)]);
+    board = board.filter((e) => allowedIds.has(e.id));
+  }
+
   const kind = activeGame.scoreKind ? ScoreKinds[activeGame.scoreKind] : null;
   const panel = document.getElementById('lbPanel')!;
   if (board.length === 0) {
-    panel.innerHTML = `<div style="color:var(--text-dim);font-size:13.5px">Ingen rekorder endnu. Vær den første.</div>`;
+    panel.innerHTML =
+      lbScope === 'friends'
+        ? `<div style="color:var(--text-dim);font-size:13.5px">Ingen af dine venner har spillet endnu.</div>`
+        : `<div style="color:var(--text-dim);font-size:13.5px">Ingen rekorder endnu. Vær den første.</div>`;
     return;
   }
   const medals = ['🥇', '🥈', '🥉'];

@@ -53,7 +53,14 @@ export interface AchievementStats {
   bestReaction: number | null;
   bestAvg: number | null;
   sessionsPlayed: number;
+  /** Reaction leaderboard rank — kept separate for backward compatibility with the original achievements. */
   rank: number | null;
+  /** Personal-best score per game id (mirrors Profile.bestScores). */
+  bestScores: Record<string, number>;
+  /** Global leaderboard rank per game id, including 'reaction'. */
+  ranks: Record<string, number | null>;
+  /** How many distinct implemented games this player has a recorded score in. */
+  gamesPlayed: number;
 }
 
 export interface LeaderboardEntry {

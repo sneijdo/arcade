@@ -3,7 +3,7 @@ import { Sound } from './sound';
 import { loadProfile, saveProfile, profile } from './state';
 import { refreshHeader } from './header';
 import { initRouter, navigate } from './router';
-import { showOnboarding, showEmailAuthModal, showNameModal, closeAnyModal } from './onboarding';
+import { showOnboarding, showAuthModal, closeAnyModal } from './onboarding';
 import { authAvailable, onAuthStateChange } from './auth';
 import type { Session } from '@supabase/supabase-js';
 
@@ -36,19 +36,26 @@ async function initLocalMode(): Promise<void> {
   navigate('home');
 }
 
-/** Supabase configured — email magic-link session gates everything. */
+/** Supabase configured — username/password session gates everything. */
 async function initSupabaseMode(): Promise<void> {
   const handleSession = async (session: Session | null) => {
     if (!session) {
       markGuest();
-      showEmailAuthModal();
+      showAuthModal('signup');
       return;
     }
     closeAnyModal();
-    const p = await loadProfile();
+    let p = await loadProfile();
+    if (!p) {
+      // Signup just created the session; its own createProfile() call may
+      // not have landed yet — give it one short retry before treating this
+      // as a genuinely missing profile.
+      await new Promise((r) => setTimeout(r, 400));
+      p = await loadProfile();
+    }
     if (!p) {
       markGuest();
-      showNameModal(session.user.id);
+      showAuthModal('signup');
       return;
     }
     Sound.setMuted(!!p.muted);
