@@ -190,7 +190,7 @@ function drawFinalScreen(score: number, isNewBest: boolean, xpGain: number, rank
 
           <div class="final-ctas">
             <button class="btn btn-primary btn-lg" id="playAgainBtn">SPIL IGEN</button>
-            <button class="btn btn-ghost btn-lg" data-nav="leaderboard">LEADERBOARD</button>
+            <button class="btn btn-ghost btn-lg" data-nav="leaderboard-aim">LEADERBOARD</button>
           </div>
         </div>
       </div>

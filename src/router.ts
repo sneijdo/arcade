@@ -3,6 +3,7 @@ import { renderHome } from './pages/home';
 import { renderGames } from './pages/games';
 import { renderLeaderboard } from './pages/leaderboard';
 import { renderProfile } from './pages/profile';
+import { renderShop } from './pages/shop';
 import { GAME_RENDERERS } from './games';
 import type { Route } from './types';
 
@@ -15,13 +16,17 @@ function setActiveNav(): void {
 }
 
 export async function navigate(r: string): Promise<void> {
-  route = r as Route;
+  // "leaderboard-<gameId>" (from a just-finished game's results screen) opens straight to
+  // that game's tab, but is still just the "leaderboard" route for nav-highlighting/type purposes.
+  const isLeaderboard = r === 'leaderboard' || r.startsWith('leaderboard-');
+  route = (isLeaderboard ? 'leaderboard' : r) as Route;
   setActiveNav();
   window.scrollTo({ top: 0, behavior: 'instant' });
   if (r === 'home') await renderHome();
   else if (r === 'games') renderGames();
-  else if (r === 'leaderboard') await renderLeaderboard();
+  else if (isLeaderboard) await renderLeaderboard(r.startsWith('leaderboard-') ? r.slice('leaderboard-'.length) : undefined);
   else if (r === 'profile') await renderProfile();
+  else if (r === 'shop') await renderShop();
   else if (r.startsWith('play-')) GAME_RENDERERS[r.slice(5)]?.();
 }
 

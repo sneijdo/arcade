@@ -17,6 +17,14 @@ export interface Profile {
   lastPlayedDate: string | null;
   /** YYYY-MM-DD (local) of the last date the daily challenge was completed — see checkDailyChallenge() in state.ts. */
   dailyChallengeDate: string | null;
+  /** Spendable shop currency — earns in lockstep with `xp` (see addXp() in state.ts) but decreases on purchase, unlike `xp` itself which stays lifetime/monotonic for leveling. */
+  xpBalance: number;
+  unlockedAvatars: string[];
+  unlockedTitles: string[];
+  /** null = fall back to initials(name) — see avatarContent() in state.ts. */
+  equippedAvatar: string | null;
+  /** null = no title shown. */
+  equippedTitle: string | null;
 }
 
 export interface ReactionSession {
@@ -70,6 +78,8 @@ export interface AchievementStats {
   gamesPlayed: number;
   /** Longest daily play streak ever reached (mirrors Profile.longestStreak). */
   longestStreak: number;
+  unlockedAvatarsCount: number;
+  unlockedTitlesCount: number;
   /** Breach Protocol cross-run counters — passed in as extra stats from finishGameSession's optional param, not derived from Profile like the fields above. Optional since only tactical.ts ever supplies them. */
   tacticalEliteKills?: number;
   tacticalVaultsUsed?: number;
@@ -80,6 +90,9 @@ export interface LeaderboardEntry {
   id: string;
   name: string;
   score: number;
+  /** Snapshot of the equipped avatar/title at the moment this entry was last pushed (see pushLeaderboardEntry in state.ts) — updates whenever the player next sets a score, not live. */
+  avatar?: string | null;
+  title?: string | null;
 }
 
-export type Route = 'home' | 'games' | 'leaderboard' | 'profile' | `play-${string}`;
+export type Route = 'home' | 'games' | 'leaderboard' | 'profile' | 'shop' | `play-${string}`;

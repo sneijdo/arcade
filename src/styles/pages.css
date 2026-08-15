@@ -56,10 +56,26 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  /* .lb-player is a CSS Grid item (the middle 1fr column of .lb-row) — grid
+     items default to min-width:auto, i.e. they refuse to shrink below their
+     content's natural width. A long username/title otherwise pushes this
+     column (and the whole row, and the whole page) wider than the viewport
+     instead of actually truncating within the available 1fr space. */
+  min-width: 0;
+}
+.lb-name-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
 }
 .lb-name {
   font-weight: 600;
   font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
 }
 .lb-you-tag {
   font-size: 9.5px;
@@ -67,6 +83,15 @@
   font-family: var(--font-mono);
   letter-spacing: 0.06em;
   margin-left: 6px;
+}
+.lb-title-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  color: var(--violet);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .lb-score {
   font-family: var(--font-mono);
@@ -99,6 +124,14 @@
   font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
+}
+.profile-title-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--violet);
+  vertical-align: middle;
 }
 .xp-bar-track {
   width: 220px;
@@ -223,5 +256,119 @@
 .settings-msg {
   font-size: 12px;
   margin: 0;
+}
+
+/* ============================= SHOP ============================= */
+.shop-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(201, 247, 62, 0.1), var(--surface-2));
+  border: 1px solid rgba(201, 247, 62, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+}
+.shop-balance-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+.shop-balance-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--lime);
+}
+.shop-avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+.shop-avatar-card {
+  background: var(--void-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 14px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  touch-action: manipulation;
+  transition: border-color 0.12s var(--ease), box-shadow 0.12s var(--ease), transform 0.1s var(--ease);
+}
+.shop-avatar-card:active {
+  transform: scale(0.96);
+}
+.shop-avatar-card.equipped {
+  border-color: var(--lime);
+  box-shadow: 0 0 0 1px var(--lime), 0 0 16px -4px var(--lime-glow);
+  background: linear-gradient(180deg, rgba(201, 247, 62, 0.08), var(--void-2) 60%);
+}
+.shop-avatar-card.unaffordable {
+  opacity: 0.55;
+}
+.shop-avatar-emoji {
+  font-size: 30px;
+  line-height: 1;
+}
+.shop-title-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+}
+.shop-title-card {
+  background: var(--void-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  touch-action: manipulation;
+  transition: border-color 0.12s var(--ease), box-shadow 0.12s var(--ease), transform 0.1s var(--ease);
+}
+.shop-title-card:active {
+  transform: scale(0.98);
+}
+.shop-title-card.equipped {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 1px var(--violet), 0 0 16px -4px var(--violet-glow);
+  background: linear-gradient(180deg, rgba(139, 107, 255, 0.08), var(--void-2) 60%);
+}
+.shop-title-card.unaffordable {
+  opacity: 0.55;
+}
+.shop-title-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+}
+.shop-cost-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--lime);
+  white-space: nowrap;
+}
+.shop-owned-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.shop-equipped-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+  color: var(--lime);
+  white-space: nowrap;
 }
 

@@ -8,6 +8,7 @@ import { Sound } from './sound';
 import { refreshHeader } from './header';
 import type { AchievementStats, LeaderboardEntry, Profile } from './types';
 import { getTodayChallenge, meetsChallengeTarget } from './dailyChallenge';
+import { findAvatar } from './shop';
 
 export let profile: Profile | null = null;
 
@@ -21,6 +22,19 @@ export function initials(name: string): string {
       .join('')
       .toUpperCase() || '?'
   );
+}
+
+/** What to render in an avatar slot — resolves the equipped avatar id (see shop.ts) to its emoji if set, else the classic initials fallback. Works on any {name, avatar} shape so leaderboard entries (not just Profile) can use it too. */
+export function avatarContent(name: string, avatarId?: string | null): string {
+  const def = findAvatar(avatarId);
+  return def ? def.emoji : initials(name);
+}
+
+/** The single place `xp` ever increases — keeps `xpBalance` (spendable in the shop) in lockstep with `xp` (lifetime, used for level) without every award site needing to remember both. */
+export function addXp(amount: number): void {
+  if (!profile) return;
+  profile.xp += amount;
+  profile.xpBalance += amount;
 }
 
 function directionForGame(gameId: string): 'asc' | 'desc' {
@@ -37,6 +51,11 @@ export async function loadProfile(): Promise<Profile | null> {
     if (p.longestStreak == null) p.longestStreak = 0;
     if (p.lastPlayedDate === undefined) p.lastPlayedDate = null;
     if (p.dailyChallengeDate === undefined) p.dailyChallengeDate = null;
+    if (p.xpBalance == null) p.xpBalance = 0;
+    if (!p.unlockedAvatars) p.unlockedAvatars = [];
+    if (!p.unlockedTitles) p.unlockedTitles = [];
+    if (p.equippedAvatar === undefined) p.equippedAvatar = null;
+    if (p.equippedTitle === undefined) p.equippedTitle = null;
     profile = p;
   }
   return profile;
@@ -73,6 +92,11 @@ export async function createProfile(name: string, id?: string): Promise<void> {
     longestStreak: 0,
     lastPlayedDate: null,
     dailyChallengeDate: null,
+    xpBalance: 0,
+    unlockedAvatars: [],
+    unlockedTitles: [],
+    equippedAvatar: null,
+    equippedTitle: null,
   };
   await saveProfile();
 }
@@ -107,7 +131,7 @@ export async function updateStreak(): Promise<void> {
 
   const bonusXp = STREAK_MILESTONE_XP[profile.currentStreak];
   if (bonusXp) {
-    profile.xp += bonusXp;
+    addXp(bonusXp);
     await saveProfile();
     toast(`<span class="toast-icon">🔥</span> +${bonusXp} XP <span style="color:var(--text-dim)">— ${profile.currentStreak} dages stime</span>`, 'achievement');
     Sound.achievement();
@@ -129,7 +153,7 @@ export async function checkDailyChallenge(gameId: string, score: number): Promis
   if (!meetsChallengeTarget(challenge, score)) return;
 
   profile.dailyChallengeDate = today;
-  profile.xp += challenge.xpReward;
+  addXp(challenge.xpReward);
   await saveProfile();
   toast(`<span class="toast-icon">🎯</span> +${challenge.xpReward} XP <span style="color:var(--text-dim)">— Dagens udfordring gennemført</span>`, 'achievement');
   Sound.achievement();
@@ -137,7 +161,11 @@ export async function checkDailyChallenge(gameId: string, score: number): Promis
 
 export async function pushLeaderboardEntry(gameId: string, score: number): Promise<void> {
   if (!profile) return;
-  await storage.set(`lb:${gameId}:` + profile.id, { name: profile.name, score, id: profile.id }, true);
+  await storage.set(
+    `lb:${gameId}:` + profile.id,
+    { name: profile.name, score, id: profile.id, avatar: profile.equippedAvatar, title: profile.equippedTitle },
+    true,
+  );
 }
 
 export async function getCombinedLeaderboard(gameId: string): Promise<LeaderboardEntry[]> {
@@ -161,7 +189,7 @@ export async function getCombinedLeaderboard(gameId: string): Promise<Leaderboar
 
 export async function awardXP(amount: number, reasonLabel?: string): Promise<void> {
   if (!profile) return;
-  profile.xp += amount;
+  addXp(amount);
   await saveProfile();
   refreshHeader();
   if (reasonLabel) {
@@ -188,6 +216,8 @@ export async function checkAchievements(extra: Partial<AchievementStats> = {}): 
     ranks,
     gamesPlayed,
     longestStreak: profile.longestStreak,
+    unlockedAvatarsCount: profile.unlockedAvatars.length,
+    unlockedTitlesCount: profile.unlockedTitles.length,
     ...extra,
   };
   let changed = false;
@@ -235,7 +265,7 @@ export async function finishGameSession(gameId: string, score: number, extraAchi
   const rank = rankIdx >= 0 ? rankIdx + 1 : null;
   if (rank && rank <= 3) xpGain += XP_RULES.top3;
 
-  profile.xp += xpGain;
+  addXp(xpGain);
   await saveProfile();
   await updateStreak();
   await checkDailyChallenge(gameId, score);

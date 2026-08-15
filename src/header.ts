@@ -1,4 +1,4 @@
-import { profile, initials } from './state';
+import { profile, avatarContent } from './state';
 import { levelInfo } from './xp';
 import { Sound } from './sound';
 
@@ -18,7 +18,7 @@ export function refreshHeader(): void {
   const xpEl = document.getElementById('headerXp');
   const muteBtn = document.getElementById('muteBtn');
   const streakChip = document.getElementById('streakChip');
-  if (avatarEl) avatarEl.textContent = initials(profile.name);
+  if (avatarEl) avatarEl.textContent = avatarContent(profile.name, profile.equippedAvatar);
   if (nameEl) nameEl.textContent = profile.name;
   if (levelEl) levelEl.textContent = String(li.level);
   if (xpEl) xpEl.textContent = profile.xp + ' XP';

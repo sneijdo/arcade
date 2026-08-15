@@ -2,7 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { XP_RULES } from '../../xp';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
-import { profile, saveProfile, getCombinedLeaderboard, pushLeaderboardEntry, checkAchievements, updateStreak, checkDailyChallenge } from '../../state';
+import { profile, saveProfile, getCombinedLeaderboard, pushLeaderboardEntry, checkAchievements, updateStreak, checkDailyChallenge, addXp } from '../../state';
 import { refreshHeader } from '../../header';
 
 const REACTION_ROUNDS = 5;
@@ -224,7 +224,7 @@ async function finishReactionSession(): Promise<void> {
   const myRank = board.findIndex((e) => e.id === profile!.id) + 1;
   if (myRank > 0 && myRank <= 3) xpGain += XP_RULES.top3;
 
-  profile.xp += xpGain;
+  addXp(xpGain);
   await saveProfile();
   await updateStreak();
   await checkDailyChallenge('reaction', best);
@@ -273,7 +273,7 @@ function drawFinalScreen(results: number[], avg: number, best: number, isNewBest
 
           <div class="final-ctas">
             <button class="btn btn-primary btn-lg" id="playAgainBtn">SPIL IGEN</button>
-            <button class="btn btn-ghost btn-lg" data-nav="leaderboard">LEADERBOARD</button>
+            <button class="btn btn-ghost btn-lg" data-nav="leaderboard-reaction">LEADERBOARD</button>
           </div>
         </div>
       </div>

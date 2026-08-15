@@ -411,6 +411,16 @@
   border-radius: var(--radius-lg);
   padding: 28px;
 }
+@media (max-width: 480px) {
+  /* Unlike .page, .panel never scaled its padding down for narrow phones —
+     28px on each side stacked with .page's own padding ate a huge chunk of
+     a 320-375px viewport (measured: only ~230px left for actual content on
+     iPhone SE), which is exactly the kind of thing that reads as "not very
+     mobile-friendly" even without anything technically overflowing. */
+  .panel {
+    padding: 16px;
+  }
+}
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

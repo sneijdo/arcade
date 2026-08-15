@@ -1,4 +1,4 @@
-import { profile, getCombinedLeaderboard, initials, clearProfile, bestScoreForGame } from '../state';
+import { profile, getCombinedLeaderboard, avatarContent, clearProfile, bestScoreForGame } from '../state';
 import { levelInfo } from '../xp';
 import { ACHIEVEMENTS } from '../achievements';
 import { authAvailable, signOut, changePassword } from '../auth';
@@ -6,6 +6,7 @@ import { showRecoveryCodeReveal } from '../onboarding';
 import { GAMES } from '../games/registry';
 import { ScoreKinds } from '../scoring';
 import { toast } from '../toast';
+import { findTitle } from '../shop';
 
 export async function renderProfile(): Promise<void> {
   const main = document.getElementById('main')!;
@@ -19,13 +20,21 @@ export async function renderProfile(): Promise<void> {
     <div class="page">
       <div class="panel">
         <div class="profile-head">
-          <div class="avatar-lg">${initials(profile.name)}</div>
+          <div class="avatar-lg">${avatarContent(profile.name, profile.equippedAvatar)}</div>
           <div>
-            <div class="profile-name">${profile.name}</div>
+            <div class="profile-name">${profile.name}${(() => { const t = findTitle(profile!.equippedTitle); return t ? ` <span class="profile-title-tag">${t.label}</span>` : ''; })()}</div>
             <div class="xp-bar-track"><div class="xp-bar-fill" style="width:${li.pct}%"></div></div>
             <div class="xp-bar-label">LEVEL ${li.level} · ${li.into} / ${li.need} XP ${rank ? `· PLACERING #${rank} GLOBALT (REACTION)` : ''}</div>
           </div>
         </div>
+      </div>
+
+      <div class="shop-balance" style="margin-top:16px">
+        <div>
+          <div class="shop-balance-label">XP-SALDO TIL BUTIKKEN</div>
+          <div class="shop-balance-value">✦ ${profile.xpBalance} XP</div>
+        </div>
+        <button class="btn btn-primary" data-nav="shop">GÅ TIL BUTIK</button>
       </div>
 
       <div class="section-title" style="margin-top:32px">Personlige rekorder</div>

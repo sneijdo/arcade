@@ -51,6 +51,10 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'streak_starter', icon: '🔥', title: 'I ILD', desc: 'Nå en 3-dages spillestime.', check: (s) => s.longestStreak >= 3 },
   { id: 'streak_legend', icon: '🌋', title: 'UUDSLUKKELIG', desc: 'Nå en 30-dages spillestime.', check: (s) => s.longestStreak >= 30 },
 
+  // Shop
+  { id: 'shop_stylish', icon: '🎭', title: 'STILFULD', desc: 'Eje 3+ avatarer fra butikken.', check: (s) => s.unlockedAvatarsCount >= 3 },
+  { id: 'shop_renowned', icon: '📛', title: 'KENDT', desc: 'Eje 3+ titler fra butikken.', check: (s) => s.unlockedTitlesCount >= 3 },
+
   // Cross-game
   { id: 'firstplace', icon: '🏆', title: 'MESTER', desc: 'Indtag #1-pladsen på et leaderboard.', check: (s) => Object.values(s.ranks).some((r) => r === 1) },
   { id: 'allrounder', icon: '🎮', title: 'ALLROUNDER', desc: 'Sæt en rekord i alle spil.', check: (s) => s.gamesPlayed >= 10 },

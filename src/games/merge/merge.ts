@@ -410,7 +410,7 @@ function drawFinalScreen(score: number, moves: number, isNewBest: boolean, xpGai
 
           <div class="final-ctas">
             <button class="btn btn-primary btn-lg" id="mergePlayAgainBtn">SPIL IGEN</button>
-            <button class="btn btn-ghost btn-lg" data-nav="leaderboard">LEADERBOARD</button>
+            <button class="btn btn-ghost btn-lg" data-nav="leaderboard-merge">LEADERBOARD</button>
           </div>
         </div>
       </div>

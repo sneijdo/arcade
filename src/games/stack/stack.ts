@@ -407,7 +407,7 @@ function drawFinalScreen(isNewBest: boolean, xpGain: number, rank: number | null
 
           <div class="final-ctas">
             <button class="btn btn-primary btn-lg" id="stackPlayAgainBtn">SPIL IGEN</button>
-            <button class="btn btn-ghost btn-lg" data-nav="leaderboard">LEADERBOARD</button>
+            <button class="btn btn-ghost btn-lg" data-nav="leaderboard-stack">LEADERBOARD</button>
           </div>
         </div>
       </div>
