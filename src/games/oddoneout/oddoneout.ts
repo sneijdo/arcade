@@ -67,10 +67,10 @@ function gridSizeForAttempt(attempt: number): number {
   return Math.min(6, 3 + Math.floor(attempt / 3));
 }
 function timeMsForAttempt(attempt: number): number {
-  return Math.max(1150, 3000 - attempt * 130);
+  return Math.max(1000, 3000 - attempt * 145);
 }
 function oddAngleForAttempt(attempt: number): number {
-  return Math.max(11, 32 - attempt * 1.4);
+  return Math.max(9, 32 - attempt * 1.5);
 }
 
 function drawShell(): void {
