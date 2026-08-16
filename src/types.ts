@@ -140,4 +140,4 @@ export interface HallOfFameEntry {
   legendaryWeeks: number;
 }
 
-export type Route = 'home' | 'games' | 'leaderboard' | 'profile' | 'shop' | 'guide' | `play-${string}`;
+export type Route = 'home' | 'games' | 'leaderboard' | 'activity' | 'profile' | 'shop' | 'guide' | `play-${string}`;

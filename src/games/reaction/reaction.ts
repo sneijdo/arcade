@@ -4,6 +4,7 @@ import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { profile, saveProfile, getCombinedLeaderboard, pushLeaderboardEntry, checkAchievements, updateStreak, checkDailyChallenge, addXp } from '../../state';
 import { refreshHeader } from '../../header';
+import { pushActivity } from '../../activity';
 
 const REACTION_ROUNDS = 5;
 /** Visible target circle stays this size (identity match with the original design). */
@@ -226,9 +227,8 @@ async function finishReactionSession(): Promise<void> {
 
   addXp(xpGain);
   await saveProfile();
-  await updateStreak();
-  await checkDailyChallenge('reaction', best);
   refreshHeader();
+  void pushActivity('reaction', best, isNewBest ? 'personal_best' : 'session', profile.name, profile.equippedAvatar, profile.equippedFrame);
 
   Sound.complete();
   if (isNewBest) {
@@ -237,7 +237,23 @@ async function finishReactionSession(): Promise<void> {
   }
 
   drawFinalScreen(results, avg, best, isNewBest, xpGain, myRank);
-  await checkAchievements();
+
+  // Streak/daily-challenge/achievements are toast-driven bonuses, not needed
+  // to paint the result screen above — settle them in the background so the
+  // player isn't stuck waiting on a frozen screen for them (same pattern as
+  // finishGameSession in state.ts).
+  void settleReactionExtras(best);
+}
+
+async function settleReactionExtras(best: number): Promise<void> {
+  try {
+    await updateStreak();
+    await checkDailyChallenge('reaction', best);
+    refreshHeader();
+    await checkAchievements();
+  } catch (e) {
+    console.error('post-session bookkeeping failed', e);
+  }
 }
 
 function drawFinalScreen(results: number[], avg: number, best: number, isNewBest: boolean, xpGain: number, rank: number): void {

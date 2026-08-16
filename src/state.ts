@@ -5,6 +5,7 @@ import { GAMES } from './games/registry';
 import { ScoreKinds } from './scoring';
 import { XP_RULES, levelInfo } from './xp';
 import { toast } from './toast';
+import { pushActivity } from './activity';
 import { Sound } from './sound';
 import { refreshHeader } from './header';
 import type { AchievementStats, HallOfFameEntry, LeaderboardEntry, PlayerMeta, Profile } from './types';
@@ -230,11 +231,11 @@ function lbPrefix(gameId: string, week: string | null): string {
 
 async function readLeaderboard(gameId: string, week: string | null): Promise<LeaderboardEntry[]> {
   const keys = await storage.list(lbPrefix(gameId, week), true);
-  const entries: LeaderboardEntry[] = [];
-  for (const k of keys) {
-    const r = await storage.get<LeaderboardEntry>(k, true);
-    if (r) entries.push(r);
-  }
+  // Fetched in parallel rather than one round-trip per key — with many
+  // players on a leaderboard, sequential fetches here were the single
+  // biggest contributor to the post-game wait (see finishGameSession).
+  const rows = await Promise.all(keys.map((k) => storage.get<LeaderboardEntry>(k, true)));
+  const entries: LeaderboardEntry[] = rows.filter((r): r is LeaderboardEntry => r != null);
   const dir = directionForGame(gameId);
   // dedupe by id keeping the best score for that game's direction
   const byId: Record<string, LeaderboardEntry> = {};
@@ -411,12 +412,15 @@ export async function awardXP(amount: number, reasonLabel?: string): Promise<voi
 export async function checkAchievements(extra: Partial<AchievementStats> = {}): Promise<void> {
   if (!profile) return;
   const implementedGameIds = GAMES.filter((g) => g.implemented).map((g) => g.id);
+  // Fetched in parallel across games rather than one game's leaderboard at a
+  // time — this loop used to be the dominant cost of ending a session (up to
+  // 15 sequential full-leaderboard reads).
+  const boards = await Promise.all(implementedGameIds.map((gameId) => getCombinedLeaderboard(gameId)));
   const ranks: Record<string, number | null> = {};
-  for (const gameId of implementedGameIds) {
-    const board = await getCombinedLeaderboard(gameId);
-    const idx = board.findIndex((e) => e.id === profile!.id);
+  implementedGameIds.forEach((gameId, i) => {
+    const idx = boards[i].findIndex((e) => e.id === profile!.id);
     ranks[gameId] = idx >= 0 ? idx + 1 : null;
-  }
+  });
   const gamesPlayed = Object.keys(profile.bestScores).length + (profile.bestReaction != null ? 1 : 0);
   const statObj: AchievementStats = {
     bestReaction: profile.bestReaction,
@@ -518,10 +522,27 @@ export async function finishGameSession(gameId: string, score: number, extraAchi
 
   addXp(xpGain);
   await saveProfile();
-  await updateStreak();
-  await checkDailyChallenge(gameId, score);
   refreshHeader();
-  await checkAchievements(extraAchievementStats);
+  void pushActivity(gameId, score, isNewBest ? 'personal_best' : 'session', profile.name, profile.equippedAvatar, profile.equippedFrame);
+
+  // Streak milestones, the daily challenge, and achievements are all
+  // pure toast-driven bonuses layered on top of this result — none of them
+  // are needed to paint score/XP/rank above. checkAchievements alone
+  // re-scans every implemented game's leaderboard, by far the slowest part
+  // of ending a session, so let this settle in the background instead of
+  // making the player stare at a frozen result screen for it.
+  void settleSessionExtras(gameId, score, extraAchievementStats);
 
   return { isNewBest, xpGain, rank };
+}
+
+async function settleSessionExtras(gameId: string, score: number, extraAchievementStats?: Partial<AchievementStats>): Promise<void> {
+  try {
+    await updateStreak();
+    await checkDailyChallenge(gameId, score);
+    refreshHeader();
+    await checkAchievements(extraAchievementStats);
+  } catch (e) {
+    console.error('post-session bookkeeping failed', e);
+  }
 }

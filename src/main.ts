@@ -6,6 +6,7 @@ import { initRouter, navigate, currentHashRoute } from './router';
 import { showOnboarding, showAuthModal, closeAnyModal } from './onboarding';
 import { authAvailable, onAuthStateChange } from './auth';
 import { hasLocalGuestProfile, useLocalGuestStorage } from './storage';
+import { startPresence } from './activity';
 import type { Session } from '@supabase/supabase-js';
 
 function wireMuteButton(): void {
@@ -61,6 +62,7 @@ async function initSupabaseMode(): Promise<void> {
     }
     Sound.setMuted(!!p.muted);
     refreshHeader();
+    startPresence(p.id, p.name, p.equippedAvatar);
     navigate(currentHashRoute());
   };
 

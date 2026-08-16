@@ -2,6 +2,7 @@ import { Sound } from './sound';
 import { renderHome } from './pages/home';
 import { renderGames } from './pages/games';
 import { renderLeaderboard } from './pages/leaderboard';
+import { renderActivity } from './pages/activity';
 import { renderProfile } from './pages/profile';
 import { renderShop } from './pages/shop';
 import { renderGuide } from './pages/guide';
@@ -30,13 +31,14 @@ export async function navigate(r: string): Promise<void> {
   if (r === 'home') await renderHome();
   else if (r === 'games') renderGames();
   else if (isLeaderboard) await renderLeaderboard(r.startsWith('leaderboard-') ? r.slice('leaderboard-'.length) : undefined);
+  else if (r === 'activity') await renderActivity();
   else if (r === 'profile') await renderProfile();
   else if (r === 'shop') await renderShop();
   else if (r === 'guide') renderGuide();
   else if (r.startsWith('play-')) GAME_RENDERERS[r.slice(5)]?.();
 }
 
-const KNOWN_ROUTES = ['home', 'games', 'leaderboard', 'profile', 'shop', 'guide'];
+const KNOWN_ROUTES = ['home', 'games', 'leaderboard', 'activity', 'profile', 'shop', 'guide'];
 
 /** What route the current URL points at — used both to restore on app boot and to resolve browser back/forward. Falls back to 'home' for anything unresolvable (e.g. a stale bookmarked/reloaded hash pointing at a game id that no longer exists, or any other unrecognized route string) rather than rendering a blank page. */
 export function currentHashRoute(): string {
