@@ -458,10 +458,17 @@
 }
 .shop-locked-tag {
   font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.03em;
+  font-size: 9px;
+  letter-spacing: 0.02em;
   color: var(--violet);
-  white-space: nowrap;
+  text-align: center;
+  width: 100%;
+  /* Deliberately NOT nowrap — a lock reason is user-provided-length text (Hall of Fame gates
+     read longer than level gates), and this renders inside an 84px-wide card. Letting it wrap
+     keeps a long reason legible instead of overflowing the card. */
+  white-space: normal;
+  line-height: 1.3;
+  overflow-wrap: break-word;
 }
 .shop-avatar-card.level-locked,
 .shop-title-card.level-locked {

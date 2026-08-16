@@ -40,10 +40,14 @@ function displayName(item: ShopItem): string {
   return 'label' in item ? item.label : item.name;
 }
 
-/** Why an unowned item can't be bought yet, if at all — null means it's just a normal cost-gated buy. */
+/**
+ * Why an unowned item can't be bought yet, if at all — null means it's just a normal cost-gated
+ * buy. Kept deliberately short: this renders inside an 84px-wide shop card ("🏆 HALL OF FAME 10"
+ * overflowed the card entirely) — the full explanation still shows in the toast on tap.
+ */
 function gateReason(item: ShopItem): string | null {
-  if (item.requiresHofWins && myHofWins < item.requiresHofWins) return `🏆 HALL OF FAME ${item.requiresHofWins}`;
-  if (item.unlockLevel && myLevel() < item.unlockLevel) return `🔒 LEVEL ${item.unlockLevel}`;
+  if (item.requiresHofWins && myHofWins < item.requiresHofWins) return `🏆 HOF ${item.requiresHofWins}`;
+  if (item.unlockLevel && myLevel() < item.unlockLevel) return `🔒 LVL ${item.unlockLevel}`;
   return null;
 }
 
