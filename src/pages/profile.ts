@@ -39,6 +39,8 @@ export async function renderProfile(): Promise<void> {
         <button class="btn btn-primary" data-nav="shop">GÅ TIL BUTIK</button>
       </div>
 
+      <button class="btn btn-ghost" style="margin-top:10px;width:100%" data-nav="guide">ⓘ SÅDAN VIRKER DET</button>
+
       <div class="shop-collection-row" style="margin-top:12px">
         <span>🎭 ${profile.unlockedAvatars.filter((id) => findAvatar(id)).length} / ${AVATARS.length} avatarer</span>
         <span>🖼️ ${profile.unlockedFrames.length} / ${FRAMES.length} rammer</span>

@@ -25,7 +25,8 @@ const DAILY_TARGETS: Record<string, number> = {
   ruleswitch: 12,
 };
 
-const XP_REWARD = 60;
+/** Halved along with every other XP source in the app (was 60). */
+const XP_REWARD = 30;
 
 function dateSeed(dateStr: string): number {
   let h = 0;

@@ -28,7 +28,7 @@ export const BADGES: Badge[] = [
   { id: 'badge-elite', name: 'Elite', desc: 'Nedkæmp 25+ elite-fjender i Breach Protocol.', asset: '/cosmetics/badges/elite.png', rarity: 'epic', check: (s) => (s.tacticalEliteKills ?? 0) >= 25 },
 
   // Legendary
-  { id: 'badge-legend', name: 'Legend', desc: '10 samlede #1-uger i Hall of Fame.', asset: '/cosmetics/badges/legend.png', rarity: 'legendary', check: (s) => (s.hofTotalWins ?? 0) >= 10 },
+  { id: 'badge-legend', name: 'Legend', desc: 'Slut en uge som nr. 1 i 4+ forskellige spil.', asset: '/cosmetics/badges/legend.png', rarity: 'legendary', check: (s) => (s.legendaryWeeks ?? 0) >= 1 },
   { id: 'badge-global', name: 'Global', desc: 'Vær #1 i det samlede Hall of Fame — kun én spiller kan have denne ad gangen.', asset: '/cosmetics/badges/global.png', rarity: 'legendary', check: (s) => s.hofIsRankOne === true },
   { id: 'badge-void-walker', name: 'Void Walker', desc: 'Nå level 20.', asset: '/cosmetics/badges/void-walker.png', rarity: 'legendary', check: (s) => s.level >= 20 },
 ];

@@ -105,8 +105,9 @@ export interface AchievementStats {
   tacticalVaultsUsed?: number;
   tacticalBossesDefeated?: string[];
   /** Hall of Fame stats — only supplied when checkBadges() is called from creditMyHallOfFameWins(), since they're not part of the normal per-session stat set. */
-  hofTotalWins?: number;
   hofIsRankOne?: boolean;
+  /** Weeks this player finished #1 in 4+ different games at once — the legendary-cosmetics gate, see LEGENDARY_WEEK_THRESHOLD in state.ts. */
+  legendaryWeeks?: number;
 }
 
 export interface LeaderboardEntry {
@@ -127,11 +128,13 @@ export interface PlayerMeta {
   frame: string | null;
 }
 
-/** Cross-week aggregate of #1 finishes, keyed by profile id. See finalizePastWeeks() in state.ts. */
+/** Cross-week aggregate of #1 finishes, keyed by profile id. See creditMyHallOfFameWins() in state.ts. */
 export interface HallOfFameEntry {
   id: string;
   wins: Record<string, number>;
   totalWins: number;
+  /** Weeks this player finished #1 in 4+ different games at once — earns a legendary-cosmetics slot each time (see getMyLegendarySlots in state.ts). */
+  legendaryWeeks: number;
 }
 
-export type Route = 'home' | 'games' | 'leaderboard' | 'profile' | 'shop' | `play-${string}`;
+export type Route = 'home' | 'games' | 'leaderboard' | 'profile' | 'shop' | 'guide' | `play-${string}`;

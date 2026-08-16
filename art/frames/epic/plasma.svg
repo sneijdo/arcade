@@ -1,0 +1,15 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="plasma" cx="0.5" cy="0.5" r="0.7">
+      <stop offset="0" stop-color="#e879f9"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </radialGradient>
+    <filter id="glowP" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter></defs>
+
+  <rect x="10" y="10" width="180" height="180" fill="none"
+        stroke="url(#plasma)" stroke-width="6" filter="url(#glowP)">
+    <animate attributeName="stroke-width" values="6;8;6" dur="2.2s" repeatCount="indefinite"/>
+  </rect>
+</svg>

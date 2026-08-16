@@ -1,0 +1,119 @@
+{
+  "version": "2.0",
+  "type": "badge-assets",
+  "note": "Normalized badge assets. Original artwork preserved; inconsistent crops and offsets corrected.",
+  "badges": [
+    {
+      "id": "badge-7-day-streak",
+      "name": "7 Day Streak",
+      "asset": "/cosmetics/badges/7-day-streak.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-10-games",
+      "name": "10 Games",
+      "asset": "/cosmetics/badges/10-games.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-50-games",
+      "name": "50 Games",
+      "asset": "/cosmetics/badges/50-games.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-100-games",
+      "name": "100 Games",
+      "asset": "/cosmetics/badges/100-games.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-diamond",
+      "name": "Diamond",
+      "asset": "/cosmetics/badges/diamond.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-dragon",
+      "name": "Dragon",
+      "asset": "/cosmetics/badges/dragon.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-elite",
+      "name": "Elite",
+      "asset": "/cosmetics/badges/elite.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-first-win",
+      "name": "First Win",
+      "asset": "/cosmetics/badges/first-win.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-global",
+      "name": "Global",
+      "asset": "/cosmetics/badges/global.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-legend",
+      "name": "Legend",
+      "asset": "/cosmetics/badges/legend.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-no-death",
+      "name": "No Death",
+      "asset": "/cosmetics/badges/no-death.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-planker",
+      "name": "Planker",
+      "asset": "/cosmetics/badges/planker.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-speedrunner",
+      "name": "Speedrunner",
+      "asset": "/cosmetics/badges/speedrunner.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-top-10",
+      "name": "Top 10",
+      "asset": "/cosmetics/badges/top-10.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-unstoppable",
+      "name": "Unstoppable",
+      "asset": "/cosmetics/badges/unstoppable.png",
+      "resolution": "256x256",
+      "transparent": true
+    },
+    {
+      "id": "badge-void-walker",
+      "name": "Void Walker",
+      "asset": "/cosmetics/badges/void-walker.png",
+      "resolution": "256x256",
+      "transparent": true
+    }
+  ]
+}

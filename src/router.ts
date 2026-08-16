@@ -4,6 +4,7 @@ import { renderGames } from './pages/games';
 import { renderLeaderboard } from './pages/leaderboard';
 import { renderProfile } from './pages/profile';
 import { renderShop } from './pages/shop';
+import { renderGuide } from './pages/guide';
 import { GAME_RENDERERS } from './games';
 import type { Route } from './types';
 
@@ -31,6 +32,7 @@ export async function navigate(r: string): Promise<void> {
   else if (isLeaderboard) await renderLeaderboard(r.startsWith('leaderboard-') ? r.slice('leaderboard-'.length) : undefined);
   else if (r === 'profile') await renderProfile();
   else if (r === 'shop') await renderShop();
+  else if (r === 'guide') renderGuide();
   else if (r.startsWith('play-')) GAME_RENDERERS[r.slice(5)]?.();
 }
 

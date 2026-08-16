@@ -8,8 +8,6 @@ export interface AvatarDef {
   cost: number;
   /** Not buyable below this level, regardless of XP balance — epic tier only. */
   unlockLevel?: number;
-  /** Not buyable without this many cumulative Hall of Fame #1-week finishes (see HallOfFameEntry.totalWins) — legendary tier only. The one gate that can't just be grinded past with XP. */
-  requiresHofWins?: number;
 }
 
 export interface FrameDef {
@@ -19,7 +17,6 @@ export interface FrameDef {
   rarity: Rarity;
   cost: number;
   unlockLevel?: number;
-  requiresHofWins?: number;
 }
 
 export interface TitleDef {
@@ -29,10 +26,7 @@ export interface TitleDef {
   rarity: Rarity;
   cost: number;
   unlockLevel?: number;
-  requiresHofWins?: number;
 }
-
-const LEGENDARY_HOF_WINS = 10;
 
 /**
  * Cosmetics Pack V1 (see /art/manifest.json — ids/names/rarities are canonical, taken directly
@@ -54,29 +48,39 @@ export const AVATARS: AvatarDef[] = [
   { id: 'avatar-neon-hacker', name: 'Neon Hacker', asset: '/cosmetics/avatars/epic/neon-hacker.png', rarity: 'epic', cost: 550, unlockLevel: 11 },
   { id: 'avatar-arcade-wizard', name: 'Arcade Wizard', asset: '/cosmetics/avatars/epic/arcade-wizard.png', rarity: 'epic', cost: 650, unlockLevel: 12 },
   { id: 'avatar-glitch', name: 'Glitch', asset: '/cosmetics/avatars/epic/glitch.png', rarity: 'epic', cost: 750, unlockLevel: 13 },
-  { id: 'avatar-arcade-king', name: 'Arcade King', asset: '/cosmetics/avatars/legendary/arcade-king.png', rarity: 'legendary', cost: 1000, requiresHofWins: LEGENDARY_HOF_WINS },
-  { id: 'avatar-glitch-god', name: 'Glitch God', asset: '/cosmetics/avatars/legendary/glitch-god.png', rarity: 'legendary', cost: 1200, requiresHofWins: LEGENDARY_HOF_WINS },
-  { id: 'avatar-void', name: 'Void', asset: '/cosmetics/avatars/legendary/void.png', rarity: 'legendary', cost: 1400, requiresHofWins: LEGENDARY_HOF_WINS },
-  { id: 'avatar-8-bit-legend', name: '8-Bit Legend', asset: '/cosmetics/avatars/legendary/8-bit-legend.png', rarity: 'legendary', cost: 1600, requiresHofWins: LEGENDARY_HOF_WINS },
+  { id: 'avatar-arcade-king', name: 'Arcade King', asset: '/cosmetics/avatars/legendary/arcade-king.png', rarity: 'legendary', cost: 1000 },
+  { id: 'avatar-glitch-god', name: 'Glitch God', asset: '/cosmetics/avatars/legendary/glitch-god.png', rarity: 'legendary', cost: 1200 },
+  { id: 'avatar-void', name: 'Void', asset: '/cosmetics/avatars/legendary/void.png', rarity: 'legendary', cost: 1400 },
+  { id: 'avatar-8-bit-legend', name: '8-Bit Legend', asset: '/cosmetics/avatars/legendary/8-bit-legend.png', rarity: 'legendary', cost: 1600 },
 ];
 
+/**
+ * Frames V2 (art/frames/*.svg — dropped in directly, no updated root manifest entry, so this
+ * catalog is hand-built from the actual folder contents rather than art/manifest.json). Vector
+ * now instead of raster PNG, which also resolves the "frames might not read well at 28px" open
+ * question from the original integration — SVG stays crisp at any size.
+ * Composition changed from V1: "Dragon" (epic) and "Arcade King" (legendary) are retired (no
+ * longer present in the source), "Prism" (epic) and "Neon Legend" (legendary) are new, and
+ * "Circuit" moved from common to rare — "Scanlines" is the new 4th common. Since this pack
+ * shipped only hours ago, no player has meaningfully owned the retired ids yet.
+ */
 export const FRAMES: FrameDef[] = [
-  { id: 'frame-pixel', name: 'Pixel', asset: '/cosmetics/frames/common/pixel.png', rarity: 'common', cost: 60 },
-  { id: 'frame-retro', name: 'Retro', asset: '/cosmetics/frames/common/retro.png', rarity: 'common', cost: 80 },
-  { id: 'frame-arcade', name: 'Arcade', asset: '/cosmetics/frames/common/arcade.png', rarity: 'common', cost: 100 },
-  { id: 'frame-circuit', name: 'Circuit', asset: '/cosmetics/frames/common/circuit.png', rarity: 'common', cost: 120 },
-  { id: 'frame-neon', name: 'Neon', asset: '/cosmetics/frames/rare/neon.png', rarity: 'rare', cost: 150 },
-  { id: 'frame-cyber', name: 'Cyber', asset: '/cosmetics/frames/rare/cyber.png', rarity: 'rare', cost: 200 },
-  { id: 'frame-holographic', name: 'Holographic', asset: '/cosmetics/frames/rare/holographic.png', rarity: 'rare', cost: 250 },
-  { id: 'frame-digital', name: 'Digital', asset: '/cosmetics/frames/rare/digital.png', rarity: 'rare', cost: 300 },
-  { id: 'frame-glitch', name: 'Glitch', asset: '/cosmetics/frames/epic/glitch.png', rarity: 'epic', cost: 450, unlockLevel: 10 },
-  { id: 'frame-plasma', name: 'Plasma', asset: '/cosmetics/frames/epic/plasma.png', rarity: 'epic', cost: 550, unlockLevel: 11 },
-  { id: 'frame-galaxy', name: 'Galaxy', asset: '/cosmetics/frames/epic/galaxy.png', rarity: 'epic', cost: 650, unlockLevel: 12 },
-  { id: 'frame-dragon', name: 'Dragon', asset: '/cosmetics/frames/epic/dragon.png', rarity: 'epic', cost: 750, unlockLevel: 13 },
-  { id: 'frame-golden', name: 'Golden', asset: '/cosmetics/frames/legendary/golden.png', rarity: 'legendary', cost: 1000, requiresHofWins: LEGENDARY_HOF_WINS },
-  { id: 'frame-diamond', name: 'Diamond', asset: '/cosmetics/frames/legendary/diamond.png', rarity: 'legendary', cost: 1200, requiresHofWins: LEGENDARY_HOF_WINS },
-  { id: 'frame-arcade-king', name: 'Arcade King', asset: '/cosmetics/frames/legendary/arcade-king.png', rarity: 'legendary', cost: 1400, requiresHofWins: LEGENDARY_HOF_WINS },
-  { id: 'frame-void', name: 'Void', asset: '/cosmetics/frames/legendary/void.png', rarity: 'legendary', cost: 1600, requiresHofWins: LEGENDARY_HOF_WINS },
+  { id: 'frame-pixel', name: 'Pixel', asset: '/cosmetics/frames/common/pixel.svg', rarity: 'common', cost: 60 },
+  { id: 'frame-retro', name: 'Retro', asset: '/cosmetics/frames/common/retro.svg', rarity: 'common', cost: 80 },
+  { id: 'frame-arcade', name: 'Arcade', asset: '/cosmetics/frames/common/arcade.svg', rarity: 'common', cost: 100 },
+  { id: 'frame-scanlines', name: 'Scanlines', asset: '/cosmetics/frames/common/scanlines.svg', rarity: 'common', cost: 120 },
+  { id: 'frame-neon', name: 'Neon', asset: '/cosmetics/frames/rare/neon.svg', rarity: 'rare', cost: 150 },
+  { id: 'frame-cyber', name: 'Cyber', asset: '/cosmetics/frames/rare/cyber.svg', rarity: 'rare', cost: 200 },
+  { id: 'frame-holographic', name: 'Holographic', asset: '/cosmetics/frames/rare/holographic.svg', rarity: 'rare', cost: 250 },
+  { id: 'frame-circuit', name: 'Circuit', asset: '/cosmetics/frames/rare/circuit.svg', rarity: 'rare', cost: 300 },
+  { id: 'frame-glitch', name: 'Glitch', asset: '/cosmetics/frames/epic/glitch.svg', rarity: 'epic', cost: 450, unlockLevel: 10 },
+  { id: 'frame-plasma', name: 'Plasma', asset: '/cosmetics/frames/epic/plasma.svg', rarity: 'epic', cost: 550, unlockLevel: 11 },
+  { id: 'frame-galaxy', name: 'Galaxy', asset: '/cosmetics/frames/epic/galaxy.svg', rarity: 'epic', cost: 650, unlockLevel: 12 },
+  { id: 'frame-prism', name: 'Prism', asset: '/cosmetics/frames/epic/prism.svg', rarity: 'epic', cost: 750, unlockLevel: 13 },
+  { id: 'frame-golden', name: 'Golden', asset: '/cosmetics/frames/legendary/golden.svg', rarity: 'legendary', cost: 1000 },
+  { id: 'frame-diamond', name: 'Diamond', asset: '/cosmetics/frames/legendary/diamond.svg', rarity: 'legendary', cost: 1200 },
+  { id: 'frame-neon-legend', name: 'Neon Legend', asset: '/cosmetics/frames/legendary/neon-legend.svg', rarity: 'legendary', cost: 1400 },
+  { id: 'frame-void', name: 'Void', asset: '/cosmetics/frames/legendary/void.svg', rarity: 'legendary', cost: 1600 },
 ];
 
 /** The 2 "secret" titles (rarity: 'secret') are deliberately absent here — they're never purchasable, only auto-granted by checkSecretUnlocks() in state.ts, and only rendered in the shop once owned. See SECRET_TITLES below. */
@@ -110,14 +114,16 @@ export const TITLES: TitleDef[] = [
   { id: 'title-elite', label: 'ELITE', asset: '/cosmetics/titles/elite.svg', rarity: 'epic', cost: 800, unlockLevel: 14 },
   { id: 'title-global', label: 'GLOBAL', asset: '/cosmetics/titles/global.svg', rarity: 'epic', cost: 850, unlockLevel: 14 },
   { id: 'title-void-walker', label: 'VOID WALKER', asset: '/cosmetics/titles/void-walker.svg', rarity: 'epic', cost: 875, unlockLevel: 14 },
-  { id: 'title-score-king', label: 'SCORE KING', asset: '/cosmetics/titles/score-king.svg', rarity: 'legendary', cost: 900, requiresHofWins: LEGENDARY_HOF_WINS },
-  { id: 'title-arcade-legend', label: 'ARCADE LEGEND', asset: '/cosmetics/titles/arcade-legend.svg', rarity: 'legendary', cost: 1000, requiresHofWins: LEGENDARY_HOF_WINS },
-  { id: 'title-the-king', label: 'THE KING', asset: '/cosmetics/titles/the-king.svg', rarity: 'legendary', cost: 1100, requiresHofWins: LEGENDARY_HOF_WINS },
-  { id: 'title-8-bit-legend', label: '8-BIT LEGEND', asset: '/cosmetics/titles/8-bit-legend.svg', rarity: 'legendary', cost: 1200, requiresHofWins: LEGENDARY_HOF_WINS },
-  { id: 'title-dragon-lord', label: 'DRAGON LORD', asset: '/cosmetics/titles/dragon-lord.svg', rarity: 'legendary', cost: 1300, requiresHofWins: LEGENDARY_HOF_WINS },
-  { id: 'title-cosmic', label: 'COSMIC', asset: '/cosmetics/titles/cosmic.svg', rarity: 'legendary', cost: 1400, requiresHofWins: LEGENDARY_HOF_WINS },
-  { id: 'title-the-ultimate', label: 'THE ULTIMATE', asset: '/cosmetics/titles/the-ultimate.svg', rarity: 'legendary', cost: 1500, requiresHofWins: LEGENDARY_HOF_WINS },
-  { id: 'title-god-mode', label: 'GOD MODE', asset: '/cosmetics/titles/god-mode.svg', rarity: 'legendary', cost: 1600, requiresHofWins: LEGENDARY_HOF_WINS },
+  { id: 'title-score-king', label: 'SCORE KING', asset: '/cosmetics/titles/score-king.svg', rarity: 'legendary', cost: 900 },
+  { id: 'title-arcade-legend', label: 'ARCADE LEGEND', asset: '/cosmetics/titles/arcade-legend.svg', rarity: 'legendary', cost: 1000 },
+  { id: 'title-the-king', label: 'THE KING', asset: '/cosmetics/titles/the-king.svg', rarity: 'legendary', cost: 1100 },
+  { id: 'title-8-bit-legend', label: '8-BIT LEGEND', asset: '/cosmetics/titles/8-bit-legend.svg', rarity: 'legendary', cost: 1200 },
+  { id: 'title-dragon-lord', label: 'DRAGON LORD', asset: '/cosmetics/titles/dragon-lord.svg', rarity: 'legendary', cost: 1300 },
+  { id: 'title-cosmic', label: 'COSMIC', asset: '/cosmetics/titles/cosmic.svg', rarity: 'legendary', cost: 1400 },
+  { id: 'title-the-ultimate', label: 'THE ULTIMATE', asset: '/cosmetics/titles/the-ultimate.svg', rarity: 'legendary', cost: 1500 },
+  { id: 'title-god-mode', label: 'GOD MODE', asset: '/cosmetics/titles/god-mode.svg', rarity: 'legendary', cost: 1600 },
+  { id: 'title-jas-final-boss', label: 'JAS FINAL BOSS', asset: '/cosmetics/titles/jas-final-boss.svg', rarity: 'legendary', cost: 1700 },
+  { id: 'title-stor-pik', label: 'STOR PIK', asset: '/cosmetics/titles/stor-pik.svg', rarity: 'legendary', cost: 1800 },
 ];
 
 /** Never shown in the shop until owned — auto-granted by checkSecretUnlocks() in state.ts. Name stays "???" (matches the source art) until then. */

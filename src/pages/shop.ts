@@ -1,4 +1,4 @@
-import { profile, saveProfile, getMyHofWins, checkAchievements } from '../state';
+import { profile, saveProfile, getMyLegendarySlots, checkAchievements } from '../state';
 import { refreshHeader } from '../header';
 import { toast } from '../toast';
 import { Sound } from '../sound';
@@ -10,11 +10,20 @@ type ShopTab = 'avatars' | 'frames' | 'titles';
 type ShopItem = AvatarDef | FrameDef | TitleDef;
 
 let shopTab: ShopTab = 'avatars';
-/** Fetched once per renderShop() call — the legendary-cosmetics gate needs it synchronously in every card's render, so it's resolved up front rather than per-card. */
-let myHofWins = 0;
+/** Fetched once per renderShop() call — the legendary-cosmetics gate needs it synchronously in every card's render, so it's resolved up front rather than per-card. Earned via LEGENDARY_WEEK_THRESHOLD in state.ts (#1 in 4+ games in the same week), NOT spent directly here — "spent" is just derived from how many legendary items the player already owns. */
+let myLegendarySlots = 0;
 
 function myLevel(): number {
   return profile ? levelInfo(profile.xp).level : 1;
+}
+
+/** How many legendary avatars/frames/titles this player already owns — each one "spends" one earned slot. */
+function ownedLegendaryCount(): number {
+  if (!profile) return 0;
+  const a = AVATARS.filter((x) => x.rarity === 'legendary' && profile!.unlockedAvatars.includes(x.id)).length;
+  const f = FRAMES.filter((x) => x.rarity === 'legendary' && profile!.unlockedFrames.includes(x.id)).length;
+  const t = TITLES.filter((x) => x.rarity === 'legendary' && profile!.unlockedTitles.includes(x.id)).length;
+  return a + f + t;
 }
 
 function itemsFor(tab: ShopTab): ShopItem[] {
@@ -42,11 +51,15 @@ function displayName(item: ShopItem): string {
 
 /**
  * Why an unowned item can't be bought yet, if at all — null means it's just a normal cost-gated
- * buy. Kept deliberately short: this renders inside an 84px-wide shop card ("🏆 HALL OF FAME 10"
- * overflowed the card entirely) — the full explanation still shows in the toast on tap.
+ * buy. Kept deliberately short: this renders inside an 84px-wide shop card (an earlier "🏆 HALL
+ * OF FAME 10" overflowed the card entirely) — the full explanation still shows in the toast on tap.
  */
 function gateReason(item: ShopItem): string | null {
-  if (item.requiresHofWins && myHofWins < item.requiresHofWins) return `🏆 HOF ${item.requiresHofWins}`;
+  if (item.rarity === 'legendary') {
+    const available = myLegendarySlots - ownedLegendaryCount();
+    if (available <= 0) return `⭐ ${Math.max(0, available)}/${myLegendarySlots}`;
+    return null;
+  }
   if (item.unlockLevel && myLevel() < item.unlockLevel) return `🔒 LVL ${item.unlockLevel}`;
   return null;
 }
@@ -54,7 +67,7 @@ function gateReason(item: ShopItem): string | null {
 export async function renderShop(): Promise<void> {
   const main = document.getElementById('main')!;
   if (!profile) return;
-  myHofWins = await getMyHofWins();
+  myLegendarySlots = await getMyLegendarySlots();
   // Bail if the player navigated away while that fetch was in flight.
   if (!document.getElementById('main') || !profile) return;
 
@@ -67,6 +80,8 @@ export async function renderShop(): Promise<void> {
         <div class="shop-balance-label">DIN SALDO</div>
         <div class="shop-balance-value">✦ ${profile.xpBalance} XP</div>
       </div>
+
+      <div class="shop-legendary-row" id="shopLegendaryRow"></div>
 
       <div class="shop-collection-row">
         <span>🎭 ${profile.unlockedAvatars.filter((id) => findAvatar(id)).length} / ${AVATARS.length} avatarer</span>
@@ -91,6 +106,20 @@ export async function renderShop(): Promise<void> {
     });
   });
   renderGrid();
+}
+
+/** Kept separate from the rest of renderShop()'s one-shot HTML so it can be refreshed after a
+ * purchase (via renderGrid()) without needing another async myLegendarySlots fetch — spent count
+ * is derived live from already-loaded profile data. */
+function updateLegendaryRow(): void {
+  const el = document.getElementById('shopLegendaryRow');
+  if (!el) return;
+  const legendarySpent = ownedLegendaryCount();
+  el.innerHTML = `
+    <span>⭐ ${legendarySpent} / ${myLegendarySlots} legendary-slots brugt</span>
+    <span class="shop-legendary-hint">${myLegendarySlots > legendarySpent ? 'Du har et ledigt slot — vælg en legendary nedenfor!' : 'Slut en uge som nr. 1 i 4+ spil for at optjene et nyt slot'}</span>
+    <span class="shop-legendary-hint" data-nav="guide" style="text-decoration:underline;cursor:pointer">Læs mere om hvordan det virker →</span>
+  `;
 }
 
 /** The cheapest not-yet-owned item that's gate-unlocked but still short on XP — a concrete "you're this close" hook. Items still behind a level/Hall of Fame gate are skipped: earning more XP doesn't get you any closer to those, so the message would be misleading. */
@@ -146,6 +175,7 @@ function renderGrid(): void {
   const grid = document.getElementById('shopGrid');
   const next = document.getElementById('shopNext');
   if (!grid || !next || !profile) return;
+  updateLegendaryRow();
   next.innerHTML = nextItemHtml();
   grid.className = shopTab === 'titles' ? 'shop-title-grid' : 'shop-avatar-grid';
   grid.innerHTML = itemsFor(shopTab)
@@ -173,8 +203,10 @@ async function handleTap(tab: ShopTab, id: string): Promise<void> {
     const gate = gateReason(def);
     if (gate) {
       toast(
-        def.requiresHofWins
-          ? `Kræver ${def.requiresHofWins} #1-uger i Hall of Fame — du har ${myHofWins}`
+        def.rarity === 'legendary'
+          ? myLegendarySlots === 0
+            ? 'Legendary kræver mindst 1 uge som nr. 1 i 4+ forskellige spil'
+            : `Ingen ledige legendary-slots — du har brugt alle ${myLegendarySlots}`
           : `Låst op ved level ${def.unlockLevel} — du er level ${myLevel()}`,
       );
       return;

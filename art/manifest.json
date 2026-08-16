@@ -7,7 +7,7 @@
     "frames": 16,
     "badges": 16,
     "themes": 6,
-    "titles": 40
+    "titles": 42
   },
   "note": "Avatars, frames and badges are transparent PNG cutouts; themes are opaque profile backgrounds; titles are scalable SVGs.",
   "avatars": [
@@ -130,112 +130,112 @@
       "type": "frame",
       "name": "Pixel",
       "rarity": "common",
-      "asset": "/cosmetics/frames/common/pixel.png"
+      "asset": "/cosmetics/frames/common/pixel.svg"
     },
     {
       "id": "frame-retro",
       "type": "frame",
       "name": "Retro",
       "rarity": "common",
-      "asset": "/cosmetics/frames/common/retro.png"
+      "asset": "/cosmetics/frames/common/retro.svg"
     },
     {
       "id": "frame-arcade",
       "type": "frame",
       "name": "Arcade",
       "rarity": "common",
-      "asset": "/cosmetics/frames/common/arcade.png"
+      "asset": "/cosmetics/frames/common/arcade.svg"
     },
     {
-      "id": "frame-circuit",
+      "id": "frame-scanlines",
       "type": "frame",
-      "name": "Circuit",
+      "name": "Scanlines",
       "rarity": "common",
-      "asset": "/cosmetics/frames/common/circuit.png"
+      "asset": "/cosmetics/frames/common/scanlines.svg"
     },
     {
       "id": "frame-neon",
       "type": "frame",
       "name": "Neon",
       "rarity": "rare",
-      "asset": "/cosmetics/frames/rare/neon.png"
+      "asset": "/cosmetics/frames/rare/neon.svg"
     },
     {
       "id": "frame-cyber",
       "type": "frame",
       "name": "Cyber",
       "rarity": "rare",
-      "asset": "/cosmetics/frames/rare/cyber.png"
+      "asset": "/cosmetics/frames/rare/cyber.svg"
     },
     {
       "id": "frame-holographic",
       "type": "frame",
       "name": "Holographic",
       "rarity": "rare",
-      "asset": "/cosmetics/frames/rare/holographic.png"
+      "asset": "/cosmetics/frames/rare/holographic.svg"
     },
     {
-      "id": "frame-digital",
+      "id": "frame-circuit",
       "type": "frame",
-      "name": "Digital",
+      "name": "Circuit",
       "rarity": "rare",
-      "asset": "/cosmetics/frames/rare/digital.png"
+      "asset": "/cosmetics/frames/rare/circuit.svg"
     },
     {
       "id": "frame-glitch",
       "type": "frame",
       "name": "Glitch",
       "rarity": "epic",
-      "asset": "/cosmetics/frames/epic/glitch.png"
+      "asset": "/cosmetics/frames/epic/glitch.svg"
     },
     {
       "id": "frame-plasma",
       "type": "frame",
       "name": "Plasma",
       "rarity": "epic",
-      "asset": "/cosmetics/frames/epic/plasma.png"
+      "asset": "/cosmetics/frames/epic/plasma.svg"
     },
     {
       "id": "frame-galaxy",
       "type": "frame",
       "name": "Galaxy",
       "rarity": "epic",
-      "asset": "/cosmetics/frames/epic/galaxy.png"
+      "asset": "/cosmetics/frames/epic/galaxy.svg"
     },
     {
-      "id": "frame-dragon",
+      "id": "frame-prism",
       "type": "frame",
-      "name": "Dragon",
+      "name": "Prism",
       "rarity": "epic",
-      "asset": "/cosmetics/frames/epic/dragon.png"
+      "asset": "/cosmetics/frames/epic/prism.svg"
     },
     {
       "id": "frame-golden",
       "type": "frame",
       "name": "Golden",
       "rarity": "legendary",
-      "asset": "/cosmetics/frames/legendary/golden.png"
+      "asset": "/cosmetics/frames/legendary/golden.svg"
     },
     {
       "id": "frame-diamond",
       "type": "frame",
       "name": "Diamond",
       "rarity": "legendary",
-      "asset": "/cosmetics/frames/legendary/diamond.png"
+      "asset": "/cosmetics/frames/legendary/diamond.svg"
     },
     {
-      "id": "frame-arcade-king",
+      "id": "frame-neon-legend",
       "type": "frame",
-      "name": "Arcade King",
+      "name": "Neon Legend",
       "rarity": "legendary",
-      "asset": "/cosmetics/frames/legendary/arcade-king.png"
+      "asset": "/cosmetics/frames/legendary/neon-legend.svg"
     },
     {
       "id": "frame-void",
       "type": "frame",
       "name": "Void",
       "rarity": "legendary",
-      "asset": "/cosmetics/frames/legendary/void.png"
+      "asset": "/cosmetics/frames/legendary/void.svg"
     }
   ],
   "badges": [
@@ -655,6 +655,20 @@
       "name": "GOD MODE",
       "rarity": "legendary",
       "asset": "/cosmetics/titles/god-mode.svg"
+    },
+    {
+      "id": "title-jas-final-boss",
+      "type": "title",
+      "name": "JAS FINAL BOSS",
+      "rarity": "legendary",
+      "asset": "/cosmetics/titles/jas-final-boss.svg"
+    },
+    {
+      "id": "title-stor-pik",
+      "type": "title",
+      "name": "STOR PIK",
+      "rarity": "legendary",
+      "asset": "/cosmetics/titles/stor-pik.svg"
     },
     {
       "id": "title-secret-01",

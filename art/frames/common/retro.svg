@@ -1,0 +1,8 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs></defs>
+
+  <rect x="10" y="10" width="180" height="180" fill="none"
+        stroke="#8fe36b" stroke-width="3" stroke-dasharray="10 6"/>
+  <rect x="18" y="18" width="164" height="164" fill="none"
+        stroke="#8fe36b" stroke-width="1" stroke-dasharray="4 4" opacity="0.5"/>
+</svg>

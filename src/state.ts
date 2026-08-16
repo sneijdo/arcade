@@ -133,7 +133,8 @@ export async function createProfile(name: string, id?: string): Promise<void> {
   await saveProfile();
 }
 
-const STREAK_MILESTONE_XP: Record<number, number> = { 3: 15, 7: 35, 14: 75, 30: 200 };
+/** Halved along with XP_RULES (was 3:15, 7:35, 14:75, 30:200). */
+const STREAK_MILESTONE_XP: Record<number, number> = { 3: 8, 7: 18, 14: 38, 30: 100 };
 
 export function todayLocalDateString(): string {
   const d = new Date();
@@ -255,6 +256,9 @@ export async function getCombinedLeaderboard(gameId: string, scope: 'week' | 'al
   return combined;
 }
 
+/** How many different games you need to finish #1 in during the SAME week to earn a legendary slot (see shop.ts) — a real weekly dominance flex, not a slow cumulative grind. */
+const LEGENDARY_WEEK_THRESHOLD = 4;
+
 /**
  * Lazily credits *this* signed-in player's own Hall of Fame #1 finishes —
  * call whenever the Hall of Fame view is opened (or any time it's convenient;
@@ -278,17 +282,28 @@ export async function creditMyHallOfFameWins(): Promise<void> {
   const now = Date.now();
   let latestChecked = profile.hofCheckedThroughWeek;
   let hof: HallOfFameEntry | null = null;
+  let newLegendaryWeeks = 0;
 
   for (let weeksAgo = 1; weeksAgo <= 8; weeksAgo++) {
     const week = isoWeekKey(new Date(now - weeksAgo * 7 * 24 * 3600 * 1000));
     if (profile.hofCheckedThroughWeek != null && week <= profile.hofCheckedThroughWeek) break;
+    let winsThisWeek = 0;
     for (const gameId of implementedGameIds) {
       const board = await readLeaderboard(gameId, week);
       if (board.length > 0 && board[0].id === profile.id) {
-        if (!hof) hof = (await storage.get<HallOfFameEntry>('hof:' + profile.id, true)) ?? { id: profile.id, wins: {}, totalWins: 0 };
+        if (!hof) hof = (await storage.get<HallOfFameEntry>('hof:' + profile.id, true)) ?? { id: profile.id, wins: {}, totalWins: 0, legendaryWeeks: 0 };
         hof.wins[gameId] = (hof.wins[gameId] ?? 0) + 1;
         hof.totalWins++;
+        winsThisWeek++;
       }
+    }
+    // A single dominant week (#1 in several games at once), not a slow accumulation across
+    // many weeks — this is what actually earns a legendary slot, tracked separately from the
+    // plain per-win totalWins tally above.
+    if (winsThisWeek >= LEGENDARY_WEEK_THRESHOLD) {
+      if (!hof) hof = (await storage.get<HallOfFameEntry>('hof:' + profile.id, true)) ?? { id: profile.id, wins: {}, totalWins: 0, legendaryWeeks: 0 };
+      hof.legendaryWeeks = (hof.legendaryWeeks ?? 0) + 1;
+      newLegendaryWeeks++;
     }
     if (latestChecked == null || week > latestChecked) latestChecked = week;
   }
@@ -301,26 +316,33 @@ export async function creditMyHallOfFameWins(): Promise<void> {
     await storage.set('hof:' + profile.id, hof, true);
     toast(`<span class="toast-icon">🏆</span> Du er kommet i Hall of Fame for en #1-placering!`, 'achievement');
     Sound.achievement();
+    if (newLegendaryWeeks > 0) {
+      toast(
+        `<span class="toast-icon">⭐</span> Du har optjent et legendary-slot — vælg selv hvilken avatar, ramme eller titel i butikken!`,
+        'achievement',
+      );
+      Sound.pb();
+    }
   }
 
-  // Legendary cosmetics/badges gate off cumulative HoF wins and "am I #1 overall" — checked every
-  // call (not just when a new win was just credited above), so a player who crossed the
-  // threshold in an earlier session still gets credited the next time this runs.
+  // Legendary cosmetics/badges gate off "how many dominant weeks" and "am I #1 overall" —
+  // checked every call (not just when something new was just credited above), so a player who
+  // crossed a threshold in an earlier session still gets credited the next time this runs.
   const currentHof = hof ?? (await storage.get<HallOfFameEntry>('hof:' + profile.id, true));
   const hofList = await getHallOfFame();
   const hofIsRankOne = hofList.length > 0 && hofList[0].id === profile.id && hofList[0].totalWins > 0;
-  await checkAchievements({ hofTotalWins: currentHof?.totalWins ?? 0, hofIsRankOne });
+  await checkAchievements({ legendaryWeeks: currentHof?.legendaryWeeks ?? 0, hofIsRankOne });
 }
 
 export async function getPlayerMeta(id: string): Promise<PlayerMeta | null> {
   return storage.get<PlayerMeta>('playerMeta:' + id, true);
 }
 
-/** This player's own cumulative Hall of Fame #1-week wins — the legendary-cosmetics gate (see shop.ts). */
-export async function getMyHofWins(): Promise<number> {
+/** How many legendary "slots" this player has earned — one per week they finished #1 in 4+ different games (see LEGENDARY_WEEK_THRESHOLD above). Each slot lets them unlock one legendary avatar/frame/title of their choice (see pages/shop.ts) — spending is derived from how many legendary items they already own, not tracked separately here. */
+export async function getMyLegendarySlots(): Promise<number> {
   if (!profile) return 0;
   const entry = await storage.get<HallOfFameEntry>('hof:' + profile.id, true);
-  return entry?.totalWins ?? 0;
+  return entry?.legendaryWeeks ?? 0;
 }
 
 export async function getHallOfFame(): Promise<HallOfFameEntry[]> {
