@@ -116,4 +116,64 @@ class SupabaseKvAdapter implements StorageAdapter {
   }
 }
 
-export const storage: StorageAdapter = isSupabaseConfigured ? new SupabaseKvAdapter() : new LocalStorageAdapter();
+let activeAdapter: StorageAdapter = isSupabaseConfigured ? new SupabaseKvAdapter() : new LocalStorageAdapter();
+let guestMode = false;
+
+/**
+ * Switches persistence to the device-local adapter for the rest of this session — used by the
+ * "play as guest" flow (see onboarding.ts) so a new visitor can start playing immediately
+ * without creating a Supabase account first. `storage` below is a stable object that always
+ * delegates to whichever adapter is currently active, so every existing call site (state.ts,
+ * merge.ts's autosave, tactical/meta.ts, etc.) keeps working unchanged regardless of which mode
+ * is active — nothing needs to know or care.
+ */
+export function useLocalGuestStorage(): void {
+  activeAdapter = new LocalStorageAdapter();
+  guestMode = true;
+}
+
+/** True only once a Supabase-configured deployment has explicitly switched to guest mode — not true for a dev/local-only deployment, which has no account path to upgrade to anyway. */
+export function isGuestMode(): boolean {
+  return guestMode;
+}
+
+/** Switches back to the Supabase adapter — used when a guest creates a real account mid-session. Safe to call even if already on Supabase (harmless no-op re-creation of the adapter). */
+export function useSupabaseStorage(): void {
+  activeAdapter = new SupabaseKvAdapter();
+  guestMode = false;
+}
+
+/** Detects a guest profile left over from a previous visit, straight from localStorage — checked at boot, before any adapter is chosen, so a returning guest resumes locally instead of hitting the signup wall again every reload. */
+export function hasLocalGuestProfile(): boolean {
+  try {
+    return localStorage.getItem(namespacedKey('profile', false)) != null;
+  } catch {
+    return false;
+  }
+}
+
+/** Clears a leftover local guest profile once its owner has created a real account, so a future reload doesn't keep detecting it and resuming guest mode instead of the new account. */
+export function clearLocalGuestProfile(): void {
+  try {
+    localStorage.removeItem(namespacedKey('profile', false));
+  } catch {
+    // best-effort — a leftover guest profile just means one more local-storage check next boot
+  }
+}
+
+export const storage: StorageAdapter = {
+  // Method shorthand (not arrow-function properties) so each method's own <T> stays generic —
+  // an arrow property here would collapse T to unknown instead of flowing through to callers.
+  get<T>(key: string, shared?: boolean): Promise<T | null> {
+    return activeAdapter.get<T>(key, shared);
+  },
+  set<T>(key: string, value: T, shared?: boolean): Promise<boolean> {
+    return activeAdapter.set<T>(key, value, shared);
+  },
+  list(prefix: string, shared?: boolean): Promise<string[]> {
+    return activeAdapter.list(prefix, shared);
+  },
+  remove(key: string, shared?: boolean): Promise<void> {
+    return activeAdapter.remove(key, shared);
+  },
+};

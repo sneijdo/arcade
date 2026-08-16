@@ -2,12 +2,15 @@ export interface AvatarDef {
   id: string;
   emoji: string;
   cost: number;
+  /** Not buyable below this level, regardless of XP balance — gives level a real consequence instead of being a vanity number, and creates a visible "locked, X levels to go" destination. Only set on the priciest few items; most stay pure cost-gated. */
+  unlockLevel?: number;
 }
 
 export interface TitleDef {
   id: string;
   label: string;
   cost: number;
+  unlockLevel?: number;
 }
 
 /** Purchasable with xpBalance (see state.ts). No entry here is "default" — an unset equippedAvatar just falls back to initials(name). */
@@ -26,8 +29,8 @@ export const AVATARS: AvatarDef[] = [
   { id: 'skull', emoji: '💀', cost: 420 },
   { id: 'fire', emoji: '🔥', cost: 420 },
   { id: 'star', emoji: '🌟', cost: 650 },
-  { id: 'crown', emoji: '👑', cost: 900 },
-  { id: 'trophy', emoji: '🏆', cost: 1200 },
+  { id: 'crown', emoji: '👑', cost: 900, unlockLevel: 9 },
+  { id: 'trophy', emoji: '🏆', cost: 1200, unlockLevel: 12 },
 ];
 
 export const TITLES: TitleDef[] = [
@@ -39,8 +42,8 @@ export const TITLES: TitleDef[] = [
   { id: 'elitespiller', label: 'ELITESPILLER', cost: 320 },
   { id: 'dominator', label: 'DOMINATOR', cost: 390 },
   { id: 'uovervindelig', label: 'UOVERVINDELIG', cost: 520 },
-  { id: 'legendarisk', label: 'LEGENDARISK', cost: 800 },
-  { id: 'arcadekongen', label: 'ARCADE-KONGEN', cost: 1300 },
+  { id: 'legendarisk', label: 'LEGENDARISK', cost: 800, unlockLevel: 8 },
+  { id: 'arcadekongen', label: 'ARCADE-KONGEN', cost: 1300, unlockLevel: 13 },
 ];
 
 export function findAvatar(id: string | null | undefined): AvatarDef | null {

@@ -2,7 +2,8 @@ import { profile, getCombinedLeaderboard, avatarContent, clearProfile, bestScore
 import { levelInfo } from '../xp';
 import { ACHIEVEMENTS } from '../achievements';
 import { authAvailable, signOut, changePassword } from '../auth';
-import { showRecoveryCodeReveal } from '../onboarding';
+import { showRecoveryCodeReveal, showAuthModal } from '../onboarding';
+import { isGuestMode } from '../storage';
 import { GAMES } from '../games/registry';
 import { ScoreKinds } from '../scoring';
 import { toast } from '../toast';
@@ -65,8 +66,16 @@ export async function renderProfile(): Promise<void> {
       </div>
 
       ${
-        authAvailable()
+        authAvailable() && isGuestMode()
           ? `
+      <div class="section-title" style="margin-top:32px">Gem din fremgang</div>
+      <div class="panel guest-upsell-panel">
+        <p>Du spiller som gæst — din fremgang findes kun på denne enhed. Opret en konto for at gemme den på tværs af enheder og komme på det globale leaderboard.</p>
+        <button class="btn btn-primary btn-block" id="createAccountBtn">OPRET KONTO</button>
+      </div>
+      `
+          : authAvailable()
+            ? `
       <div class="section-title" style="margin-top:32px">Kontosikkerhed</div>
       <div class="panel settings-panel">
         <div class="settings-block">
@@ -83,10 +92,11 @@ export async function renderProfile(): Promise<void> {
       </div>
       <button class="btn btn-ghost" id="signOutBtn" style="margin-top:16px">LOG UD</button>
       `
-          : ''
+            : ''
       }
     </div>
   `;
+  document.getElementById('createAccountBtn')?.addEventListener('click', () => showAuthModal('signup'));
   document.getElementById('signOutBtn')?.addEventListener('click', async () => {
     clearProfile();
     await signOut();

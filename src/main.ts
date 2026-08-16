@@ -5,6 +5,7 @@ import { refreshHeader } from './header';
 import { initRouter, navigate, currentHashRoute } from './router';
 import { showOnboarding, showAuthModal, closeAnyModal } from './onboarding';
 import { authAvailable, onAuthStateChange } from './auth';
+import { hasLocalGuestProfile, useLocalGuestStorage } from './storage';
 import type { Session } from '@supabase/supabase-js';
 
 function wireMuteButton(): void {
@@ -79,8 +80,16 @@ async function init(): Promise<void> {
   initRouter();
   wireMuteButton();
   wireAudioUnlock();
-  if (authAvailable()) await initSupabaseMode();
-  else await initLocalMode();
+  if (authAvailable() && hasLocalGuestProfile()) {
+    // A previous visit chose "play as guest" — resume that local profile straight away instead
+    // of forcing the signup wall again on every reload (see onboarding.ts's enterAsGuest()).
+    useLocalGuestStorage();
+    await initLocalMode();
+  } else if (authAvailable()) {
+    await initSupabaseMode();
+  } else {
+    await initLocalMode();
+  }
 }
 
 init();

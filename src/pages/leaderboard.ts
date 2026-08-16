@@ -2,6 +2,7 @@ import { profile, getCombinedLeaderboard, avatarContent, creditMyHallOfFameWins,
 import { findTitle } from '../shop';
 import { GAMES } from '../games/registry';
 import { ScoreKinds } from '../scoring';
+import { isGuestMode } from '../storage';
 import type { LeaderboardEntry, ScoreKind } from '../types';
 
 let lbGameId = 'reaction';
@@ -21,6 +22,7 @@ export async function renderLeaderboard(gameId?: string): Promise<void> {
     <div class="page">
       <div class="section-label">Ranglister</div>
       <div class="section-title">Leaderboard</div>
+      ${isGuestMode() ? '<div class="guest-lb-note">Du spiller som gæst, så du er ikke med på det globale leaderboard endnu — opret en konto fra din profil for at komme med.</div>' : ''}
       <div class="tabs" id="lbViewTabs">
         <button class="tab-btn ${lbView === 'week' ? 'active' : ''}" data-view="week">DENNE UGE</button>
         <button class="tab-btn ${lbView === 'alltime' ? 'active' : ''}" data-view="alltime">ALL-TIME</button>

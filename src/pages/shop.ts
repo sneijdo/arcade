@@ -4,6 +4,11 @@ import { toast } from '../toast';
 import { Sound } from '../sound';
 import { Haptics } from '../haptics';
 import { AVATARS, TITLES, type AvatarDef, type TitleDef } from '../shop';
+import { levelInfo } from '../xp';
+
+function myLevel(): number {
+  return profile ? levelInfo(profile.xp).level : 1;
+}
 
 let shopTab: 'avatars' | 'titles' = 'avatars';
 
@@ -47,8 +52,11 @@ export async function renderShop(): Promise<void> {
 function nextItemHtml(): string {
   if (!profile) return '';
   const balance = profile.xpBalance;
+  const level = myLevel();
   if (shopTab === 'avatars') {
-    const next = AVATARS.filter((a) => !profile!.unlockedAvatars.includes(a.id) && a.cost > balance).sort((a, b) => a.cost - b.cost)[0];
+    const next = AVATARS.filter((a) => !profile!.unlockedAvatars.includes(a.id) && a.cost > balance && (!a.unlockLevel || a.unlockLevel <= level)).sort(
+      (a, b) => a.cost - b.cost,
+    )[0];
     if (!next) return '';
     return `
       <div class="shop-next-card">
@@ -60,7 +68,9 @@ function nextItemHtml(): string {
       </div>
     `;
   }
-  const next = TITLES.filter((t) => !profile!.unlockedTitles.includes(t.id) && t.cost > balance).sort((a, b) => a.cost - b.cost)[0];
+  const next = TITLES.filter((t) => !profile!.unlockedTitles.includes(t.id) && t.cost > balance && (!t.unlockLevel || t.unlockLevel <= level)).sort(
+    (a, b) => a.cost - b.cost,
+  )[0];
   if (!next) return '';
   return `
     <div class="shop-next-card">
@@ -101,10 +111,18 @@ function avatarCardHtml(a: AvatarDef): string {
   const owned = profile!.unlockedAvatars.includes(a.id);
   const equipped = profile!.equippedAvatar === a.id;
   const affordable = profile!.xpBalance >= a.cost;
+  const levelLocked = !owned && !!a.unlockLevel && myLevel() < a.unlockLevel;
+  const tag = equipped
+    ? '<div class="shop-equipped-tag">TAGET PÅ</div>'
+    : owned
+      ? '<div class="shop-owned-tag">EJET</div>'
+      : levelLocked
+        ? `<div class="shop-locked-tag">🔒 LEVEL ${a.unlockLevel}</div>`
+        : `<div class="shop-cost-tag">✦ ${a.cost}</div>`;
   return `
-    <button class="shop-avatar-card ${equipped ? 'equipped' : ''} ${!owned && !affordable ? 'unaffordable' : ''}" data-avatar="${a.id}">
+    <button class="shop-avatar-card ${equipped ? 'equipped' : ''} ${!owned && !affordable ? 'unaffordable' : ''} ${levelLocked ? 'level-locked' : ''}" data-avatar="${a.id}">
       <div class="shop-avatar-emoji">${a.emoji}</div>
-      ${equipped ? '<div class="shop-equipped-tag">TAGET PÅ</div>' : owned ? '<div class="shop-owned-tag">EJET</div>' : `<div class="shop-cost-tag">✦ ${a.cost}</div>`}
+      ${tag}
     </button>
   `;
 }
@@ -113,10 +131,18 @@ function titleCardHtml(t: TitleDef): string {
   const owned = profile!.unlockedTitles.includes(t.id);
   const equipped = profile!.equippedTitle === t.id;
   const affordable = profile!.xpBalance >= t.cost;
+  const levelLocked = !owned && !!t.unlockLevel && myLevel() < t.unlockLevel;
+  const tag = equipped
+    ? '<div class="shop-equipped-tag">TAGET PÅ</div>'
+    : owned
+      ? '<div class="shop-owned-tag">EJET</div>'
+      : levelLocked
+        ? `<div class="shop-locked-tag">🔒 LEVEL ${t.unlockLevel}</div>`
+        : `<div class="shop-cost-tag">✦ ${t.cost}</div>`;
   return `
-    <button class="shop-title-card ${equipped ? 'equipped' : ''} ${!owned && !affordable ? 'unaffordable' : ''}" data-title="${t.id}">
+    <button class="shop-title-card ${equipped ? 'equipped' : ''} ${!owned && !affordable ? 'unaffordable' : ''} ${levelLocked ? 'level-locked' : ''}" data-title="${t.id}">
       <div class="shop-title-label">${t.label}</div>
-      ${equipped ? '<div class="shop-equipped-tag">TAGET PÅ</div>' : owned ? '<div class="shop-owned-tag">EJET</div>' : `<div class="shop-cost-tag">✦ ${t.cost}</div>`}
+      ${tag}
     </button>
   `;
 }
@@ -130,6 +156,10 @@ async function handleAvatarTap(id: string): Promise<void> {
     profile.equippedAvatar = profile.equippedAvatar === id ? null : id;
     Sound.click();
   } else {
+    if (def.unlockLevel && myLevel() < def.unlockLevel) {
+      toast(`Låst op ved level ${def.unlockLevel} — du er level ${myLevel()}`);
+      return;
+    }
     if (profile.xpBalance < def.cost) {
       toast('Ikke nok XP til den her avatar endnu');
       return;
@@ -155,6 +185,10 @@ async function handleTitleTap(id: string): Promise<void> {
     profile.equippedTitle = profile.equippedTitle === id ? null : id;
     Sound.click();
   } else {
+    if (def.unlockLevel && myLevel() < def.unlockLevel) {
+      toast(`Låst op ved level ${def.unlockLevel} — du er level ${myLevel()}`);
+      return;
+    }
     if (profile.xpBalance < def.cost) {
       toast('Ikke nok XP til den her titel endnu');
       return;
