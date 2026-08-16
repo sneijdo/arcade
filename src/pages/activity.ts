@@ -4,6 +4,7 @@ import { ScoreKinds, scoreUnitSuffix } from '../scoring';
 import { isGuestMode } from '../storage';
 import { isSupabaseConfigured } from '../supabaseClient';
 import { fetchRecentActivity, subscribeActivity, onPresenceChange, type ActivityEntry, type PresenceUser } from '../activity';
+import { playerLinkTarget } from './playerProfile';
 
 const MAX_FEED_ROWS = 40;
 
@@ -32,8 +33,9 @@ function scoreText(gameId: string, score: number): string {
 function activityRowHtml(e: ActivityEntry): string {
   const isMe = profile?.id === e.ownerId;
   const { icon, title } = gameLabel(e.gameId);
+  const target = playerLinkTarget(e.ownerId);
   return `
-    <div class="activity-row ${isMe ? 'me' : ''}">
+    <a class="activity-row ${isMe ? 'me' : ''}" href="#/${target}" data-nav="${target}">
       ${avatarFrameHtml(e.name, e.avatar, e.frame, 30)}
       <div class="activity-row-body">
         <div class="activity-row-line">
@@ -43,14 +45,17 @@ function activityRowHtml(e: ActivityEntry): string {
         <div class="activity-row-sub">${icon} ${title} · <span class="mono">${scoreText(e.gameId, e.score)}</span></div>
       </div>
       <div class="activity-time" data-ts="${e.createdAt}">${timeAgo(e.createdAt)}</div>
-    </div>
+    </a>
   `;
 }
 
 function onlineListHtml(users: PresenceUser[]): string {
   if (users.length === 0) return '<div class="activity-empty">Ingen online lige nu.</div>';
   return `<div class="activity-online-list">${users
-    .map((u) => `<div class="activity-online-chip">${avatarFrameHtml(u.name, u.avatar, null, 26)}<span>${escapeHtml(u.name)}</span></div>`)
+    .map((u) => {
+      const target = playerLinkTarget(u.id);
+      return `<a class="activity-online-chip" href="#/${target}" data-nav="${target}">${avatarFrameHtml(u.name, u.avatar, null, 26)}<span>${escapeHtml(u.name)}</span></a>`;
+    })
     .join('')}</div>`;
 }
 

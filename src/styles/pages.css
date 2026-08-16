@@ -38,10 +38,21 @@
   border-radius: 11px;
   margin-bottom: 4px;
   border: 1px solid transparent;
+  /* .lb-row is an <a> now (links through to that player's profile) — undo the
+     native anchor look so it still reads as a plain row. */
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.15s var(--ease);
+}
+.lb-row:hover {
+  background: var(--surface-2);
 }
 .lb-row.me {
   background: rgba(139, 107, 255, 0.12);
   border-color: var(--violet);
+}
+.lb-row.me:hover {
+  background: rgba(139, 107, 255, 0.18);
 }
 .lb-rank {
   font-family: var(--font-mono);
@@ -585,6 +596,12 @@
   padding: 5px 12px 5px 6px;
   font-size: 12.5px;
   font-weight: 600;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s var(--ease);
+}
+.activity-online-chip:hover {
+  border-color: var(--border-2);
 }
 .activity-row {
   display: flex;
@@ -592,15 +609,24 @@
   gap: 12px;
   padding: 11px 4px;
   border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.15s var(--ease);
 }
 .activity-row:last-child {
   border-bottom: none;
+}
+.activity-row:hover {
+  background: var(--surface-2);
 }
 .activity-row.me {
   background: rgba(139, 107, 255, 0.08);
   border-radius: 10px;
   padding-left: 10px;
   padding-right: 10px;
+}
+.activity-row.me:hover {
+  background: rgba(139, 107, 255, 0.14);
 }
 .activity-row-body {
   flex: 1;

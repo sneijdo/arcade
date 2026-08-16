@@ -123,12 +123,24 @@ export interface LeaderboardEntry {
   frame?: string | null;
 }
 
-/** Public, shared mirror of a profile's display identity — written every saveProfile() so leaderboard/Hall of Fame rows can show a player's *current* avatar/title/frame/name instead of whatever was equipped the last time they posted a score. */
+/** Public, shared mirror of a profile's display identity — written every saveProfile() so leaderboard/Hall of Fame rows can show a player's *current* avatar/title/frame/name instead of whatever was equipped the last time they posted a score.
+ *
+ * The progress fields below ride along for the read-only player-profile page (see
+ * renderPlayerProfile in pages/playerProfile.ts) — optional because rows written
+ * before that page existed won't have them until that player's next saveProfile(). */
 export interface PlayerMeta {
   name: string;
   avatar: string | null;
   title: string | null;
   frame: string | null;
+  xp?: number;
+  bestReaction?: number | null;
+  bestScores?: Record<string, number>;
+  sessionsPlayed?: number;
+  currentStreak?: number;
+  longestStreak?: number;
+  unlockedAchievements?: string[];
+  unlockedBadges?: string[];
 }
 
 /** Cross-week aggregate of #1 finishes, keyed by profile id. See creditMyHallOfFameWins() in state.ts. */
@@ -140,4 +152,4 @@ export interface HallOfFameEntry {
   legendaryWeeks: number;
 }
 
-export type Route = 'home' | 'games' | 'leaderboard' | 'activity' | 'profile' | 'shop' | 'guide' | `play-${string}`;
+export type Route = 'home' | 'games' | 'leaderboard' | 'activity' | 'profile' | 'shop' | 'guide' | `play-${string}` | `player-${string}`;

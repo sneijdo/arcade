@@ -4,6 +4,7 @@ import { renderGames } from './pages/games';
 import { renderLeaderboard } from './pages/leaderboard';
 import { renderActivity } from './pages/activity';
 import { renderProfile } from './pages/profile';
+import { renderPlayerProfile } from './pages/playerProfile';
 import { renderShop } from './pages/shop';
 import { renderGuide } from './pages/guide';
 import { GAME_RENDERERS } from './games';
@@ -36,6 +37,7 @@ export async function navigate(r: string): Promise<void> {
   else if (r === 'shop') await renderShop();
   else if (r === 'guide') renderGuide();
   else if (r.startsWith('play-')) GAME_RENDERERS[r.slice(5)]?.();
+  else if (r.startsWith('player-')) await renderPlayerProfile(r.slice('player-'.length));
 }
 
 const KNOWN_ROUTES = ['home', 'games', 'leaderboard', 'activity', 'profile', 'shop', 'guide'];
@@ -46,6 +48,7 @@ export function currentHashRoute(): string {
   if (!r) return 'home';
   if (r.startsWith('play-')) return GAME_RENDERERS[r.slice(5)] ? r : 'home';
   if (r.startsWith('leaderboard-')) return r;
+  if (r.startsWith('player-')) return r;
   return KNOWN_ROUTES.includes(r) ? r : 'home';
 }
 

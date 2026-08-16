@@ -101,7 +101,20 @@ export async function saveProfile(): Promise<void> {
   // Mirror the public-facing identity fields to a shared record so leaderboard/Hall
   // of Fame rows can resolve a player's *current* avatar/title/name instead of a
   // stale snapshot from whenever they last posted a score (see getCombinedLeaderboard).
-  const meta: PlayerMeta = { name: profile.name, avatar: profile.equippedAvatar, title: profile.equippedTitle, frame: profile.equippedFrame };
+  const meta: PlayerMeta = {
+    name: profile.name,
+    avatar: profile.equippedAvatar,
+    title: profile.equippedTitle,
+    frame: profile.equippedFrame,
+    xp: profile.xp,
+    bestReaction: profile.bestReaction,
+    bestScores: profile.bestScores,
+    sessionsPlayed: profile.sessionsPlayed,
+    currentStreak: profile.currentStreak,
+    longestStreak: profile.longestStreak,
+    unlockedAchievements: profile.unlockedAchievements,
+    unlockedBadges: profile.unlockedBadges,
+  };
   await storage.set('playerMeta:' + profile.id, meta, true);
 }
 

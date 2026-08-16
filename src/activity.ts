@@ -27,6 +27,7 @@ export interface ActivityEntry {
 }
 
 export interface PresenceUser {
+  id: string;
   name: string;
   avatar: string | null;
 }
@@ -93,8 +94,11 @@ const presenceListeners = new Set<(users: PresenceUser[]) => void>();
 
 function currentPresenceUsers(): PresenceUser[] {
   if (!presenceChannel) return [];
-  const state = presenceChannel.presenceState<PresenceUser>();
-  return Object.values(state).flatMap((entries) => entries.map((e) => ({ name: e.name, avatar: e.avatar ?? null })));
+  // presenceState()'s outer object is keyed by the presence key each client tracked
+  // under — id, per startPresence() below — which the tracked payload itself doesn't
+  // repeat, so the id has to come from here rather than from `e`.
+  const state = presenceChannel.presenceState<{ name: string; avatar: string | null }>();
+  return Object.entries(state).flatMap(([id, entries]) => entries.map((e) => ({ id, name: e.name, avatar: e.avatar ?? null })));
 }
 
 /** Joins the shared presence channel once per app session — call at boot, right after

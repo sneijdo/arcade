@@ -1,5 +1,6 @@
 import { profile, getCombinedLeaderboard, avatarFrameHtml, creditMyHallOfFameWins, getHallOfFame, getPlayerMeta, getWeeklyLeadStandings, LEGENDARY_WEEK_THRESHOLD, escapeHtml } from '../state';
 import { findTitle } from '../shop';
+import { playerLinkTarget } from './playerProfile';
 import { GAMES } from '../games/registry';
 import { ScoreKinds, formatScore, scoreUnitSuffix } from '../scoring';
 import { isGuestMode } from '../storage';
@@ -77,8 +78,9 @@ async function renderGameBoard(gameId: string, scoreKindId: string | null): Prom
       const isMe = e.id === profile!.id;
       const scoreText = kind ? `${kind.format(e.score)}<span style="color:var(--text-faint);font-size:11px">${scoreUnitSuffix(kind)}</span>` : Math.round(e.score);
       const title = findTitle(e.title);
+      const target = playerLinkTarget(e.id);
       return `
-      <div class="lb-row ${isMe ? 'me' : ''}">
+      <a class="lb-row ${isMe ? 'me' : ''}" href="#/${target}" data-nav="${target}">
         <div class="lb-rank ${i < 3 ? 'medal' : ''}">${i < 3 ? medals[i] : '#' + (i + 1)}</div>
         <div class="lb-player">
           ${avatarFrameHtml(e.name, e.avatar, e.frame, 28)}
@@ -88,7 +90,7 @@ async function renderGameBoard(gameId: string, scoreKindId: string | null): Prom
           </div>
         </div>
         <div class="lb-score mono">${scoreText}</div>
-      </div>
+      </a>
     `;
     })
     .join('');
@@ -166,8 +168,9 @@ async function renderLegendaryProgress(): Promise<void> {
             return `<span class="hof-badge">${g?.icon ?? '🎮'} ${g?.title ?? gameId}</span>`;
           })
           .join('');
+        const target = playerLinkTarget(s.id);
         return `
-        <div class="lb-row ${isMe ? 'me' : ''}">
+        <a class="lb-row ${isMe ? 'me' : ''}" href="#/${target}" data-nav="${target}">
           <div class="lb-rank ${qualifies ? 'medal' : ''}">${qualifies ? '⭐' : s.gameIds.length + '/' + LEGENDARY_WEEK_THRESHOLD}</div>
           <div class="lb-player">
             ${avatarFrameHtml(s.name, s.avatar, s.frame, 28)}
@@ -177,7 +180,7 @@ async function renderLegendaryProgress(): Promise<void> {
             </div>
           </div>
           <div class="lb-score mono">${s.gameIds.length}<span style="color:var(--text-faint);font-size:11px"> #1'ere</span></div>
-        </div>
+        </a>
       `;
       })
       .join('');
@@ -208,8 +211,9 @@ async function renderHallOfFame(): Promise<void> {
           return `<span class="hof-badge">${g?.icon ?? '🎮'} ${g?.title ?? gameId} ×${count}</span>`;
         })
         .join('');
+      const target = playerLinkTarget(e.id);
       return `
-      <div class="lb-row ${isMe ? 'me' : ''}">
+      <a class="lb-row ${isMe ? 'me' : ''}" href="#/${target}" data-nav="${target}">
         <div class="lb-rank ${i < 3 ? 'medal' : ''}">${i < 3 ? medals[i] : '#' + (i + 1)}</div>
         <div class="lb-player">
           ${avatarFrameHtml(name, meta?.avatar, meta?.frame, 28)}
@@ -220,7 +224,7 @@ async function renderHallOfFame(): Promise<void> {
           </div>
         </div>
         <div class="lb-score mono">${e.totalWins}<span style="color:var(--text-faint);font-size:11px"> #1'ere</span></div>
-      </div>
+      </a>
     `;
     }),
   );
