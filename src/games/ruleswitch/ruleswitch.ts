@@ -135,11 +135,12 @@ function drawArenaContent(): void {
           <li>Sortér tallet efter reglen øverst — tap venstre eller højre</li>
           <li>Reglen skifter uden varsel undervejs — hold øje med banneret</li>
           <li>Svarer du ikke i tide, tæller det som forkert</li>
+          <li>Forkert svar koster et point — gæt ikke i blinde</li>
         </ul>
-        <button class="btn btn-primary btn-lg" id="startBtn">START</button>
+        <button class="btn btn-primary btn-lg" id="ruleswitchStartBtn">START</button>
       </div>
     `;
-    document.getElementById('startBtn')!.addEventListener('click', (e) => {
+    document.getElementById('ruleswitchStartBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
       startSession();
     });
@@ -227,6 +228,10 @@ function answer(side: 'left' | 'right' | null): void {
     Sound.hit();
     Haptics.hit();
   } else {
+    // Without a penalty here, blind-spamming answers cost nothing and netted free score
+    // on the ~50% that landed correct by chance — a wrong answer now costs a point (floored
+    // at 0) so accuracy, not raw tap speed, is what actually grows the score.
+    state.score = Math.max(0, state.score - 1);
     state.combo = 0;
     Sound.mistake();
     Haptics.miss();

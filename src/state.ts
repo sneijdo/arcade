@@ -13,6 +13,16 @@ import { findAvatar, findFrame, AVATARS, FRAMES, TITLES } from './shop';
 
 export let profile: Profile | null = null;
 
+const ESCAPE_MAP: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+/** Player names (guest or real) are never validated as strictly as the real signup username
+ * (see validateUsername in auth.ts) and end up interpolated directly into innerHTML template
+ * strings all over the app (profile, leaderboard, Hall of Fame) — escape at every one of those
+ * render boundaries rather than trusting upstream validation to catch every path a name can
+ * be set through. */
+export function escapeHtml(str: string): string {
+  return str.replace(/[&<>"']/g, (c) => ESCAPE_MAP[c]);
+}
+
 export function initials(name: string): string {
   return (
     (name || '?')

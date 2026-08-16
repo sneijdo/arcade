@@ -81,10 +81,10 @@ function drawArenaContent(): void {
           <li>Klik / tap i samme øjeblik du ser det</li>
           <li>5 runder — klikker du for tidligt, koster det runden</li>
         </ul>
-        <button class="btn btn-primary btn-lg" id="startBtn">START RUNDE 1</button>
+        <button class="btn btn-primary btn-lg" id="reactionStartBtn">START RUNDE 1</button>
       </div>
     `;
-    document.getElementById('startBtn')!.addEventListener('click', (e) => {
+    document.getElementById('reactionStartBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
       startRound();
     });

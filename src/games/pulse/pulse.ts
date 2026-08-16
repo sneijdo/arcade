@@ -95,10 +95,10 @@ function drawArenaContent(): void {
           <li>Ram præcist for PERFECT, lidt ved siden af for GOD</li>
           <li>Combo øger point pr. hit — men brister ved et missede tryk</li>
         </ul>
-        <button class="btn btn-primary btn-lg" id="startBtn">START</button>
+        <button class="btn btn-primary btn-lg" id="pulseStartBtn">START</button>
       </div>
     `;
-    document.getElementById('startBtn')!.addEventListener('click', (e) => {
+    document.getElementById('pulseStartBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
       startSession();
     });

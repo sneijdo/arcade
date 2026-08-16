@@ -1,7 +1,7 @@
-import { profile, getCombinedLeaderboard, avatarFrameHtml, creditMyHallOfFameWins, getHallOfFame, getPlayerMeta, getWeeklyLeadStandings, LEGENDARY_WEEK_THRESHOLD } from '../state';
+import { profile, getCombinedLeaderboard, avatarFrameHtml, creditMyHallOfFameWins, getHallOfFame, getPlayerMeta, getWeeklyLeadStandings, LEGENDARY_WEEK_THRESHOLD, escapeHtml } from '../state';
 import { findTitle } from '../shop';
 import { GAMES } from '../games/registry';
-import { ScoreKinds } from '../scoring';
+import { ScoreKinds, formatScore, scoreUnitSuffix } from '../scoring';
 import { isGuestMode } from '../storage';
 import type { LeaderboardEntry, ScoreKind } from '../types';
 
@@ -21,7 +21,7 @@ export async function renderLeaderboard(gameId?: string): Promise<void> {
   main.innerHTML = `
     <div class="page">
       <div class="section-label">Ranglister</div>
-      <div class="section-title">Leaderboard</div>
+      <h1 class="section-title">Leaderboard</h1>
       ${isGuestMode() ? '<div class="guest-lb-note">Du spiller som gæst, så du er ikke med på det globale leaderboard endnu — opret en konto fra din profil for at komme med.</div>' : ''}
       <div class="tabs" id="lbViewTabs">
         <button class="tab-btn ${lbView === 'week' ? 'active' : ''}" data-view="week">DENNE UGE</button>
@@ -75,7 +75,7 @@ async function renderGameBoard(gameId: string, scoreKindId: string | null): Prom
   panel.innerHTML = myRankCardHtml(board, kind) + board
     .map((e, i) => {
       const isMe = e.id === profile!.id;
-      const scoreText = kind ? `${kind.format(e.score)}<span style="color:var(--text-faint);font-size:11px"> ${kind.unit}</span>` : Math.round(e.score);
+      const scoreText = kind ? `${kind.format(e.score)}<span style="color:var(--text-faint);font-size:11px">${scoreUnitSuffix(kind)}</span>` : Math.round(e.score);
       const title = findTitle(e.title);
       return `
       <div class="lb-row ${isMe ? 'me' : ''}">
@@ -83,7 +83,7 @@ async function renderGameBoard(gameId: string, scoreKindId: string | null): Prom
         <div class="lb-player">
           ${avatarFrameHtml(e.name, e.avatar, e.frame, 28)}
           <div class="lb-name-col">
-            <span class="lb-name">${e.name}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
+            <span class="lb-name">${escapeHtml(e.name)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
             ${title ? `<img src="${title.asset}" alt="${title.label}" class="title-badge-img">` : ''}
           </div>
         </div>
@@ -102,7 +102,7 @@ async function renderGameBoard(gameId: string, scoreKindId: string | null): Prom
 function myRankCardHtml(board: LeaderboardEntry[], kind: ScoreKind | null): string {
   if (!profile) return '';
   const myIdx = board.findIndex((e) => e.id === profile!.id);
-  const fmt = (v: number) => (kind ? `${kind.format(v)}${kind.unit}` : `${Math.round(v)}`);
+  const fmt = (v: number) => (kind ? formatScore(kind, v) : `${Math.round(v)}`);
 
   if (myIdx === -1) {
     return `
@@ -137,7 +137,7 @@ function myRankCardHtml(board: LeaderboardEntry[], kind: ScoreKind | null): stri
         <div class="my-rank-num">#${myIdx + 1}</div>
         <div class="my-rank-score mono">${fmt(me.score)}</div>
       </div>
-      <div class="my-rank-gap">${fmt(Math.abs(gap))} fra ${above.name} (#${myIdx})</div>
+      <div class="my-rank-gap">${fmt(Math.abs(gap))} fra ${escapeHtml(above.name)} (#${myIdx})</div>
     </div>
   `;
 }
@@ -172,7 +172,7 @@ async function renderLegendaryProgress(): Promise<void> {
           <div class="lb-player">
             ${avatarFrameHtml(s.name, s.avatar, s.frame, 28)}
             <div class="lb-name-col">
-              <span class="lb-name">${s.name}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
+              <span class="lb-name">${escapeHtml(s.name)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
               <span class="hof-badges">${gameBadges}</span>
             </div>
           </div>
@@ -214,7 +214,7 @@ async function renderHallOfFame(): Promise<void> {
         <div class="lb-player">
           ${avatarFrameHtml(name, meta?.avatar, meta?.frame, 28)}
           <div class="lb-name-col">
-            <span class="lb-name">${name}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
+            <span class="lb-name">${escapeHtml(name)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
             ${title ? `<img src="${title.asset}" alt="${title.label}" class="title-badge-img">` : ''}
             <span class="hof-badges">${gameBadges}</span>
           </div>

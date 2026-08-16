@@ -124,10 +124,10 @@ function drawArenaContent(): void {
           <li>Brug skyderne til at genskabe den så præcist som muligt</li>
           <li>5 runder — jo tættere du rammer, jo højere nøjagtighed</li>
         </ul>
-        <button class="btn btn-primary btn-lg" id="startBtn">START RUNDE 1</button>
+        <button class="btn btn-primary btn-lg" id="colorStartBtn">START RUNDE 1</button>
       </div>
     `;
-    document.getElementById('startBtn')!.addEventListener('click', (e) => {
+    document.getElementById('colorStartBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
       startRound();
     });
@@ -257,10 +257,10 @@ function advanceAfterRound(): void {
   arena.innerHTML = `
     <div class="arena-inner">
       <div class="arena-title">Runde ${colorState.round + 1}</div>
-      <button class="btn btn-primary btn-lg" id="startBtn">START</button>
+      <button class="btn btn-primary btn-lg" id="colorStartBtn">START</button>
     </div>
   `;
-  document.getElementById('startBtn')!.addEventListener('click', (e) => {
+  document.getElementById('colorStartBtn')!.addEventListener('click', (e) => {
     e.stopPropagation();
     startRound();
   });

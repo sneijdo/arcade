@@ -103,10 +103,10 @@ function drawArenaContent(): void {
           <li>Tap det rigtige svar blandt de fire muligheder</li>
           <li>Forkert svar koster intet — du går bare videre</li>
         </ul>
-        <button class="btn btn-primary btn-lg" id="startBtn">START</button>
+        <button class="btn btn-primary btn-lg" id="numberrushStartBtn">START</button>
       </div>
     `;
-    document.getElementById('startBtn')!.addEventListener('click', (e) => {
+    document.getElementById('numberrushStartBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
       startSession();
     });

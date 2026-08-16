@@ -1,6 +1,6 @@
 import { GAMES } from '../games/registry';
 import { profile, bestScoreForGame } from '../state';
-import { ScoreKinds } from '../scoring';
+import { ScoreKinds, formatScore } from '../scoring';
 
 export function renderGameGrid(container: HTMLElement): void {
   if (!profile) return;
@@ -10,7 +10,7 @@ export function renderGameGrid(container: HTMLElement): void {
       const best = bestScoreForGame(g.id);
       if (best != null && g.scoreKind) {
         const kind = ScoreKinds[g.scoreKind];
-        bestHtml = `Rekord: <b>${kind.format(best)}${kind.unit}</b>`;
+        bestHtml = `Rekord: <b>${formatScore(kind, best)}</b>`;
       } else {
         bestHtml = 'Ikke spillet endnu';
       }

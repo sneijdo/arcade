@@ -123,10 +123,10 @@ function drawArenaContent(): void {
           <li>Kant-boksene giver flest point — men er svære at ramme</li>
           <li>${TOTAL_BALLS} kugler — din samlede score tæller</li>
         </ul>
-        <button class="btn btn-primary btn-lg" id="startBtn">START</button>
+        <button class="btn btn-primary btn-lg" id="dropzoneStartBtn">START</button>
       </div>
     `;
-    document.getElementById('startBtn')!.addEventListener('click', (e) => {
+    document.getElementById('dropzoneStartBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
       startSession();
     });

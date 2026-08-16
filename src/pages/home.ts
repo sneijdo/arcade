@@ -2,7 +2,7 @@ import { profile, todayLocalDateString } from '../state';
 import { renderGameGrid } from './gameGrid';
 import { getTodayChallenge } from '../dailyChallenge';
 import { GAMES } from '../games/registry';
-import { ScoreKinds } from '../scoring';
+import { ScoreKinds, formatScore } from '../scoring';
 import { levelInfo } from '../xp';
 
 /** Level/XP progress is otherwise only visible as a tiny header badge — surfaced here so "what am I working toward" has an answer on the one screen everyone lands on. */
@@ -28,7 +28,7 @@ function renderDailyChallengeCard(): string {
   const game = GAMES.find((g) => g.id === challenge.gameId);
   const kind = game?.scoreKind ? ScoreKinds[game.scoreKind] : null;
   const completed = profile.dailyChallengeDate === todayLocalDateString();
-  const targetText = kind ? `${kind.format(challenge.target)}${kind.unit}` : challenge.target;
+  const targetText = kind ? formatScore(kind, challenge.target) : challenge.target;
   return `
     <div class="daily-challenge ${completed ? 'completed' : ''}">
       <div class="daily-challenge-icon">${completed ? '✅' : game ? `<img src="${game.iconAsset}" alt="" class="daily-challenge-icon-img">` : '🎯'}</div>
@@ -49,7 +49,7 @@ export async function renderHome(): Promise<void> {
     <div class="page">
       <section class="hero">
         <div class="hero-tag">SPIL · KONKURRER · DOMINÉR</div>
-        <div class="hero-word">ARCADE</div>
+        <h1 class="hero-word">ARCADE</h1>
         <p class="hero-sub">Hurtige spil. Rigtige leaderboards. Ét forsøg mere er altid ét klik væk.</p>
         <div class="hero-ctas">
           <button class="btn btn-primary btn-lg" data-nav="games">▶ SPIL NU</button>
@@ -61,7 +61,7 @@ export async function renderHome(): Promise<void> {
       ${renderDailyChallengeCard()}
 
       <div class="section-label" style="margin-top:44px">Hurtigt i gang</div>
-      <div class="section-title">Spil</div>
+      <h2 class="section-title">Spil</h2>
       <div class="game-grid" id="homeGameGrid"></div>
 
       <div class="footer-note">ARCADE · BYGGET TIL ÉT FORSØG MERE</div>

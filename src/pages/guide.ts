@@ -57,14 +57,14 @@ export function renderGuide(): void {
   main.innerHTML = `
     <div class="page">
       <div class="section-label">Hjælp</div>
-      <div class="section-title">Sådan virker det</div>
+      <h1 class="section-title">Sådan virker det</h1>
       <div class="guide-list">
         ${SECTIONS.map(
           (s) => `
           <div class="panel guide-section">
             <div class="guide-icon">${s.icon}</div>
             <div>
-              <div class="guide-title">${s.title}</div>
+              <h2 class="guide-title">${s.title}</h2>
               <div class="guide-body">${s.body}</div>
             </div>
           </div>

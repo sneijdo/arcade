@@ -68,10 +68,10 @@ function drawArenaContent(): void {
           <li>Målet flytter sig med det samme efter hvert hit</li>
           <li>Tap hurtigt og præcist — hvert hit tæller</li>
         </ul>
-        <button class="btn btn-primary btn-lg" id="startBtn">START</button>
+        <button class="btn btn-primary btn-lg" id="aimStartBtn">START</button>
       </div>
     `;
-    document.getElementById('startBtn')!.addEventListener('click', (e) => {
+    document.getElementById('aimStartBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
       startSession();
     });

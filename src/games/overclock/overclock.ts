@@ -65,10 +65,10 @@ function drawArenaContent(): void {
           <li>Overloader den mens du holder, mister du hele rundens gevinst</li>
           <li>${TOTAL_ROUNDS} runder — din samlede bankede score tæller</li>
         </ul>
-        <button class="btn btn-primary btn-lg" id="startBtn">START</button>
+        <button class="btn btn-primary btn-lg" id="overclockStartBtn">START</button>
       </div>
     `;
-    document.getElementById('startBtn')!.addEventListener('click', (e) => {
+    document.getElementById('overclockStartBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
       startSession();
     });

@@ -1,5 +1,22 @@
 import type { ScoreKind } from './types';
 
+/** The space (or lack of one) between a formatted score and its unit, e.g. "800 point" vs "95%"
+ * vs a bare "256" for merge's unitless tile value. Centralized so every call site gets this right
+ * instead of each one guessing — several previously hardcoded a space that was wrong for '%' and
+ * '' units, and a couple of ScoreKinds compensated with an inconsistent leading space baked into
+ * `unit` itself. */
+export function scoreUnitSuffix(kind: ScoreKind): string {
+  const u = kind.unit.trim();
+  if (!u || u === '%') return u;
+  return ' ' + u;
+}
+
+/** The one place a score + its unit should be formatted for display — use this instead of
+ * hand-concatenating `kind.format(v)` and `kind.unit`. */
+export function formatScore(kind: ScoreKind, value: number): string {
+  return kind.format(value) + scoreUnitSuffix(kind);
+}
+
 /** Reusable scoring abstraction — new games register a ScoreKind here rather than inventing their own rating logic. */
 export const ScoreKinds: Record<string, ScoreKind> = {
   reaction_ms: {
@@ -64,7 +81,7 @@ export const ScoreKinds: Record<string, ScoreKind> = {
   },
   tactical_rooms: {
     direction: 'desc',
-    unit: ' rum',
+    unit: 'rum',
     format: (v) => `${Math.round(v)}`,
     rating: (v) => {
       if (v >= 7) return { label: 'SINDSSYGT', color: 'var(--lime)' };
@@ -76,7 +93,7 @@ export const ScoreKinds: Record<string, ScoreKind> = {
   },
   stack_height: {
     direction: 'desc',
-    unit: ' blokke',
+    unit: 'blokke',
     format: (v) => `${Math.round(v)}`,
     rating: (v) => {
       if (v >= 25) return { label: 'SINDSSYGT', color: 'var(--lime)' };

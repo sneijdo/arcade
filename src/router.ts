@@ -36,17 +36,25 @@ export async function navigate(r: string): Promise<void> {
   else if (r.startsWith('play-')) GAME_RENDERERS[r.slice(5)]?.();
 }
 
-/** What route the current URL points at — used both to restore on app boot and to resolve browser back/forward. Falls back to 'home' for anything unresolvable (e.g. a stale bookmarked/reloaded hash pointing at a game id that no longer exists) rather than rendering a blank page. */
+const KNOWN_ROUTES = ['home', 'games', 'leaderboard', 'profile', 'shop', 'guide'];
+
+/** What route the current URL points at — used both to restore on app boot and to resolve browser back/forward. Falls back to 'home' for anything unresolvable (e.g. a stale bookmarked/reloaded hash pointing at a game id that no longer exists, or any other unrecognized route string) rather than rendering a blank page. */
 export function currentHashRoute(): string {
   const r = location.hash.startsWith('#/') ? location.hash.slice(2) : 'home';
-  if (r.startsWith('play-') && !GAME_RENDERERS[r.slice(5)]) return 'home';
-  return r || 'home';
+  if (!r) return 'home';
+  if (r.startsWith('play-')) return GAME_RENDERERS[r.slice(5)] ? r : 'home';
+  if (r.startsWith('leaderboard-')) return r;
+  return KNOWN_ROUTES.includes(r) ? r : 'home';
 }
 
 export function initRouter(): void {
   document.addEventListener('click', (e) => {
     const navEl = (e.target as HTMLElement).closest<HTMLElement>('[data-nav]');
     if (navEl) {
+      // nav-link/logo/player-chip are real <a href="#/..."> now (for keyboard/screen-reader
+      // access) — prevent the native anchor navigation so the JS router stays the single
+      // source of truth instead of double-handling the hash change.
+      e.preventDefault();
       Sound.click();
       navigate(navEl.dataset.nav!);
     }

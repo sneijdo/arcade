@@ -81,10 +81,10 @@ function drawArenaContent(): void {
           <li>Undgå de røde "korrupte" felter — de koster point og nulstiller din combo</li>
           <li>Højere combo giver flere point pr. glitch</li>
         </ul>
-        <button class="btn btn-primary btn-lg" id="startBtn">START</button>
+        <button class="btn btn-primary btn-lg" id="glitchgridStartBtn">START</button>
       </div>
     `;
-    document.getElementById('startBtn')!.addEventListener('click', (e) => {
+    document.getElementById('glitchgridStartBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
       startSession();
     });

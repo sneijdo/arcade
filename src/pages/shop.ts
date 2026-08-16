@@ -1,4 +1,4 @@
-import { profile, saveProfile, getMyLegendarySlots, checkAchievements } from '../state';
+import { profile, saveProfile, getMyLegendarySlots, checkAchievements, avatarFrameHtml } from '../state';
 import { refreshHeader } from '../header';
 import { toast } from '../toast';
 import { Sound } from '../sound';
@@ -76,7 +76,7 @@ export async function renderShop(): Promise<void> {
   main.innerHTML = `
     <div class="page">
       <div class="section-label">Brug din XP</div>
-      <div class="section-title">Butik</div>
+      <h1 class="section-title">Butik</h1>
 
       <div class="shop-balance">
         <div class="shop-balance-label">DIN SALDO</div>
@@ -116,7 +116,7 @@ function updateLegendaryRow(): void {
   el.innerHTML = `
     <span>⭐ ${legendarySpent} / ${myLegendarySlots} legendary-slots brugt</span>
     <span class="shop-legendary-hint">${myLegendarySlots > legendarySpent ? 'Du har et ledigt slot — vælg en legendary nedenfor!' : 'Slut en uge som nr. 1 i 4+ spil for at optjene et nyt slot'}</span>
-    <span class="shop-legendary-hint" data-nav="guide" style="text-decoration:underline;cursor:pointer">Læs mere om hvordan det virker →</span>
+    <a class="shop-legendary-hint" href="#/guide" data-nav="guide" style="text-decoration:underline;cursor:pointer">Læs mere om hvordan det virker →</a>
   `;
 }
 
@@ -159,7 +159,11 @@ function itemCardHtml(item: ShopItem, tab: ShopTab): string {
   const media =
     tab === 'titles'
       ? `<img src="${item.asset}" alt="${displayName(item)}" class="shop-title-thumb">`
-      : `<div class="shop-avatar-emoji"><img src="${item.asset}" alt="${displayName(item)}" class="shop-item-thumb"></div>`;
+      : tab === 'frames'
+        // A bare frame ring on its own is mostly transparent and unreadable — preview it
+        // composited over the player's own avatar so the card actually shows what they'd get.
+        ? avatarFrameHtml(profile!.name, profile!.equippedAvatar, item.id, 44)
+        : `<div class="shop-avatar-emoji"><img src="${item.asset}" alt="${displayName(item)}" class="shop-item-thumb"></div>`;
   return `
     <button class="${cardClass} rarity-${item.rarity} ${equipped ? 'equipped' : ''} ${!owned && !affordable ? 'unaffordable' : ''} ${gate ? 'level-locked' : ''}" ${attr}="${item.id}">
       <div class="rarity-tag rarity-${item.rarity}">${RARITY_LABEL[item.rarity]}</div>

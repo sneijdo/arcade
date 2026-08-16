@@ -1,4 +1,4 @@
-import { profile, getCombinedLeaderboard, avatarFrameHtml, clearProfile, bestScoreForGame } from '../state';
+import { profile, getCombinedLeaderboard, avatarFrameHtml, clearProfile, bestScoreForGame, escapeHtml } from '../state';
 import { levelInfo } from '../xp';
 import { ACHIEVEMENTS } from '../achievements';
 import { BADGES } from '../badges';
@@ -6,7 +6,7 @@ import { authAvailable, signOut, changePassword } from '../auth';
 import { showRecoveryCodeReveal, showAuthModal } from '../onboarding';
 import { isGuestMode } from '../storage';
 import { GAMES } from '../games/registry';
-import { ScoreKinds } from '../scoring';
+import { ScoreKinds, formatScore } from '../scoring';
 import { toast } from '../toast';
 import { findTitle, findAvatar, AVATARS, FRAMES, TITLES, SECRET_TITLES } from '../shop';
 
@@ -24,7 +24,7 @@ export async function renderProfile(): Promise<void> {
         <div class="profile-head">
           ${avatarFrameHtml(profile.name, profile.equippedAvatar, profile.equippedFrame, 74)}
           <div class="profile-head-info">
-            <div class="profile-name">${profile.name}${(() => { const t = findTitle(profile!.equippedTitle); return t ? ` <img src="${t.asset}" alt="${t.label}" class="title-badge-img profile-title-badge">` : ''; })()}</div>
+            <h1 class="profile-name">${escapeHtml(profile.name)}${(() => { const t = findTitle(profile!.equippedTitle); return t ? ` <img src="${t.asset}" alt="${t.label}" class="title-badge-img profile-title-badge">` : ''; })()}</h1>
             <div class="xp-bar-track"><div class="xp-bar-fill" style="width:${li.pct}%"></div></div>
             <div class="xp-bar-label">LEVEL ${li.level} · ${li.into} / ${li.need} XP ${rank ? `· PLACERING #${rank} GLOBALT (REACTION)` : ''}</div>
           </div>
@@ -47,13 +47,13 @@ export async function renderProfile(): Promise<void> {
         <span>🏷️ ${profile.unlockedTitles.filter((id) => findTitle(id)).length} / ${TITLES.length + SECRET_TITLES.length} titler</span>
       </div>
 
-      <div class="section-title" style="margin-top:32px">Personlige rekorder</div>
+      <h2 class="section-title" style="margin-top:32px">Personlige rekorder</h2>
       <div class="pb-grid">
         ${implementedGames
           .map((g) => {
             const best = bestScoreForGame(g.id);
             const kind = g.scoreKind ? ScoreKinds[g.scoreKind] : null;
-            const val = best != null && kind ? `${kind.format(best)} ${kind.unit}` : '—';
+            const val = best != null && kind ? formatScore(kind, best) : '—';
             return `<div class="pb-card"><div class="g">${g.title}</div><div class="v">${val}</div></div>`;
           })
           .join('')}
@@ -63,7 +63,7 @@ export async function renderProfile(): Promise<void> {
         <div class="pb-card"><div class="g">Længste stime</div><div class="v">${profile.longestStreak}</div></div>
       </div>
 
-      <div class="section-title" style="margin-top:32px">Bedrifter</div>
+      <h2 class="section-title" style="margin-top:32px">Bedrifter</h2>
       <div class="ach-grid">
         ${ACHIEVEMENTS.map((a) => {
           const unlocked = profile!.unlockedAchievements.includes(a.id);
@@ -74,7 +74,7 @@ export async function renderProfile(): Promise<void> {
         }).join('')}
       </div>
 
-      <div class="section-title" style="margin-top:32px">Badges (${profile.unlockedBadges.length} / ${BADGES.length})</div>
+      <h2 class="section-title" style="margin-top:32px">Badges (${profile.unlockedBadges.length} / ${BADGES.length})</h2>
       <div class="badge-grid">
         ${BADGES.map((b) => {
           const unlocked = profile!.unlockedBadges.includes(b.id);
@@ -89,7 +89,7 @@ export async function renderProfile(): Promise<void> {
       ${
         authAvailable() && isGuestMode()
           ? `
-      <div class="section-title" style="margin-top:32px">Gem din fremgang</div>
+      <h2 class="section-title" style="margin-top:32px">Gem din fremgang</h2>
       <div class="panel guest-upsell-panel">
         <p>Du spiller som gæst — din fremgang findes kun på denne enhed. Opret en konto for at gemme den på tværs af enheder og komme på det globale leaderboard.</p>
         <button class="btn btn-primary btn-block" id="createAccountBtn">OPRET KONTO</button>
@@ -97,7 +97,7 @@ export async function renderProfile(): Promise<void> {
       `
           : authAvailable()
             ? `
-      <div class="section-title" style="margin-top:32px">Kontosikkerhed</div>
+      <h2 class="section-title" style="margin-top:32px">Kontosikkerhed</h2>
       <div class="panel settings-panel">
         <div class="settings-block">
           <div class="settings-label">Skift adgangskode</div>
@@ -130,6 +130,12 @@ export async function renderProfile(): Promise<void> {
     if (!newPasswordInput || !passwordChangeMsg) return;
     const newPassword = newPasswordInput.value;
     passwordChangeMsg.style.display = 'none';
+    if (!newPassword) {
+      passwordChangeMsg.textContent = 'Indtast en ny adgangskode.';
+      passwordChangeMsg.style.color = 'var(--coral)';
+      passwordChangeMsg.style.display = 'block';
+      return;
+    }
     if (newPassword.length < 6) {
       passwordChangeMsg.textContent = 'Adgangskoden er for kort — mindst 6 tegn.';
       passwordChangeMsg.style.color = 'var(--coral)';

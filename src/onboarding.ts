@@ -6,11 +6,24 @@ import { toast } from './toast';
 import { useLocalGuestStorage, useSupabaseStorage, clearLocalGuestProfile, isGuestMode } from './storage';
 import { Sound } from './sound';
 
+let modalIdCounter = 0;
+
+/** Every modal template passed here follows the same shape — a `.modal` div with an `<h2>` as
+ * its heading — so the dialog semantics (role, aria-modal, aria-labelledby) can be wired up once
+ * here instead of repeating them in every call site's markup. */
 function mountModal(html: string): HTMLElement {
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
   backdrop.innerHTML = html;
   document.body.appendChild(backdrop);
+  const modal = backdrop.querySelector('.modal');
+  const heading = modal?.querySelector('h2');
+  if (modal && heading) {
+    if (!heading.id) heading.id = 'modalTitle-' + ++modalIdCounter;
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', heading.id);
+  }
   return backdrop;
 }
 

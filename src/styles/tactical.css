@@ -17,6 +17,10 @@
   min-height: 0;
   overflow-y: auto;
   padding: 3px;
+  /* Fades the last visible row toward transparent so a taller-than-the-box weapon list
+     reads as "scroll for more" instead of looking like a rendering cutoff. */
+  mask-image: linear-gradient(to bottom, black calc(100% - 28px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 28px), transparent 100%);
 }
 .weapon-card {
   background: var(--void-2);

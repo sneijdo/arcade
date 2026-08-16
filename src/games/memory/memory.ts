@@ -76,10 +76,10 @@ function drawStage(): void {
           <li>Gentag den ved at tappe felterne i samme rækkefølge</li>
           <li>Sekvensen bliver ét felt længere for hver runde du klarer</li>
         </ul>
-        <button class="btn btn-primary btn-lg" id="startBtn">START</button>
+        <button class="btn btn-primary btn-lg" id="memoryStartBtn">START</button>
       </div>
     `;
-    document.getElementById('startBtn')!.addEventListener('click', (e) => {
+    document.getElementById('memoryStartBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
       startGame();
     });

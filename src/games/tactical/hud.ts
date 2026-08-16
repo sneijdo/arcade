@@ -83,9 +83,9 @@ export function showLevelUpModal(choices: UpgradeDef[], onPick: (u: UpgradeDef) 
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
   backdrop.innerHTML = `
-    <div class="modal" style="max-width:560px">
+    <div class="modal" style="max-width:560px" role="dialog" aria-modal="true" aria-labelledby="levelUpModalTitle">
       <div class="hero-tag" style="margin-bottom:6px">LEVEL OP</div>
-      <h2>Vælg en opgradering</h2>
+      <h2 id="levelUpModalTitle">Vælg en opgradering</h2>
       <div class="upgrade-grid">
         ${choices
           .map(
@@ -125,9 +125,9 @@ export function showVaultModal(onPick: (choice: 'heal' | 'currency' | 'upgrade')
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
   backdrop.innerHTML = `
-    <div class="modal" style="max-width:560px">
+    <div class="modal" style="max-width:560px" role="dialog" aria-modal="true" aria-labelledby="vaultModalTitle">
       <div class="hero-tag" style="margin-bottom:6px">HVÆLV FUNDET</div>
-      <h2>Vælg din belønning</h2>
+      <h2 id="vaultModalTitle">Vælg din belønning</h2>
       <div class="upgrade-grid">
         ${VAULT_OPTIONS.map(
           (o, i) => `
@@ -165,9 +165,9 @@ export function showPerkShopModal(meta: TacticalMeta, perks: PerkDef[], onBuy: (
 
   function renderContent(): void {
     backdrop.innerHTML = `
-      <div class="modal" style="max-width:480px">
+      <div class="modal" style="max-width:480px" role="dialog" aria-modal="true" aria-labelledby="perkShopModalTitle">
         <div class="hero-tag" style="margin-bottom:6px">PERMANENTE PERKS</div>
-        <h2>Perk-butik</h2>
+        <h2 id="perkShopModalTitle">Perk-butik</h2>
         <p style="margin-top:-6px">Din saldo: <b style="color:var(--lime)">🔷 ${meta.currency}</b></p>
         <div class="perk-list">
           ${perks
