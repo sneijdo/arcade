@@ -292,8 +292,7 @@ export interface WeeklyLeadStanding {
  * (which only reflects weeks already credited/finalized), this reads the in-progress current
  * week directly so players can track real-time progress toward the 4-game legendary threshold
  * (see LEGENDARY_WEEK_THRESHOLD below) before the week ends. Nothing is written here. */
-export async function getWeeklyLeadStandings(): Promise<WeeklyLeadStanding[]> {
-  const week = weekKey(new Date());
+export async function getWeeklyLeadStandings(week: string = weekKey(new Date())): Promise<WeeklyLeadStanding[]> {
   const implementedGameIds = GAMES.filter((g) => g.implemented).map((g) => g.id);
   const byId: Record<string, string[]> = {};
   await Promise.all(
@@ -314,6 +313,19 @@ export async function getWeeklyLeadStandings(): Promise<WeeklyLeadStanding[]> {
 
 /** How many different games you need to finish #1 in during the SAME week to earn a legendary slot (see shop.ts) — a real weekly dominance flex, not a slow cumulative grind. */
 export const LEGENDARY_WEEK_THRESHOLD = 4;
+
+/** Last (fully completed) week's legendary winner(s) — anyone who finished #1 in
+ * LEGENDARY_WEEK_THRESHOLD+ games. Unlike creditMyHallOfFameWins() (self-scoped by RLS
+ * to only ever write the signed-in player's own hof:<id> row), this only *reads*
+ * already-public leaderboard entries, so every client computes the same answer for
+ * anyone — used purely for the "who won legendary" reveal (see legendary.ts), not for
+ * actually crediting Hall of Fame/legendary slots (that still only happens lazily, per
+ * player, via creditMyHallOfFameWins). */
+export async function getLastWeekLegendaryWinners(): Promise<WeeklyLeadStanding[]> {
+  const lastWeek = weekKey(new Date(Date.now() - 7 * 24 * 3600 * 1000));
+  const standings = await getWeeklyLeadStandings(lastWeek);
+  return standings.filter((s) => s.gameIds.length >= LEGENDARY_WEEK_THRESHOLD);
+}
 
 /**
  * Lazily credits *this* signed-in player's own Hall of Fame #1 finishes —
@@ -480,7 +492,9 @@ export async function checkAchievements(extra: Partial<AchievementStats> = {}): 
 
   // Secret titles — same auto-grant pattern, but the two conditions need direct profile access
   // (collection-completeness checks) rather than anything in the shared AchievementStats shape.
-  if (!profile.unlockedTitles.includes('title-secret-01') && statObj.gamesPlayed >= 15) {
+  // Derived from the live implemented-game count (not a hardcoded number) so this stays "every
+  // game" instead of silently going stale — and prematurely awardable — every time a game is added.
+  if (!profile.unlockedTitles.includes('title-secret-01') && statObj.gamesPlayed >= implementedGameIds.length) {
     profile.unlockedTitles.push('title-secret-01');
     changed = true;
     toast(`<span class="toast-icon">🔮</span><div><b>Hemmelig titel fundet!</b><br><span style="color:var(--text-dim);font-size:11.5px">Du har spillet alle spil — tjek butikken.</span></div>`, 'achievement');

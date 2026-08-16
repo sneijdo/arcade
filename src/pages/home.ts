@@ -4,6 +4,7 @@ import { getTodayChallenge } from '../dailyChallenge';
 import { GAMES } from '../games/registry';
 import { ScoreKinds, formatScore } from '../scoring';
 import { levelInfo } from '../xp';
+import { renderLegendaryRaceWidget, startCountdownTicker } from '../legendary';
 
 /** Level/XP progress is otherwise only visible as a tiny header badge — surfaced here so "what am I working toward" has an answer on the one screen everyone lands on. */
 function renderProgressCard(): string {
@@ -45,6 +46,12 @@ function renderDailyChallengeCard(): string {
 export async function renderHome(): Promise<void> {
   const main = document.getElementById('main')!;
   if (!profile) return;
+  const legendaryCardHtml = await renderLegendaryRaceWidget();
+
+  // The player may have navigated away while the widget's data was loading.
+  const stillHere = document.getElementById('main');
+  if (!stillHere) return;
+
   main.innerHTML = `
     <div class="page">
       <section class="hero">
@@ -57,6 +64,7 @@ export async function renderHome(): Promise<void> {
         </div>
       </section>
 
+      ${legendaryCardHtml}
       ${renderProgressCard()}
       ${renderDailyChallengeCard()}
 
@@ -68,4 +76,6 @@ export async function renderHome(): Promise<void> {
     </div>
   `;
   renderGameGrid(document.getElementById('homeGameGrid')!);
+  const countdownEl = document.getElementById('legendaryCountdown');
+  if (countdownEl) startCountdownTicker(countdownEl);
 }

@@ -1,3 +1,132 @@
+/* ============================= LEGENDARY RACE ============================= */
+.legendary-card {
+  margin-top: 28px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(255, 201, 60, 0.12), var(--surface-2));
+  border: 1px solid rgba(255, 201, 60, 0.35);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 40px -20px var(--gold-glow);
+}
+.legendary-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.legendary-card-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  color: var(--gold);
+}
+.legendary-countdown {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  text-shadow: 0 0 16px var(--gold-glow);
+}
+.legendary-card-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.legendary-contenders {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+}
+.legendary-contender {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.legendary-contender-rank {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  width: 14px;
+  flex-shrink: 0;
+}
+.legendary-contender-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.legendary-contender-count {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.legendary-empty {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  margin-top: 14px;
+}
+.legendary-card .btn {
+  margin-top: 16px;
+}
+
+/* Big reveal modal — see legendary.ts's maybeShowLegendaryReveal(). */
+.legendary-reveal-modal {
+  max-width: 420px;
+}
+.legendary-reveal-confetti {
+  font-size: 26px;
+  margin-bottom: 6px;
+  animation: legendary-confetti-bounce 1.4s var(--ease) infinite;
+}
+@keyframes legendary-confetti-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+.legendary-reveal-modal h2 {
+  background: linear-gradient(90deg, var(--gold), var(--lime));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.legendary-reveal-winners {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  margin: 8px 0 20px;
+}
+.legendary-reveal-winner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.legendary-reveal-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.legendary-reveal-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold);
+}
+
 /* ============================= LEADERBOARD ============================= */
 .tabs {
   display: flex;

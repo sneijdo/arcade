@@ -13,6 +13,10 @@ import { renderGlitchGridGame } from './glitchgrid/glitchgrid';
 import { renderPulseGame } from './pulse/pulse';
 import { renderDropZoneGame } from './dropzone/dropzone';
 import { renderRuleSwitchGame } from './ruleswitch/ruleswitch';
+import { renderWordRushGame } from './wordrush/wordrush';
+import { renderSwerveGame } from './swerve/swerve';
+import { renderPairsGame } from './pairs/pairs';
+import { renderOddOneOutGame } from './oddoneout/oddoneout';
 
 /** Maps a GAMES registry id to its render function. router.ts dispatches `play-<id>` routes through this. */
 export const GAME_RENDERERS: Record<string, () => void> = {
@@ -31,4 +35,8 @@ export const GAME_RENDERERS: Record<string, () => void> = {
   pulse: renderPulseGame,
   dropzone: renderDropZoneGame,
   ruleswitch: renderRuleSwitchGame,
+  wordrush: renderWordRushGame,
+  swerve: renderSwerveGame,
+  pairs: renderPairsGame,
+  oddoneout: renderOddOneOutGame,
 };

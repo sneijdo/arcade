@@ -199,4 +199,52 @@ export const ScoreKinds: Record<string, ScoreKind> = {
       return { label: 'SKAL ØVES', color: 'var(--coral)' };
     },
   },
+  wordrush_score: {
+    direction: 'desc',
+    unit: 'ord',
+    format: (v) => `${Math.round(v)}`,
+    rating: (v) => {
+      if (v >= 22) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 16) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 11) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 6) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
+  swerve_time: {
+    direction: 'desc', // stored as milliseconds survived; higher is better
+    unit: 's',
+    format: (v) => (v / 1000).toFixed(1),
+    rating: (v) => {
+      if (v >= 45000) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 30000) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 18000) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 8000) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
+  pairs_score: {
+    direction: 'desc',
+    unit: 'point',
+    format: (v) => `${Math.round(v)}`,
+    rating: (v) => {
+      if (v >= 220) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 160) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 110) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 60) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
+  oddoneout_score: {
+    direction: 'desc',
+    unit: 'runder',
+    format: (v) => `${Math.round(v)}`,
+    rating: (v) => {
+      if (v >= 16) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 11) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 7) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 3) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
 };

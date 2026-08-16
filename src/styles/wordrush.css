@@ -1,0 +1,50 @@
+/* ============================= WORD RUSH ============================= */
+.wr-wrap {
+  gap: 26px;
+  width: 100%;
+}
+.wr-word {
+  font-size: clamp(28px, 8vw, 44px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.wr-char {
+  color: var(--text-faint);
+  transition: color 0.1s var(--ease);
+}
+.wr-char.correct {
+  color: var(--lime);
+  text-shadow: 0 0 18px var(--lime-glow);
+}
+.wr-char.wrong {
+  color: var(--coral);
+  text-shadow: 0 0 18px var(--coral-glow);
+}
+.wr-word.wr-pop {
+  animation: wr-pop 0.28s var(--ease);
+}
+@keyframes wr-pop {
+  0% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.wr-input {
+  width: min(100%, 320px);
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--text);
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+.wr-input:focus {
+  outline: none;
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px var(--violet-glow);
+}

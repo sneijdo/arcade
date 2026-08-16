@@ -23,6 +23,10 @@ const DAILY_TARGETS: Record<string, number> = {
   pulse: 5000,
   dropzone: 800,
   ruleswitch: 12,
+  wordrush: 11,
+  swerve: 18000,
+  pairs: 110,
+  oddoneout: 7,
 };
 
 /** Halved along with every other XP source in the app (was 60). */

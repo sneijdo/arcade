@@ -11,7 +11,7 @@ let modalIdCounter = 0;
 /** Every modal template passed here follows the same shape — a `.modal` div with an `<h2>` as
  * its heading — so the dialog semantics (role, aria-modal, aria-labelledby) can be wired up once
  * here instead of repeating them in every call site's markup. */
-function mountModal(html: string): HTMLElement {
+export function mountModal(html: string): HTMLElement {
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
   backdrop.innerHTML = html;

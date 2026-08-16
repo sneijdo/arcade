@@ -5,6 +5,7 @@ import { isGuestMode } from '../storage';
 import { isSupabaseConfigured } from '../supabaseClient';
 import { fetchRecentActivity, subscribeActivity, onPresenceChange, type ActivityEntry, type PresenceUser } from '../activity';
 import { playerLinkTarget } from './playerProfile';
+import { renderLegendaryRaceWidget, startCountdownTicker, maybeShowLegendaryReveal } from '../legendary';
 
 const MAX_FEED_ROWS = 40;
 
@@ -62,6 +63,11 @@ function onlineListHtml(users: PresenceUser[]): string {
 export async function renderActivity(): Promise<void> {
   const main = document.getElementById('main')!;
   const live = isSupabaseConfigured && !isGuestMode();
+  const legendaryCardHtml = live ? await renderLegendaryRaceWidget() : '';
+
+  // The player may have navigated away while the widget's data was loading.
+  const stillHere = document.getElementById('main');
+  if (!stillHere) return;
 
   main.innerHTML = `
     <div class="page">
@@ -76,10 +82,11 @@ export async function renderActivity(): Promise<void> {
             }</div>`
           : ''
       }
+      ${legendaryCardHtml}
       ${
         live
           ? `
-      <div class="panel activity-panel">
+      <div class="panel activity-panel" style="margin-top:16px">
         <div class="activity-panel-header"><span class="activity-live-dot"></span>ONLINE NU</div>
         <div id="onlineList">${onlineListHtml([])}</div>
       </div>
@@ -94,6 +101,10 @@ export async function renderActivity(): Promise<void> {
   `;
 
   if (!live) return;
+
+  const countdownEl = document.getElementById('legendaryCountdown');
+  if (countdownEl) startCountdownTicker(countdownEl);
+  void maybeShowLegendaryReveal();
 
   // Presence — the listener self-removes the moment #onlineList is no longer in
   // the DOM (i.e. the player navigated away), same DOM-presence-check idiom used
