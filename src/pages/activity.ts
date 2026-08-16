@@ -35,7 +35,7 @@ function scoreText(gameId: string, score: number): string {
 function duelResultSub(e: ActivityEntry): string {
   const opponent = escapeHtml(e.opponentName ?? 'en modstander');
   const verb = e.score === 1 ? 'besejrede' : e.score === 0.5 ? 'spillede uafgjort mod' : 'tabte til';
-  return `🏍 ${verb} ${opponent} i Light Cycles`;
+  return `🧠 ${verb} ${opponent} i Quiz Duel`;
 }
 
 function activityRowHtml(e: ActivityEntry): string {
@@ -67,7 +67,7 @@ function onlineListHtml(users: PresenceUser[]): string {
       return `
         <div class="activity-online-chip">
           <a class="activity-online-link" href="#/${target}" data-nav="${target}">${avatarFrameHtml(u.name, u.avatar, null, 26)}<span>${escapeHtml(u.name)}</span></a>
-          ${isSelf ? '' : `<button class="btn btn-ghost btn-sm duel-challenge-btn" data-duel-challenge="${u.id}">🏍</button>`}
+          ${isSelf ? '' : `<button class="btn btn-ghost btn-sm duel-challenge-btn" data-duel-challenge="${u.id}">🧠</button>`}
         </div>`;
     })
     .join('')}</div>`;
@@ -75,7 +75,7 @@ function onlineListHtml(users: PresenceUser[]): string {
 
 function wireOnlineListButtons(el: HTMLElement, users: PresenceUser[]): void {
   el.querySelectorAll<HTMLButtonElement>('[data-duel-challenge]').forEach((btn) => {
-    btn.title = 'Udfordr til Light Cycles';
+    btn.title = 'Udfordr til Quiz Duel';
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();

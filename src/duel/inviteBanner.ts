@@ -69,7 +69,7 @@ function incomingCardHtml(c: DuelChallenge): string {
       ${avatarFrameHtml(c.senderName, c.senderAvatar, c.senderFrame, 40)}
       <div class="duel-invite-body">
         <div class="duel-invite-title">${escapeHtml(c.senderName)} udfordrer dig</div>
-        <div class="duel-invite-sub">🏍 Light Cycles · <span class="mono">${secondsLeft(c.createdAt)}s</span></div>
+        <div class="duel-invite-sub">🧠 Quiz Duel · <span class="mono">${secondsLeft(c.createdAt)}s</span></div>
         <div class="duel-invite-actions">
           <button class="btn btn-primary btn-sm" data-duel-accept="${c.id}">ACCEPTÉR</button>
           <button class="btn btn-ghost btn-sm" data-duel-decline="${c.id}">AFVIS</button>
@@ -85,7 +85,7 @@ function outgoingCardHtml(c: DuelChallenge, recipient: PresenceUser | undefined)
       ${avatarFrameHtml(recipient?.name ?? '?', recipient?.avatar ?? null, null, 40)}
       <div class="duel-invite-body">
         <div class="duel-invite-title">Venter på ${escapeHtml(recipient?.name ?? 'svar')}…</div>
-        <div class="duel-invite-sub">🏍 Light Cycles · <span class="mono">${secondsLeft(c.createdAt)}s</span></div>
+        <div class="duel-invite-sub">🧠 Quiz Duel · <span class="mono">${secondsLeft(c.createdAt)}s</span></div>
         <div class="duel-invite-actions">
           <button class="btn btn-ghost btn-sm" data-duel-cancel="${c.id}">FORTRYD</button>
         </div>
@@ -207,8 +207,8 @@ export function mountInviteBanner(): void {
       scheduleAutoJoin(c.id);
     } else {
       const recipient = outgoingRecipients.get(c.id);
-      if (c.status === 'declined' && recipient) toast(`<span class="toast-icon">🏍</span> ${escapeHtml(recipient.name)} afviste din udfordring`);
-      else if (c.status === 'expired' && recipient) toast(`<span class="toast-icon">🏍</span> Udfordringen til ${escapeHtml(recipient.name)} udløb`);
+      if (c.status === 'declined' && recipient) toast(`<span class="toast-icon">🧠</span> ${escapeHtml(recipient.name)} afviste din udfordring`);
+      else if (c.status === 'expired' && recipient) toast(`<span class="toast-icon">🧠</span> Udfordringen til ${escapeHtml(recipient.name)} udløb`);
       if (outgoing?.id === c.id) outgoing = null;
       outgoingRecipients.delete(c.id);
     }
@@ -229,5 +229,5 @@ export async function challengePlayer(recipient: PresenceUser): Promise<void> {
   outgoing = challenge;
   ensureTicker();
   render();
-  toast(`<span class="toast-icon">🏍</span> Udfordring sendt til ${escapeHtml(recipient.name)}`);
+  toast(`<span class="toast-icon">🧠</span> Udfordring sendt til ${escapeHtml(recipient.name)}`);
 }

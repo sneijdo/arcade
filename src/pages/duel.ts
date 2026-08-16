@@ -4,37 +4,23 @@ import { Haptics } from '../haptics';
 import { fetchChallenge, writeDuelResult, type DuelResult } from '../duel/challenges';
 import { challengePlayer } from '../duel/inviteBanner';
 import { onPresenceChange } from '../activity';
-import { DuelEngine, GRID_W, GRID_H, type Slot, type MatchPhase, type MatchSnapshot, type MatchOutcome, type Dir } from '../duel/match';
+import { QuizEngine, QUESTION_TIME_MS, type Slot, type QuizPhase, type RoundState, type RevealState, type MatchOutcome } from '../duel/quizEngine';
+import { QUIZ_CATEGORIES } from '../duel/questionBank';
 
-/** Colors match tokens.css's --lime/--coral — canvas can't read CSS custom properties without a
- * getComputedStyle round-trip, so these are duplicated as plain hex rather than adding that cost
- * to every animation frame. "You" is always lime, "them" is always coral, regardless of which
- * side (sender/recipient) either player actually is in the match record. */
-const MY_COLOR = '#c9f73e';
-const OPP_COLOR = '#ff5d7a';
-const CELL_PX = 20;
-const SWIPE_THRESHOLD = 20;
-
-const ARROW_KEY_DIRS: Record<string, Dir> = { ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 }, ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 } };
-
-let engine: DuelEngine | null = null;
+let engine: QuizEngine | null = null;
 let currentMatchId = '';
 let mySlot: Slot = 'sender';
 let oppId = '';
 let oppName = '';
 let oppAvatar: string | null = null;
 let oppFrame: string | null = null;
-let swipeStart: { x: number; y: number } | null = null;
-let swipeArmed = false;
+let myAnswerThisRound: number | null = null;
 
 function main(): HTMLElement {
   return document.getElementById('main')!;
 }
 function arenaEl(): HTMLElement | null {
   return document.getElementById('duelArena');
-}
-function canvasEl(): HTMLCanvasElement | null {
-  return document.getElementById('duelCanvas') as HTMLCanvasElement | null;
 }
 
 /** The DOM-presence bail-out idiom used throughout this app (see snake.ts's tick(), swerve.ts's
@@ -58,8 +44,7 @@ export async function renderDuelMatch(matchId: string): Promise<void> {
   if (!profile) return;
 
   const challenge = await fetchChallenge(matchId);
-  const stillOnDuelBoot = document.querySelector('.duel-loading');
-  if (!stillOnDuelBoot) return; // navigated away while the fetch was in flight
+  if (!document.querySelector('.duel-loading')) return; // navigated away while the fetch was in flight
 
   const iAmParticipant = challenge && (challenge.senderId === profile.id || challenge.recipientId === profile.id);
   if (!challenge || challenge.status !== 'accepted' || !iAmParticipant) {
@@ -95,7 +80,7 @@ function drawShell(matchId: string): void {
     <div class="page">
       <div class="game-shell">
         <div class="game-topbar">
-          <span>🏍 LIGHT CYCLES</span>
+          <span>🧠 QUIZ DUEL</span>
           <span class="mono" id="duelStatus">Venter på modstander…</span>
         </div>
         <div class="duel-players">
@@ -112,21 +97,9 @@ function drawShell(matchId: string): void {
   startEngine(matchId);
 }
 
-function drawPlayArea(): void {
-  const arena = arenaEl();
-  if (!arena) return;
-  arena.innerHTML = `
-    <div class="duel-field">
-      <canvas id="duelCanvas" width="${GRID_W * CELL_PX}" height="${GRID_H * CELL_PX}"></canvas>
-      <div class="duel-leadin" id="duelLeadin"></div>
-    </div>
-  `;
-  wireControls();
-}
-
 function startEngine(matchId: string): void {
   if (!profile) return;
-  engine = new DuelEngine({
+  engine = new QuizEngine({
     matchId,
     myId: profile.id,
     mySlot,
@@ -135,14 +108,17 @@ function startEngine(matchId: string): void {
       if (!stillHere()) return;
       handlePhaseChange(phase);
     },
-    onLeadIn: (msLeft) => {
+    onCategoryState: (mine, theirs) => {
       if (!stillHere()) return;
-      const el = document.getElementById('duelLeadin');
-      if (el) el.textContent = msLeft <= 0 ? '' : String(Math.ceil(msLeft / 1000));
+      renderCategoryPicker(mine, theirs);
     },
-    onTick: (snap) => {
+    onRound: (state) => {
       if (!stillHere()) return;
-      drawFrame(snap);
+      renderQuestion(state);
+    },
+    onReveal: (state) => {
+      if (!stillHere()) return;
+      renderReveal(state);
     },
     onEnd: (outcome) => {
       if (!stillHere()) return;
@@ -151,85 +127,140 @@ function startEngine(matchId: string): void {
   });
 }
 
-function handlePhaseChange(phase: MatchPhase): void {
+function handlePhaseChange(phase: QuizPhase): void {
   const statusEl = document.getElementById('duelStatus');
-  if (phase === 'leadin') {
-    if (statusEl) statusEl.textContent = 'Klar…';
-    drawPlayArea();
+  if (phase === 'category') {
+    if (statusEl) statusEl.textContent = 'VÆLG KATEGORI';
+  } else if (phase === 'leadin') {
+    if (statusEl) statusEl.textContent = 'KLAR…';
+    renderLeadin();
     Sound.countdown();
-  } else if (phase === 'playing') {
-    if (statusEl) statusEl.textContent = 'KAMP I GANG';
-    const el = document.getElementById('duelLeadin');
-    if (el) el.textContent = '';
+  } else if (phase === 'question') {
+    if (statusEl) statusEl.textContent = 'QUIZ I GANG';
   }
 }
 
-function wireControls(): void {
-  const canvas = canvasEl();
-  if (!canvas) return;
-  canvas.addEventListener('pointerdown', (e) => {
-    if (!e.isPrimary) return;
-    e.preventDefault();
-    swipeStart = { x: e.clientX, y: e.clientY };
-    swipeArmed = true;
+function renderCategoryPicker(mine: string | null, theirs: string | null): void {
+  const arena = arenaEl();
+  if (!arena) return;
+  if (mine) {
+    const cat = QUIZ_CATEGORIES.find((c) => c.id === mine);
+    arena.innerHTML = `
+      <div class="arena-inner">
+        <div class="arena-title">${cat?.icon ?? ''} Du valgte ${escapeHtml(cat?.label ?? '')}</div>
+        <div class="arena-sub">Venter på modstanderens valg…</div>
+      </div>
+    `;
+    return;
+  }
+  arena.innerHTML = `
+    <div class="quiz-category-picker">
+      <div class="arena-title" style="margin-bottom:6px">Vælg din kategori</div>
+      ${theirs ? '<div class="arena-sub" style="margin-bottom:14px">Modstanderen har valgt sin kategori</div>' : '<div class="arena-sub" style="margin-bottom:14px">5 spørgsmål fra din kategori, 5 fra modstanderens</div>'}
+      <div class="quiz-category-grid">
+        ${QUIZ_CATEGORIES.map((c) => `<button class="quiz-category-chip" data-category="${c.id}"><span class="quiz-category-icon">${c.icon}</span><span>${c.label}</span></button>`).join('')}
+      </div>
+    </div>
+  `;
+  arena.querySelectorAll<HTMLButtonElement>('[data-category]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      Sound.click();
+      engine?.chooseCategory(btn.dataset.category!);
+    });
   });
-  canvas.addEventListener('pointermove', (e) => {
-    if (!swipeArmed || !swipeStart || !e.isPrimary) return;
-    const dx = e.clientX - swipeStart.x;
-    const dy = e.clientY - swipeStart.y;
-    if (Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE_THRESHOLD) return;
-    engine?.queueTurn(Math.abs(dx) > Math.abs(dy) ? { x: dx > 0 ? 1 : -1, y: 0 } : { x: 0, y: dy > 0 ? 1 : -1 });
-    swipeStart = { x: e.clientX, y: e.clientY };
-  });
-  const endSwipe = () => {
-    swipeArmed = false;
-    swipeStart = null;
+}
+
+function renderLeadin(): void {
+  const arena = arenaEl();
+  if (!arena) return;
+  arena.innerHTML = `<div class="arena-inner"><div class="quiz-leadin-number" id="quizLeadinNumber">3</div></div>`;
+  let n = 3;
+  const tick = () => {
+    const el = document.getElementById('quizLeadinNumber');
+    if (!el) return;
+    n--;
+    el.textContent = n > 0 ? String(n) : '';
+    if (n > 0) setTimeout(tick, 1000);
   };
-  canvas.addEventListener('pointerup', endSwipe);
-  canvas.addEventListener('pointercancel', endSwipe);
-
-  document.removeEventListener('keydown', handleKeyDown);
-  document.addEventListener('keydown', handleKeyDown);
+  setTimeout(tick, 1000);
 }
 
-function handleKeyDown(e: KeyboardEvent): void {
-  if (!canvasEl()) return; // stale listener from a match the player already left — see stillHere()
-  const dir = ARROW_KEY_DIRS[e.key];
-  if (!dir || !engine) return;
-  e.preventDefault();
-  engine.queueTurn(dir);
+function questionCardHtml(round: RoundState): string {
+  const cat = QUIZ_CATEGORIES.find((c) => c.id === round.categoryId);
+  const optionsHtml = round.question.options.map((opt, i) => `<button class="quiz-answer-btn" data-option="${i}">${escapeHtml(opt)}</button>`).join('');
+  return `
+    <div class="quiz-round">
+      <div class="quiz-round-header">SPØRGSMÅL ${round.index + 1}/${round.total} · ${cat?.icon ?? ''} ${(cat?.label ?? '').toUpperCase()}</div>
+      <div class="quiz-question">${escapeHtml(round.question.q)}</div>
+      <div class="quiz-answer-grid">${optionsHtml}</div>
+      <div class="quiz-timer-track"><div class="quiz-timer-bar" id="quizTimerBar"></div></div>
+      <div class="quiz-status" id="quizStatus"></div>
+    </div>
+  `;
 }
 
-function drawTrail(ctx: CanvasRenderingContext2D, trail: { x: number; y: number }[], color: string): void {
-  ctx.fillStyle = color;
-  ctx.shadowColor = color;
-  ctx.shadowBlur = 8;
-  for (const c of trail) ctx.fillRect(c.x * CELL_PX + 1, c.y * CELL_PX + 1, CELL_PX - 2, CELL_PX - 2);
-  const head = trail[trail.length - 1];
-  ctx.shadowBlur = 16;
-  ctx.fillRect(head.x * CELL_PX, head.y * CELL_PX, CELL_PX, CELL_PX);
-  ctx.shadowBlur = 0;
+function renderQuestion(round: RoundState): void {
+  const arena = arenaEl();
+  if (!arena) return;
+  myAnswerThisRound = null;
+  arena.innerHTML = questionCardHtml(round);
+  arena.querySelectorAll<HTMLButtonElement>('.quiz-answer-btn[data-option]').forEach((btn) => {
+    btn.addEventListener('click', () => handleAnswerClick(Number(btn.dataset.option)));
+  });
+  const bar = document.getElementById('quizTimerBar');
+  if (bar) {
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+    void bar.offsetWidth; // force reflow so the transition below actually animates from 100%
+    bar.style.transition = `width ${QUESTION_TIME_MS}ms linear`;
+    bar.style.width = '0%';
+  }
 }
 
-function drawFrame(snap: MatchSnapshot): void {
-  const canvas = canvasEl();
-  const ctx = canvas?.getContext('2d');
-  if (!canvas || !ctx) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'rgba(255,255,255,0.05)';
-  for (let x = 0; x <= GRID_W; x++) ctx.fillRect(x * CELL_PX - 0.5, 0, 1, canvas.height);
-  for (let y = 0; y <= GRID_H; y++) ctx.fillRect(0, y * CELL_PX - 0.5, canvas.width, 1);
+function handleAnswerClick(idx: number): void {
+  if (myAnswerThisRound != null) return;
+  myAnswerThisRound = idx;
+  Sound.click();
+  engine?.submitAnswer(idx);
+  document.querySelectorAll<HTMLButtonElement>('.quiz-answer-btn').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === idx) btn.classList.add('selected');
+  });
+  const status = document.getElementById('quizStatus');
+  if (status) status.textContent = 'Venter på modstanderens svar…';
+}
 
-  const oppSlot: Slot = mySlot === 'sender' ? 'recipient' : 'sender';
-  drawTrail(ctx, snap.trails[oppSlot], OPP_COLOR);
-  drawTrail(ctx, snap.trails[mySlot], MY_COLOR);
+function renderReveal(state: RevealState): void {
+  const arena = arenaEl();
+  if (!arena) return;
+  const cat = QUIZ_CATEGORIES.find((c) => c.id === state.categoryId);
+  const optionsHtml = state.question.options
+    .map((opt, i) => {
+      let cls = 'quiz-answer-btn disabled';
+      if (i === state.correctIndex) cls += ' correct';
+      else if (i === state.myAnswer) cls += ' wrong';
+      return `<button class="${cls}" disabled>${escapeHtml(opt)}</button>`;
+    })
+    .join('');
+  arena.innerHTML = `
+    <div class="quiz-round">
+      <div class="quiz-round-header">SPØRGSMÅL ${state.index + 1}/${state.total} · ${cat?.icon ?? ''} ${(cat?.label ?? '').toUpperCase()}</div>
+      <div class="quiz-question">${escapeHtml(state.question.q)}</div>
+      <div class="quiz-answer-grid">${optionsHtml}</div>
+      <div class="quiz-score-header">
+        DIG <b>${state.myTotal}</b>${state.myGain ? `<span class="quiz-gain">+${state.myGain}</span>` : ''}
+        <span class="quiz-score-sep">—</span>
+        <b>${state.oppTotal}</b>${state.oppGain ? `<span class="quiz-gain opp">+${state.oppGain}</span>` : ''} MODSTANDER
+      </div>
+    </div>
+  `;
+  if (state.myAnswer === state.correctIndex) Sound.hit();
+  else if (state.myAnswer != null) Sound.mistake();
 }
 
 async function handleEnd(outcome: MatchOutcome): Promise<void> {
-  document.removeEventListener('keydown', handleKeyDown);
   // The match itself is decided — release the per-match Realtime channel now rather than
-  // leaving it subscribed until the player happens to navigate elsewhere (stillHere()'s
-  // destroy-on-teardown only fires on the *next* callback, which nothing here still triggers).
+  // leaving it subscribed until the player happens to navigate elsewhere.
   engine?.destroy();
   engine = null;
   const iWon = outcome.winner === mySlot;
@@ -250,16 +281,21 @@ async function handleEnd(outcome: MatchOutcome): Promise<void> {
   // after a forfeit win) — this is bookkeeping, not a render, so it doesn't need stillHere().
   const { xpGain } = await finishDuelSession(outcomeLabel, oppName);
   await writeDuelResult(currentMatchId, dbResult);
-  if (stillHere()) drawResult(outcomeLabel, xpGain, outcome.reason);
+  if (stillHere()) drawResult(outcomeLabel, xpGain, outcome);
 }
 
-function drawResult(outcome: 'win' | 'loss' | 'draw', xpGain: number, reason: MatchOutcome['reason']): void {
+function drawResult(outcome: 'win' | 'loss' | 'draw', xpGain: number, matchOutcome: MatchOutcome): void {
   const label = outcome === 'win' ? 'SEJR' : outcome === 'loss' ? 'NEDERLAG' : 'UAFGJORT';
   const color = outcome === 'win' ? 'var(--lime)' : outcome === 'loss' ? 'var(--coral)' : 'var(--text-dim)';
-  const reasonLabel = reason === 'forfeit' ? (outcome === 'win' ? 'Modstanderen forlod duellen' : 'Du forlod duellen') : reason === 'desync' ? 'Forbindelsen tabte synkronisering' : outcome === 'draw' ? 'Frontal kollision' : 'Styrt';
-  const w = (profile?.duelWins ?? 0);
-  const l = (profile?.duelLosses ?? 0);
-  const d = (profile?.duelDraws ?? 0);
+  const reasonLabel =
+    matchOutcome.reason === 'forfeit'
+      ? outcome === 'win'
+        ? 'Modstanderen forlod duellen'
+        : 'Du forlod duellen'
+      : `${matchOutcome.myTotal} – ${matchOutcome.oppTotal} point`;
+  const w = profile?.duelWins ?? 0;
+  const l = profile?.duelLosses ?? 0;
+  const d = profile?.duelDraws ?? 0;
 
   main().innerHTML = `
     <div class="page">

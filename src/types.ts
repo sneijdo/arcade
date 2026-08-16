@@ -32,7 +32,7 @@ export interface Profile {
   equippedFrame: string | null;
   /** Badges are auto-earned (see checkBadges() in state.ts), never purchased — no "equipped" concept, just a collection shown on Profile. */
   unlockedBadges: string[];
-  /** Light Cycles duel record — see finishDuelSession() in state.ts. */
+  /** Quiz Duel record — see finishDuelSession() in state.ts. */
   duelWins: number;
   duelLosses: number;
   duelDraws: number;

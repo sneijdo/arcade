@@ -4,7 +4,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { PresenceUser } from '../activity';
 
 /**
- * Invite lifecycle for Light Cycles duels, backed by the `duel_challenges` table
+ * Invite lifecycle for Quiz Duel, backed by the `duel_challenges` table
  * (see supabase/schema_duels.sql) — same "typed row mapper + Realtime subscription"
  * shape as activity.ts, but two-party (both sender and recipient can read/update a
  * row they're part of) rather than owner-only.
