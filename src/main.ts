@@ -63,6 +63,12 @@ async function initSupabaseMode(): Promise<void> {
     Sound.setMuted(!!p.muted);
     refreshHeader();
     startPresence(p.id, p.name, p.equippedAvatar);
+    // Refreshes this player's public PlayerMeta snapshot (see saveProfile in state.ts)
+    // just from opening the app — not only from playing/equipping something. Otherwise
+    // a player who's genuinely progressed but hasn't triggered a save since a new
+    // PlayerMeta field was added would show stale/zeroed-out data on their public
+    // player-profile page until their next game session.
+    void saveProfile();
     navigate(currentHashRoute());
   };
 
