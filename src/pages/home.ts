@@ -52,7 +52,7 @@ export async function renderHome(): Promise<void> {
         <div class="hero-word">ARCADE</div>
         <p class="hero-sub">Hurtige spil. Rigtige leaderboards. Ét forsøg mere er altid ét klik væk.</p>
         <div class="hero-ctas">
-          <button class="btn btn-primary btn-lg" data-nav="play-reaction">▶ SPIL NU</button>
+          <button class="btn btn-primary btn-lg" data-nav="games">▶ SPIL NU</button>
           <button class="btn btn-ghost btn-lg" data-nav="leaderboard">SE LEADERBOARD</button>
         </div>
       </section>

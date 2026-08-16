@@ -167,10 +167,17 @@
   gap: 20px;
   flex-wrap: wrap;
 }
+/* min-width: 0 overrides flex items' default min-width: auto, which otherwise refuses to
+   shrink below the name+title's content width and pushes the title off-screen on narrow
+   viewports instead of wrapping it. */
+.profile-head-info {
+  min-width: 0;
+}
 .profile-name {
   font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
+  overflow-wrap: break-word;
 }
 .xp-bar-track {
   width: 220px;

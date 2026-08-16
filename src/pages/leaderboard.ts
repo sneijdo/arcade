@@ -1,4 +1,4 @@
-import { profile, getCombinedLeaderboard, avatarFrameHtml, creditMyHallOfFameWins, getHallOfFame, getPlayerMeta } from '../state';
+import { profile, getCombinedLeaderboard, avatarFrameHtml, creditMyHallOfFameWins, getHallOfFame, getPlayerMeta, getWeeklyLeadStandings, LEGENDARY_WEEK_THRESHOLD } from '../state';
 import { findTitle } from '../shop';
 import { GAMES } from '../games/registry';
 import { ScoreKinds } from '../scoring';
@@ -6,7 +6,7 @@ import { isGuestMode } from '../storage';
 import type { LeaderboardEntry, ScoreKind } from '../types';
 
 let lbGameId = 'reaction';
-type LbView = 'week' | 'alltime' | 'hof';
+type LbView = 'week' | 'alltime' | 'hof' | 'legendary';
 let lbView: LbView = 'week';
 
 export async function renderLeaderboard(gameId?: string): Promise<void> {
@@ -26,9 +26,10 @@ export async function renderLeaderboard(gameId?: string): Promise<void> {
       <div class="tabs" id="lbViewTabs">
         <button class="tab-btn ${lbView === 'week' ? 'active' : ''}" data-view="week">DENNE UGE</button>
         <button class="tab-btn ${lbView === 'alltime' ? 'active' : ''}" data-view="alltime">ALL-TIME</button>
+        <button class="tab-btn ${lbView === 'legendary' ? 'active' : ''}" data-view="legendary">⭐ MOD LEGENDARY</button>
         <button class="tab-btn ${lbView === 'hof' ? 'active' : ''}" data-view="hof">🏆 HALL OF FAME</button>
       </div>
-      <div class="tabs" id="lbGameTabs" style="${lbView === 'hof' ? 'display:none' : ''}">
+      <div class="tabs" id="lbGameTabs" style="${lbView === 'hof' || lbView === 'legendary' ? 'display:none' : ''}">
         ${implementedGames
           .map((g) => `<button class="tab-btn ${g.id === activeGame.id ? 'active' : ''}" data-game="${g.id}">${g.title.toUpperCase()}</button>`)
           .join('')}
@@ -50,6 +51,7 @@ export async function renderLeaderboard(gameId?: string): Promise<void> {
   });
 
   if (lbView === 'hof') await renderHallOfFame();
+  else if (lbView === 'legendary') await renderLegendaryProgress();
   else await renderGameBoard(activeGame.id, activeGame.scoreKind);
 }
 
@@ -138,6 +140,47 @@ function myRankCardHtml(board: LeaderboardEntry[], kind: ScoreKind | null): stri
       <div class="my-rank-gap">${fmt(Math.abs(gap))} fra ${above.name} (#${myIdx})</div>
     </div>
   `;
+}
+
+/** Live progress toward this week's legendary slot — who's currently #1 in how many different
+ * games right now, so players can see exactly how close they (or a rival) are before the week
+ * ends, instead of only finding out after the fact via the Hall of Fame tab. */
+async function renderLegendaryProgress(): Promise<void> {
+  const standings = await getWeeklyLeadStandings();
+  const panel = document.getElementById('lbPanel');
+  if (!panel) return;
+
+  if (standings.length === 0) {
+    panel.innerHTML = `<div style="color:var(--text-dim);font-size:13.5px">Ingen har sat en rekord denne uge endnu — vær den første #1.</div>`;
+    return;
+  }
+  panel.innerHTML =
+    `<div style="color:var(--text-dim);font-size:13px;margin-bottom:12px">Slut ugen som #1 i mindst ${LEGENDARY_WEEK_THRESHOLD} forskellige spil for at optjene et legendary-slot.</div>` +
+    standings
+      .map((s) => {
+        const isMe = s.id === profile!.id;
+        const qualifies = s.gameIds.length >= LEGENDARY_WEEK_THRESHOLD;
+        const gameBadges = s.gameIds
+          .map((gameId) => {
+            const g = GAMES.find((gg) => gg.id === gameId);
+            return `<span class="hof-badge">${g?.icon ?? '🎮'} ${g?.title ?? gameId}</span>`;
+          })
+          .join('');
+        return `
+        <div class="lb-row ${isMe ? 'me' : ''}">
+          <div class="lb-rank ${qualifies ? 'medal' : ''}">${qualifies ? '⭐' : s.gameIds.length + '/' + LEGENDARY_WEEK_THRESHOLD}</div>
+          <div class="lb-player">
+            ${avatarFrameHtml(s.name, s.avatar, s.frame, 28)}
+            <div class="lb-name-col">
+              <span class="lb-name">${s.name}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
+              <span class="hof-badges">${gameBadges}</span>
+            </div>
+          </div>
+          <div class="lb-score mono">${s.gameIds.length}<span style="color:var(--text-faint);font-size:11px"> #1'ere</span></div>
+        </div>
+      `;
+      })
+      .join('');
 }
 
 async function renderHallOfFame(): Promise<void> {

@@ -33,15 +33,20 @@ const SECTIONS: GuideSection[] = [
   {
     icon: '🏆',
     title: 'Leaderboard — denne uge & all-time',
-    body: 'Hvert spils leaderboard nulstilles automatisk hver mandag ("DENNE UGE"-fanen) — så der altid er en frisk konkurrence, uanset hvor længe du har spillet. "ALL-TIME"-fanen viser stadig din bedste nogensinde.',
+    body: 'Hvert spils leaderboard nulstilles automatisk hver søndag ("DENNE UGE"-fanen) — så der altid er en frisk konkurrence, uanset hvor længe du har spillet. "ALL-TIME"-fanen viser stadig din bedste nogensinde.',
+  },
+  {
+    icon: '⭐',
+    title: 'Mod Legendary',
+    body: 'Denne fane viser live, hvem der lige nu er #1 i hvor mange forskellige spil i den igangværende uge — så du kan følge med i din egen (eller andres) vej mod et legendary-slot, mens ugen stadig kører.',
   },
   {
     icon: '👑',
     title: 'Hall of Fame',
-    body: 'Slutter du en uge som #1 i et spil, tæller det som en sejr i Hall of Fame — synligt på leaderboardets 3. fane. Sejre tæller på tværs af alle spil og uger.',
+    body: 'Slutter du en uge som #1 i et spil, tæller det som en sejr i Hall of Fame — synligt på leaderboardets sidste fane. Sejre tæller på tværs af alle spil og uger.',
   },
   {
-    icon: '⭐',
+    icon: '🔓',
     title: 'Legendary — sådan låser du op',
     body: 'Legendary avatarer, rammer og titler kan IKKE bare købes for XP, uanset hvor meget du har. Du skal først optjene et "slot": slut en uge som #1 i mindst 4 forskellige spil på samme tid. Hvert slot lader dig vælge præcis én legendary ting i butikken — resten venter til din næste store uge.',
   },

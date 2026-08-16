@@ -25,7 +25,7 @@ export interface Profile {
   equippedAvatar: string | null;
   /** null = no title shown. */
   equippedTitle: string | null;
-  /** Most recent ISO week (see isoWeekKey in state.ts) already checked for this player's own Hall of Fame #1 finishes — see creditMyHallOfFameWins(). null = never checked. Self-scoped (rather than a single global marker) because RLS only lets a player write their own `hof:<id>` row — see supabase/schema.sql. */
+  /** Most recent week key (Sunday-start, see weekKey() in state.ts) already checked for this player's own Hall of Fame #1 finishes — see creditMyHallOfFameWins(). null = never checked. Self-scoped (rather than a single global marker) because RLS only lets a player write their own `hof:<id>` row — see supabase/schema.sql. */
   hofCheckedThroughWeek: string | null;
   unlockedFrames: string[];
   /** null = no frame — see avatarFrameHtml() in state.ts. */

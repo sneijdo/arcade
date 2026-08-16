@@ -56,7 +56,9 @@ function displayName(item: ShopItem): string {
  */
 function gateReason(item: ShopItem): string | null {
   if (item.rarity === 'legendary') {
-    const available = myLegendarySlots - ownedLegendaryCount();
+    const owned = ownedLegendaryCount();
+    if (item.requiresOwnedLegendary && owned < item.requiresOwnedLegendary) return `🔒 ${owned}/${item.requiresOwnedLegendary} LEG`;
+    const available = myLegendarySlots - owned;
     if (available <= 0) return `⭐ ${Math.max(0, available)}/${myLegendarySlots}`;
     return null;
   }
@@ -78,16 +80,12 @@ export async function renderShop(): Promise<void> {
 
       <div class="shop-balance">
         <div class="shop-balance-label">DIN SALDO</div>
-        <div class="shop-balance-value">✦ ${profile.xpBalance} XP</div>
+        <div class="shop-balance-value" id="shopBalanceValue">✦ ${profile.xpBalance} XP</div>
       </div>
 
       <div class="shop-legendary-row" id="shopLegendaryRow"></div>
 
-      <div class="shop-collection-row">
-        <span>🎭 ${profile.unlockedAvatars.filter((id) => findAvatar(id)).length} / ${AVATARS.length} avatarer</span>
-        <span>🖼️ ${profile.unlockedFrames.length} / ${FRAMES.length} rammer</span>
-        <span>🏷️ ${profile.unlockedTitles.filter((id) => findTitle(id)).length} / ${TITLES.length + SECRET_TITLES.length} titler</span>
-      </div>
+      <div class="shop-collection-row" id="shopCollectionRow"></div>
 
       <div class="tabs" style="margin-top:18px">
         <button class="tab-btn ${shopTab === 'avatars' ? 'active' : ''}" data-tab="avatars">AVATARER</button>
@@ -171,11 +169,29 @@ function itemCardHtml(item: ShopItem, tab: ShopTab): string {
   `;
 }
 
+/** Balance + collection counters, kept separate from renderShop()'s one-shot HTML for the same
+ * reason as updateLegendaryRow() — refreshed after every purchase/equip via renderGrid() instead
+ * of going stale until the player navigates away and back. */
+function updateBalanceAndCollection(): void {
+  if (!profile) return;
+  const balanceEl = document.getElementById('shopBalanceValue');
+  if (balanceEl) balanceEl.textContent = `✦ ${profile.xpBalance} XP`;
+  const collectionEl = document.getElementById('shopCollectionRow');
+  if (collectionEl) {
+    collectionEl.innerHTML = `
+      <span>🎭 ${profile.unlockedAvatars.filter((id) => findAvatar(id)).length} / ${AVATARS.length} avatarer</span>
+      <span>🖼️ ${profile.unlockedFrames.length} / ${FRAMES.length} rammer</span>
+      <span>🏷️ ${profile.unlockedTitles.filter((id) => findTitle(id)).length} / ${TITLES.length + SECRET_TITLES.length} titler</span>
+    `;
+  }
+}
+
 function renderGrid(): void {
   const grid = document.getElementById('shopGrid');
   const next = document.getElementById('shopNext');
   if (!grid || !next || !profile) return;
   updateLegendaryRow();
+  updateBalanceAndCollection();
   next.innerHTML = nextItemHtml();
   grid.className = shopTab === 'titles' ? 'shop-title-grid' : 'shop-avatar-grid';
   grid.innerHTML = itemsFor(shopTab)
@@ -202,11 +218,14 @@ async function handleTap(tab: ShopTab, id: string): Promise<void> {
   } else {
     const gate = gateReason(def);
     if (gate) {
+      const owned = ownedLegendaryCount();
       toast(
         def.rarity === 'legendary'
-          ? myLegendarySlots === 0
-            ? 'Legendary kræver mindst 1 uge som nr. 1 i 4+ forskellige spil'
-            : `Ingen ledige legendary-slots — du har brugt alle ${myLegendarySlots}`
+          ? def.requiresOwnedLegendary && owned < def.requiresOwnedLegendary
+            ? `Kræver ${def.requiresOwnedLegendary} andre ejede legendary ting — du har ${owned}`
+            : myLegendarySlots === 0
+              ? 'Legendary kræver mindst 1 uge som nr. 1 i 4+ forskellige spil'
+              : `Ingen ledige legendary-slots — du har brugt alle ${myLegendarySlots}`
           : `Låst op ved level ${def.unlockLevel} — du er level ${myLevel()}`,
       );
       return;

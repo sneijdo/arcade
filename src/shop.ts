@@ -8,6 +8,11 @@ export interface AvatarDef {
   cost: number;
   /** Not buyable below this level, regardless of XP balance — epic tier only. */
   unlockLevel?: number;
+  /** Legendary tier only — not buyable until the player already owns this many OTHER legendary
+   * items (any kind), on top of the usual legendary-slot requirement. A second, steeper gate for
+   * a couple of specific joke/personal titles the owner wants reserved for players who've already
+   * cleaned out the "serious" legendary catalog. */
+  requiresOwnedLegendary?: number;
 }
 
 export interface FrameDef {
@@ -17,6 +22,7 @@ export interface FrameDef {
   rarity: Rarity;
   cost: number;
   unlockLevel?: number;
+  requiresOwnedLegendary?: number;
 }
 
 export interface TitleDef {
@@ -26,6 +32,7 @@ export interface TitleDef {
   rarity: Rarity;
   cost: number;
   unlockLevel?: number;
+  requiresOwnedLegendary?: number;
 }
 
 /**
@@ -122,8 +129,8 @@ export const TITLES: TitleDef[] = [
   { id: 'title-cosmic', label: 'COSMIC', asset: '/cosmetics/titles/cosmic.svg', rarity: 'legendary', cost: 1400 },
   { id: 'title-the-ultimate', label: 'THE ULTIMATE', asset: '/cosmetics/titles/the-ultimate.svg', rarity: 'legendary', cost: 1500 },
   { id: 'title-god-mode', label: 'GOD MODE', asset: '/cosmetics/titles/god-mode.svg', rarity: 'legendary', cost: 1600 },
-  { id: 'title-jas-final-boss', label: 'JAS FINAL BOSS', asset: '/cosmetics/titles/jas-final-boss.svg', rarity: 'legendary', cost: 1700 },
-  { id: 'title-stor-pik', label: 'STOR PIK', asset: '/cosmetics/titles/stor-pik.svg', rarity: 'legendary', cost: 1800 },
+  { id: 'title-jas-final-boss', label: 'JAS FINAL BOSS', asset: '/cosmetics/titles/jas-final-boss.svg', rarity: 'legendary', cost: 1700, requiresOwnedLegendary: 4 },
+  { id: 'title-stor-pik', label: 'STOR PIK', asset: '/cosmetics/titles/stor-pik.svg', rarity: 'legendary', cost: 1800, requiresOwnedLegendary: 4 },
 ];
 
 /** Never shown in the shop until owned — auto-granted by checkSecretUnlocks() in state.ts. Name stays "???" (matches the source art) until then. */

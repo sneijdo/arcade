@@ -23,7 +23,7 @@ export async function renderProfile(): Promise<void> {
       <div class="panel">
         <div class="profile-head">
           ${avatarFrameHtml(profile.name, profile.equippedAvatar, profile.equippedFrame, 74)}
-          <div>
+          <div class="profile-head-info">
             <div class="profile-name">${profile.name}${(() => { const t = findTitle(profile!.equippedTitle); return t ? ` <img src="${t.asset}" alt="${t.label}" class="title-badge-img profile-title-badge">` : ''; })()}</div>
             <div class="xp-bar-track"><div class="xp-bar-fill" style="width:${li.pct}%"></div></div>
             <div class="xp-bar-label">LEVEL ${li.level} · ${li.into} / ${li.need} XP ${rank ? `· PLACERING #${rank} GLOBALT (REACTION)` : ''}</div>

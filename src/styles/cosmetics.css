@@ -5,9 +5,6 @@
    avatarFrameHtml; font-size here only matters for the plain-initials fallback. */
 .avatar-frame-wrap {
   position: relative;
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: linear-gradient(135deg, var(--violet), var(--violet-2));
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -16,9 +13,14 @@
   font-weight: 700;
   color: #fff;
 }
+/* Only the avatar itself is clipped to a rounded square — the frame overlay is a sibling
+   (not a child) of this, so its own corner/edge decorations never get cut off by the rounding. */
 .avatar-frame-inner {
   position: absolute;
   inset: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--violet), var(--violet-2));
   display: flex;
   align-items: center;
   justify-content: center;

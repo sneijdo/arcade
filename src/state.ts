@@ -141,16 +141,15 @@ export function todayLocalDateString(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** ISO-8601 week key (e.g. "2026-W33", Monday-start) — the leaderboard's weekly reset boundary. */
-export function isoWeekKey(d: Date): string {
+/** Sunday-start week key (e.g. "2026-08-16", the date of that week's Sunday) — the leaderboard's
+ * weekly reset boundary. A new week starts every Sunday, which is also when a fresh shot at a
+ * legendary slot opens up. Plain calendar-date strings sort lexicographically in chronological
+ * order, same as the ISO-week strings this replaced, so every caller that compares week keys as
+ * strings keeps working unchanged. */
+export function weekKey(d: Date): string {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const dayNum = (date.getUTCDay() + 6) % 7; // Mon=0..Sun=6
-  date.setUTCDate(date.getUTCDate() - dayNum + 3); // nearest Thursday determines the ISO week/year
-  const firstThursday = new Date(Date.UTC(date.getUTCFullYear(), 0, 4));
-  const firstDayNum = (firstThursday.getUTCDay() + 6) % 7;
-  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNum + 3);
-  const weekNum = 1 + Math.round((date.getTime() - firstThursday.getTime()) / (7 * 24 * 3600 * 1000));
-  return `${date.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+  date.setUTCDate(date.getUTCDate() - date.getUTCDay()); // back up to that week's Sunday (UTC day 0)
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
 }
 
 /**
@@ -204,10 +203,10 @@ export async function checkDailyChallenge(gameId: string, score: number): Promis
   Sound.achievement();
 }
 
-/** Entries are keyed per ISO week, so a new week naturally starts empty — that IS the weekly reset, no cron/migration needed. Pre-existing (pre-weekly-key) entries keep matching the wider 'alltime' prefix below, so historical scores aren't lost, they just don't count for the current week until replayed. */
+/** Entries are keyed per week (Sunday-start, see weekKey()), so a new week naturally starts empty — that IS the weekly reset, no cron/migration needed. Pre-existing (pre-weekly-key) entries keep matching the wider 'alltime' prefix below, so historical scores aren't lost, they just don't count for the current week until replayed. */
 export async function pushLeaderboardEntry(gameId: string, score: number): Promise<void> {
   if (!profile) return;
-  const week = isoWeekKey(new Date());
+  const week = weekKey(new Date());
   await storage.set(
     `lb:${gameId}:${week}:` + profile.id,
     { name: profile.name, score, id: profile.id, avatar: profile.equippedAvatar, title: profile.equippedTitle, frame: profile.equippedFrame },
@@ -239,7 +238,7 @@ async function readLeaderboard(gameId: string, week: string | null): Promise<Lea
 }
 
 export async function getCombinedLeaderboard(gameId: string, scope: 'week' | 'alltime' = 'week'): Promise<LeaderboardEntry[]> {
-  const combined = await readLeaderboard(gameId, scope === 'week' ? isoWeekKey(new Date()) : null);
+  const combined = await readLeaderboard(gameId, scope === 'week' ? weekKey(new Date()) : null);
   // Overlay each player's live avatar/title/name so an equip change shows up
   // immediately instead of waiting for that player's next score push.
   await Promise.all(
@@ -256,8 +255,41 @@ export async function getCombinedLeaderboard(gameId: string, scope: 'week' | 'al
   return combined;
 }
 
+export interface WeeklyLeadStanding {
+  id: string;
+  name: string;
+  avatar: string | null;
+  frame: string | null;
+  title: string | null;
+  gameIds: string[];
+}
+
+/** Live "who's currently #1 in how many games this week" standings — unlike getHallOfFame()
+ * (which only reflects weeks already credited/finalized), this reads the in-progress current
+ * week directly so players can track real-time progress toward the 4-game legendary threshold
+ * (see LEGENDARY_WEEK_THRESHOLD below) before the week ends. Nothing is written here. */
+export async function getWeeklyLeadStandings(): Promise<WeeklyLeadStanding[]> {
+  const week = weekKey(new Date());
+  const implementedGameIds = GAMES.filter((g) => g.implemented).map((g) => g.id);
+  const byId: Record<string, string[]> = {};
+  await Promise.all(
+    implementedGameIds.map(async (gameId) => {
+      const board = await readLeaderboard(gameId, week);
+      if (board.length > 0) (byId[board[0].id] ??= []).push(gameId);
+    }),
+  );
+  const standings = await Promise.all(
+    Object.entries(byId).map(async ([id, gameIds]) => {
+      const meta = await storage.get<PlayerMeta>('playerMeta:' + id, true);
+      return { id, name: meta?.name ?? 'Ukendt spiller', avatar: meta?.avatar ?? null, frame: meta?.frame ?? null, title: meta?.title ?? null, gameIds };
+    }),
+  );
+  standings.sort((a, b) => b.gameIds.length - a.gameIds.length);
+  return standings;
+}
+
 /** How many different games you need to finish #1 in during the SAME week to earn a legendary slot (see shop.ts) — a real weekly dominance flex, not a slow cumulative grind. */
-const LEGENDARY_WEEK_THRESHOLD = 4;
+export const LEGENDARY_WEEK_THRESHOLD = 4;
 
 /**
  * Lazily credits *this* signed-in player's own Hall of Fame #1 finishes —
@@ -285,7 +317,7 @@ export async function creditMyHallOfFameWins(): Promise<void> {
   let newLegendaryWeeks = 0;
 
   for (let weeksAgo = 1; weeksAgo <= 8; weeksAgo++) {
-    const week = isoWeekKey(new Date(now - weeksAgo * 7 * 24 * 3600 * 1000));
+    const week = weekKey(new Date(now - weeksAgo * 7 * 24 * 3600 * 1000));
     if (profile.hofCheckedThroughWeek != null && week <= profile.hofCheckedThroughWeek) break;
     let winsThisWeek = 0;
     for (const gameId of implementedGameIds) {
