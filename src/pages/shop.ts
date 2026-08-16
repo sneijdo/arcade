@@ -20,11 +20,17 @@ export async function renderShop(): Promise<void> {
         <div class="shop-balance-value">✦ ${profile.xpBalance} XP</div>
       </div>
 
+      <div class="shop-collection-row">
+        <span>🎭 ${profile.unlockedAvatars.length} / ${AVATARS.length} avatarer</span>
+        <span>🏷️ ${profile.unlockedTitles.length} / ${TITLES.length} titler</span>
+      </div>
+
       <div class="tabs" style="margin-top:18px">
         <button class="tab-btn ${shopTab === 'avatars' ? 'active' : ''}" data-tab="avatars">AVATARER</button>
         <button class="tab-btn ${shopTab === 'titles' ? 'active' : ''}" data-tab="titles">TITLER</button>
       </div>
 
+      <div id="shopNext"></div>
       <div id="shopGrid"></div>
     </div>
   `;
@@ -37,9 +43,41 @@ export async function renderShop(): Promise<void> {
   renderGrid();
 }
 
+/** The cheapest not-yet-owned, not-yet-affordable item — a concrete "you're this close" hook instead of a static catalog. Omitted if everything owned is already affordable (nothing to anticipate) or already owned. */
+function nextItemHtml(): string {
+  if (!profile) return '';
+  const balance = profile.xpBalance;
+  if (shopTab === 'avatars') {
+    const next = AVATARS.filter((a) => !profile!.unlockedAvatars.includes(a.id) && a.cost > balance).sort((a, b) => a.cost - b.cost)[0];
+    if (!next) return '';
+    return `
+      <div class="shop-next-card">
+        <div class="shop-next-emoji">${next.emoji}</div>
+        <div class="shop-next-body">
+          <div class="shop-next-label">NÆSTE</div>
+          <div class="shop-next-cost mono">${next.cost - balance} XP mangler</div>
+        </div>
+      </div>
+    `;
+  }
+  const next = TITLES.filter((t) => !profile!.unlockedTitles.includes(t.id) && t.cost > balance).sort((a, b) => a.cost - b.cost)[0];
+  if (!next) return '';
+  return `
+    <div class="shop-next-card">
+      <div class="shop-next-emoji">🏷️</div>
+      <div class="shop-next-body">
+        <div class="shop-next-label">NÆSTE — "${next.label}"</div>
+        <div class="shop-next-cost mono">${next.cost - balance} XP mangler</div>
+      </div>
+    </div>
+  `;
+}
+
 function renderGrid(): void {
   const grid = document.getElementById('shopGrid');
-  if (!grid || !profile) return;
+  const next = document.getElementById('shopNext');
+  if (!grid || !next || !profile) return;
+  next.innerHTML = nextItemHtml();
   if (shopTab === 'avatars') {
     grid.className = 'shop-avatar-grid';
     grid.innerHTML = AVATARS.map((a) => avatarCardHtml(a)).join('');

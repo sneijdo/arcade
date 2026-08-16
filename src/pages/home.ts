@@ -3,6 +3,24 @@ import { renderGameGrid } from './gameGrid';
 import { getTodayChallenge } from '../dailyChallenge';
 import { GAMES } from '../games/registry';
 import { ScoreKinds } from '../scoring';
+import { levelInfo } from '../xp';
+
+/** Level/XP progress is otherwise only visible as a tiny header badge — surfaced here so "what am I working toward" has an answer on the one screen everyone lands on. */
+function renderProgressCard(): string {
+  if (!profile) return '';
+  const li = levelInfo(profile.xp);
+  const toGo = li.need - li.into;
+  return `
+    <div class="home-xp-card">
+      <div class="home-xp-row">
+        <div class="home-xp-level">LEVEL ${li.level}</div>
+        <div class="home-xp-amount mono">${li.into} / ${li.need} XP</div>
+      </div>
+      <div class="home-xp-track"><div class="home-xp-fill" style="width:${li.pct}%"></div></div>
+      <div class="home-xp-sub">${toGo} XP til level ${li.level + 1}</div>
+    </div>
+  `;
+}
 
 function renderDailyChallengeCard(): string {
   const challenge = getTodayChallenge(todayLocalDateString());
@@ -41,6 +59,7 @@ export async function renderHome(): Promise<void> {
         </div>
       </section>
 
+      ${renderProgressCard()}
       ${renderDailyChallengeCard()}
 
       <div class="section-label">I fokus</div>

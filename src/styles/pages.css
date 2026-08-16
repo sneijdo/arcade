@@ -98,6 +98,49 @@
   font-weight: 700;
   font-size: 15px;
 }
+.my-rank-card {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(139, 107, 255, 0.1), var(--surface-2));
+  border: 1px solid rgba(139, 107, 255, 0.3);
+  border-radius: var(--radius);
+}
+.my-rank-card.leading {
+  background: linear-gradient(135deg, rgba(201, 247, 62, 0.1), var(--surface-2));
+  border-color: rgba(201, 247, 62, 0.35);
+}
+.my-rank-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+.my-rank-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+.my-rank-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+}
+.my-rank-score {
+  font-weight: 700;
+  font-size: 15px;
+}
+.my-rank-gap {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+.my-rank-empty {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
 .hof-badges {
   display: flex;
   flex-wrap: wrap;
@@ -297,6 +340,43 @@
   font-weight: 700;
   font-size: 20px;
   color: var(--lime);
+}
+.shop-collection-row {
+  display: flex;
+  gap: 18px;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+.shop-next-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  margin-bottom: 4px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(139, 107, 255, 0.1), var(--surface-2));
+  border: 1px solid rgba(139, 107, 255, 0.3);
+  border-radius: var(--radius);
+}
+.shop-next-emoji {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.shop-next-body {
+  min-width: 0;
+}
+.shop-next-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--violet);
+}
+.shop-next-cost {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 2px;
 }
 .shop-avatar-grid {
   display: grid;

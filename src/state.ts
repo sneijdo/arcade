@@ -331,14 +331,18 @@ export async function checkAchievements(extra: Partial<AchievementStats> = {}): 
     if (!profile.unlockedAchievements.includes(a.id) && a.check(statObj)) {
       profile.unlockedAchievements.push(a.id);
       changed = true;
+      addXp(XP_RULES.achievement);
       Sound.achievement();
       toast(
-        `<span class="toast-icon">${a.icon}</span><div><b>${a.title}</b><br><span style="color:var(--text-dim);font-size:11.5px">${a.desc}</span></div>`,
+        `<span class="toast-icon">${a.icon}</span><div><b>${a.title}</b> <span style="color:var(--lime)">+${XP_RULES.achievement} XP</span><br><span style="color:var(--text-dim);font-size:11.5px">${a.desc}</span></div>`,
         'achievement',
       );
     }
   }
-  if (changed) await saveProfile();
+  if (changed) {
+    await saveProfile();
+    refreshHeader(); // achievements can award XP now — the header's XP/level may already be stale by the time we get here
+  }
 }
 
 export interface SessionResult {

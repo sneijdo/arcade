@@ -2,6 +2,7 @@ import { profile, getCombinedLeaderboard, avatarContent, creditMyHallOfFameWins,
 import { findTitle } from '../shop';
 import { GAMES } from '../games/registry';
 import { ScoreKinds } from '../scoring';
+import type { LeaderboardEntry, ScoreKind } from '../types';
 
 let lbGameId = 'reaction';
 type LbView = 'week' | 'alltime' | 'hof';
@@ -67,7 +68,7 @@ async function renderGameBoard(gameId: string, scoreKindId: string | null): Prom
     return;
   }
   const medals = ['🥇', '🥈', '🥉'];
-  panel.innerHTML = board
+  panel.innerHTML = myRankCardHtml(board, kind) + board
     .map((e, i) => {
       const isMe = e.id === profile!.id;
       const scoreText = kind ? `${kind.format(e.score)}<span style="color:var(--text-faint);font-size:11px"> ${kind.unit}</span>` : Math.round(e.score);
@@ -87,6 +88,54 @@ async function renderGameBoard(gameId: string, scoreKindId: string | null): Prom
     `;
     })
     .join('');
+}
+
+/**
+ * "Your rank" summary above the full list — the raw board answers "who's winning" but not "can I
+ * actually move up," which is what makes a leaderboard worth coming back to. Shows the gap to
+ * whoever's directly above you (a natural rival) instead of just your position in a crowd.
+ */
+function myRankCardHtml(board: LeaderboardEntry[], kind: ScoreKind | null): string {
+  if (!profile) return '';
+  const myIdx = board.findIndex((e) => e.id === profile!.id);
+  const fmt = (v: number) => (kind ? `${kind.format(v)}${kind.unit}` : `${Math.round(v)}`);
+
+  if (myIdx === -1) {
+    return `
+      <div class="my-rank-card">
+        <div class="my-rank-label">DIN PLACERING</div>
+        <div class="my-rank-empty">Du er ikke med på ranglisten endnu — spil en runde for at komme med.</div>
+      </div>
+    `;
+  }
+
+  const me = board[myIdx];
+  if (myIdx === 0) {
+    const marginText = board.length > 1 ? `${fmt(Math.abs(board[1].score - me.score))} foran #2` : 'Ingen andre på listen endnu';
+    return `
+      <div class="my-rank-card leading">
+        <div class="my-rank-label">DIN PLACERING</div>
+        <div class="my-rank-row">
+          <div class="my-rank-num">🥇 #1</div>
+          <div class="my-rank-score mono">${fmt(me.score)}</div>
+        </div>
+        <div class="my-rank-gap">🔥 Du fører — ${marginText}</div>
+      </div>
+    `;
+  }
+
+  const above = board[myIdx - 1];
+  const gap = kind?.direction === 'asc' ? me.score - above.score : above.score - me.score;
+  return `
+    <div class="my-rank-card">
+      <div class="my-rank-label">DIN PLACERING</div>
+      <div class="my-rank-row">
+        <div class="my-rank-num">#${myIdx + 1}</div>
+        <div class="my-rank-score mono">${fmt(me.score)}</div>
+      </div>
+      <div class="my-rank-gap">${fmt(Math.abs(gap))} fra ${above.name} (#${myIdx})</div>
+    </div>
+  `;
 }
 
 async function renderHallOfFame(): Promise<void> {

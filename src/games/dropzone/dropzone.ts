@@ -5,7 +5,6 @@ import { finishGameSession } from '../../state';
 
 const TOTAL_BALLS = 8;
 const ROWS = 7;
-const MAX_COLS = 7;
 const PEG_R = 5;
 const BALL_R = 8;
 const TOP_MARGIN = 46;
@@ -13,6 +12,26 @@ const BOTTOM_MARGIN = 54;
 const GRAVITY = 1500;
 const RESTITUTION = 0.55;
 const BIN_VALUES = [500, 100, 20, 10, 20, 100, 500];
+
+const MIN_DIST = PEG_R + BALL_R;
+/** How far from the wall a dropped ball can be aimed — see PEG_SIDE_MARGIN for why this can't just be BALL_R. */
+const AIM_MARGIN = BALL_R + 10;
+/**
+ * How far the first (wall-adjacent) peg column sits from each wall. Deliberately fixed in
+ * pixels, NOT scaled with arena width — it has to satisfy two competing constraints at once:
+ *  - >= BALL_R + MIN_DIST, or a ball resting against the wall is simultaneously colliding with
+ *    the peg, and the two position corrections fight every frame — the ball oscillates in place
+ *    forever instead of landing (found by simulation: an earlier version of this trapped ~9% of
+ *    drops indefinitely).
+ *  - <  AIM_MARGIN + MIN_DIST, or a ball dropped at the edge (x = AIM_MARGIN, vx = 0 the whole
+ *    way down since it never touches the wall) falls in a dead-straight line that never comes
+ *    within collision range of any peg in any row, landing untouched in the ±500 edge bin every
+ *    time — the original bug report.
+ * With BALL_R=8, PEG_R=5, AIM_MARGIN=18 that window is [21, 31) — comfortably wide with a fixed
+ * value, but would drift outside it (reopening the edge exploit) on a wide/desktop arena if this
+ * scaled with arenaW, which is why it doesn't.
+ */
+const PEG_SIDE_MARGIN = 25;
 
 type Phase = 'idle' | 'playing' | 'result';
 type SubPhase = 'ready' | 'aiming' | 'falling';
@@ -138,26 +157,44 @@ function measureAndBuildPegs(): void {
   pegsEl.innerHTML = state.pegs.map((p) => `<div class="dz-peg" style="left:${p.x}px;top:${p.y}px"></div>`).join('');
 }
 
+/**
+ * Builds a triangular peg lattice that reaches all the way to both walls, row 1 included —
+ * earlier this left a peg-free "gutter" along each edge (the old formula inset every row's
+ * outermost peg by half a column gap or more), so a ball dropped right at the wall could fall
+ * the entire height untouched and land in the ±500 edge bin every single time. "Full" rows now
+ * place a peg literally at each wall; "staggered" rows sit in the gaps between them — the
+ * classic Plinko lattice — so any drop position, edges included, hits a peg in the first row.
+ *
+ * Column count scales with arena width rather than a fixed number: with two interleaved
+ * row-phases, the worst-case gap between a straight-falling ball and the nearest peg column is
+ * colGap/4, so colGap must stay under 4*MIN_DIST or an interior gutter reopens on wide
+ * (desktop) arenas even with the edges fixed — confirmed by simulation, where a fixed 7-column
+ * lattice let a ball dropped a quarter of the way across a 640px-wide arena fall untouched
+ * every time. TARGET_COL_GAP is kept comfortably under that threshold.
+ */
+const TARGET_COL_GAP = 40;
+
 function buildPegs(arenaW: number, arenaH: number): Peg[] {
   const pegs: Peg[] = [];
-  const binAreaH = BOTTOM_MARGIN;
-  const usableH = arenaH - TOP_MARGIN - binAreaH;
+  const usableH = arenaH - TOP_MARGIN - BOTTOM_MARGIN;
   const rowGap = usableH / (ROWS + 1);
+  const usableW = arenaW - PEG_SIDE_MARGIN * 2;
+  const cols = Math.max(5, Math.round(usableW / TARGET_COL_GAP) + 1);
+  const colGap = usableW / (cols - 1);
   for (let row = 1; row <= ROWS; row++) {
     const y = TOP_MARGIN + row * rowGap;
-    const cols = row % 2 === 0 ? MAX_COLS : MAX_COLS - 1;
-    const colGap = arenaW / (cols + 1);
-    const offsetX = row % 2 === 0 ? 0 : colGap / 2;
-    for (let c = 1; c <= cols; c++) {
-      pegs.push({ x: offsetX + c * colGap, y });
+    const isFullRow = row % 2 === 1; // row 1 is a full row, so the very first row already reaches both walls
+    if (isFullRow) {
+      for (let i = 0; i < cols; i++) pegs.push({ x: PEG_SIDE_MARGIN + i * colGap, y });
+    } else {
+      for (let i = 0; i < cols - 1; i++) pegs.push({ x: PEG_SIDE_MARGIN + (i + 0.5) * colGap, y });
     }
   }
   return pegs;
 }
 
 function clampAimX(x: number): number {
-  const margin = BALL_R + 4;
-  return Math.max(margin, Math.min(state.arenaW - margin, x));
+  return Math.max(AIM_MARGIN, Math.min(state.arenaW - AIM_MARGIN, x));
 }
 
 function wireControls(): void {
@@ -232,11 +269,10 @@ function physicsLoop(now: number): void {
     const dx = ball.x - peg.x;
     const dy = ball.y - peg.y;
     const dist = Math.hypot(dx, dy);
-    const minDist = BALL_R + PEG_R;
-    if (dist > 0 && dist < minDist) {
+    if (dist > 0 && dist < MIN_DIST) {
       const nx = dx / dist;
       const ny = dy / dist;
-      const overlap = minDist - dist;
+      const overlap = MIN_DIST - dist;
       ball.x += nx * overlap;
       ball.y += ny * overlap;
       const vDotN = ball.vx * nx + ball.vy * ny;
