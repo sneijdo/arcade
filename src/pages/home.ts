@@ -31,7 +31,7 @@ function renderDailyChallengeCard(): string {
   const targetText = kind ? `${kind.format(challenge.target)}${kind.unit}` : challenge.target;
   return `
     <div class="daily-challenge ${completed ? 'completed' : ''}">
-      <div class="daily-challenge-icon">${completed ? '✅' : game?.icon ?? '🎯'}</div>
+      <div class="daily-challenge-icon">${completed ? '✅' : game ? `<img src="${game.iconAsset}" alt="" class="daily-challenge-icon-img">` : '🎯'}</div>
       <div class="daily-challenge-body">
         <div class="daily-challenge-label">DAGENS UDFORDRING</div>
         <div class="daily-challenge-title">${completed ? 'Gennemført!' : `${challenge.gameTitle} — nå ${targetText}`}</div>

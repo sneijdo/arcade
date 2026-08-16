@@ -18,7 +18,7 @@ export function renderGameGrid(container: HTMLElement): void {
     return `
       <div class="game-card ${g.implemented ? '' : 'soon'}" ${g.implemented ? `data-nav="play-${g.id}"` : ''}>
         ${!g.implemented ? '<span class="soon-tag">KOMMER SNART</span>' : ''}
-        <div class="game-icon">${g.icon}</div>
+        <div class="game-icon"><img src="${g.iconAsset}" alt="" class="game-icon-img"></div>
         <div>
           <div class="game-name">${g.title}</div>
           <div class="game-cat">${g.category}</div>

@@ -1,15 +1,14 @@
-# ARCADE Titles — Large & Readable V6
+# ARCADE Titles — Large & Readable V7
 
-V6 makes the title text larger again.
+Updated from the supplied SVGs.
 
-Only the `<text>` element was changed from V5.
-The original title frame/background is preserved.
+This version makes the existing title text larger while preserving the original
+frame/background artwork.
 
-Text:
-- larger than V5
-- white
-- strong dark outline
-- no glow/blur
-- responsive sizing based on title length
+Only the `<text>` element was changed:
+- larger responsive font size
+- tiny letter spacing to maximize usable width
+- existing white fill and dark outline preserved
+- original frame, gradient, borders and dimensions preserved
 
-Long titles are reduced only enough to stay comfortably inside the existing frame.
+Secret placeholders remain unchanged because their supplied SVGs contain no title text.

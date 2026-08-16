@@ -57,7 +57,10 @@ export interface GameDef {
   id: string;
   title: string;
   category: string;
+  /** Emoji fallback — still used in a couple of small inline spots (Hall of Fame per-game badges) where the full icon art is too small to read. See iconAsset for the real game-card icon. */
   icon: string;
+  /** Game-card icon artwork (see /art/gameicons) — used in the games grid and the daily-challenge card. */
+  iconAsset: string;
   description: string;
   scoreKind: string | null;
   implemented: boolean;
