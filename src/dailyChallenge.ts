@@ -18,6 +18,11 @@ const DAILY_TARGETS: Record<string, number> = {
   color: 70,
   dash: 100,
   merge: 256,
+  overclock: 1200,
+  glitchgrid: 35,
+  pulse: 5000,
+  dropzone: 800,
+  ruleswitch: 12,
 };
 
 const XP_REWARD = 60;

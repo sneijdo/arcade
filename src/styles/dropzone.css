@@ -1,0 +1,124 @@
+/* ============================= DROP ZONE ============================= */
+.dz-field {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.dz-guide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background: repeating-linear-gradient(to bottom, var(--lime) 0, var(--lime) 6px, transparent 6px, transparent 12px);
+  opacity: 0;
+  transform: translateX(-999px);
+  pointer-events: none;
+}
+.dz-guide.visible {
+  opacity: 0.75;
+}
+.dz-pegs {
+  position: absolute;
+  inset: 0;
+}
+.dz-peg {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  border: 1px solid var(--border-2);
+}
+.dz-ball {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff0c9, var(--lime) 55%, #92c928);
+  box-shadow: 0 0 14px 2px var(--lime-glow);
+  transform: translate(-999px, -999px);
+  pointer-events: none;
+  z-index: 2;
+}
+.dz-bins {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 46px;
+  display: flex;
+  gap: 3px;
+  padding: 0 2px;
+}
+.dz-bin {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 8px 8px 4px 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  overflow: visible;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+.dz-bin:first-child,
+.dz-bin:last-child {
+  color: var(--lime);
+  border-color: rgba(201, 247, 62, 0.3);
+}
+.dz-bin.hit {
+  animation: dz-bin-hit 0.4s var(--ease);
+  background: var(--surface-2);
+}
+@keyframes dz-bin-hit {
+  0% {
+    transform: scaleY(1);
+  }
+  40% {
+    transform: scaleY(0.82);
+    background: var(--lime);
+    color: var(--void);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+.dz-popup {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--lime);
+  text-shadow: 0 0 10px var(--lime-glow);
+  animation: dz-popup-float 0.7s var(--ease) forwards;
+  pointer-events: none;
+}
+@keyframes dz-popup-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -26px);
+  }
+}

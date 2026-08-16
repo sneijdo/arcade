@@ -122,4 +122,64 @@ export const ScoreKinds: Record<string, ScoreKind> = {
       return { label: 'SKAL ØVES', color: 'var(--coral)' };
     },
   },
+  overclock_score: {
+    direction: 'desc',
+    unit: 'point',
+    format: (v) => `${Math.round(v)}`,
+    rating: (v) => {
+      if (v >= 2500) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 1800) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 1200) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 700) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
+  glitchgrid_score: {
+    direction: 'desc',
+    unit: 'point',
+    format: (v) => `${Math.round(v)}`,
+    rating: (v) => {
+      if (v >= 90) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 60) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 35) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 15) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
+  pulse_score: {
+    direction: 'desc',
+    unit: 'point',
+    format: (v) => `${Math.round(v)}`,
+    rating: (v) => {
+      if (v >= 15000) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 9000) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 5000) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 2000) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
+  dropzone_score: {
+    direction: 'desc',
+    unit: 'point',
+    format: (v) => `${Math.round(v)}`,
+    rating: (v) => {
+      if (v >= 3000) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 1500) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 800) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 400) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
+  ruleswitch_score: {
+    direction: 'desc',
+    unit: 'point',
+    format: (v) => `${Math.round(v)}`,
+    rating: (v) => {
+      if (v >= 24) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 18) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 12) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 6) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
 };

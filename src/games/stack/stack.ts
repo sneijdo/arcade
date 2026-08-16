@@ -241,7 +241,7 @@ function dropBlock(): void {
     state.perfectStreak++;
     showPerfectCallout(state.perfectStreak);
     flashBlock(state.blocks.length - 1);
-    Sound.pb();
+    Sound.perfect();
     Haptics.personalBest();
   } else {
     state.perfectStreak = 0;
@@ -249,7 +249,7 @@ function dropBlock(): void {
     // sharp little camera jolt — landing precision reads as different from
     // a comfortable overlap, not just as the same "thud" every time.
     if (overlapWidth < current.width * 0.4) triggerTowerJolt();
-    Sound.hit();
+    Sound.place();
     Haptics.hit();
   }
 

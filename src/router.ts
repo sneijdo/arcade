@@ -22,12 +22,23 @@ export async function navigate(r: string): Promise<void> {
   route = (isLeaderboard ? 'leaderboard' : r) as Route;
   setActiveNav();
   window.scrollTo({ top: 0, behavior: 'instant' });
+  // Reflect the route in the URL so a reload/relaunch (e.g. mobile OS backgrounding and
+  // then reloading the tab) restores here instead of always dropping back to the homepage.
+  const hash = '#/' + r;
+  if (location.hash !== hash) history.pushState(null, '', hash);
   if (r === 'home') await renderHome();
   else if (r === 'games') renderGames();
   else if (isLeaderboard) await renderLeaderboard(r.startsWith('leaderboard-') ? r.slice('leaderboard-'.length) : undefined);
   else if (r === 'profile') await renderProfile();
   else if (r === 'shop') await renderShop();
   else if (r.startsWith('play-')) GAME_RENDERERS[r.slice(5)]?.();
+}
+
+/** What route the current URL points at — used both to restore on app boot and to resolve browser back/forward. Falls back to 'home' for anything unresolvable (e.g. a stale bookmarked/reloaded hash pointing at a game id that no longer exists) rather than rendering a blank page. */
+export function currentHashRoute(): string {
+  const r = location.hash.startsWith('#/') ? location.hash.slice(2) : 'home';
+  if (r.startsWith('play-') && !GAME_RENDERERS[r.slice(5)]) return 'home';
+  return r || 'home';
 }
 
 export function initRouter(): void {
@@ -37,5 +48,8 @@ export function initRouter(): void {
       Sound.click();
       navigate(navEl.dataset.nav!);
     }
+  });
+  window.addEventListener('popstate', () => {
+    void navigate(currentHashRoute());
   });
 }

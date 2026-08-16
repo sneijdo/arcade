@@ -131,7 +131,7 @@ function playback(): void {
   state.sequence.forEach((tileIndex) => {
     schedule(() => {
       lightTile(tileIndex, true);
-      Sound.target();
+      Sound.note(tileIndex);
     }, t);
     schedule(() => lightTile(tileIndex, false), t + FLASH_ON_MS);
     t += FLASH_ON_MS + FLASH_GAP_MS;
@@ -153,7 +153,7 @@ function handleTilePointerDown(e: PointerEvent): void {
 
   if (tapped === state.sequence[state.playerIndex]) {
     lightTile(tapped, true);
-    Sound.hit();
+    Sound.note(tapped);
     Haptics.hit();
     schedule(() => lightTile(tapped, false), PLAYER_FLASH_MS);
     state.playerIndex++;

@@ -60,6 +60,8 @@ interface RunState {
   roomSequence: EncounterWave[];
   roomIndex: number;
   roomsCleared: number;
+  /** True once this run has beaten at least one boss — past that point the mission keeps going in endless mode (see startRoom/loop), and this decides whether an eventual death still reads as "MISSION FULDFØRT" (endless bonus rooms) or a genuine loss. */
+  beatFirstBoss: boolean;
   enemiesKilled: number;
   spawnQueue: SpawnTicket[];
   roomTransitionTimer: number;
@@ -109,6 +111,7 @@ function makeRunState(): RunState {
     roomSequence: [],
     roomIndex: 0,
     roomsCleared: 0,
+    beatFirstBoss: false,
     enemiesKilled: 0,
     spawnQueue: [],
     roomTransitionTimer: 0,
@@ -290,7 +293,7 @@ function startRoom(index: number): void {
   hud.showBossBar(false);
 
   if (index >= run.roomSequence.length) {
-    hud.updateRoomLabel(`RUM ${TOTAL_ROOMS}/${TOTAL_ROOMS} · BOSS`);
+    hud.updateRoomLabel(index < TOTAL_ROOMS ? `RUM ${TOTAL_ROOMS}/${TOTAL_ROOMS} · BOSS` : `RUM ${index + 1} · BOSS`);
     const bossId = pickBossId();
     run.boss = spawnBoss({ x: run.arenaW / 2, y: run.arenaH * 0.28 }, bossId);
     hud.showBossBar(true);
@@ -305,7 +308,8 @@ function startRoom(index: number): void {
 
   const wave = run.roomSequence[index];
   run.obstacles = toPixelRects(wave.obstacles ?? [], run.arenaW, run.arenaH);
-  hud.updateRoomLabel(`RUM ${index + 1}/${TOTAL_ROOMS} · ${wave.label.toUpperCase()}`);
+  const roomLabel = index < TOTAL_ROOMS ? `RUM ${index + 1}/${TOTAL_ROOMS}` : `RUM ${index + 1}`;
+  hud.updateRoomLabel(`${roomLabel} · ${wave.label.toUpperCase()}`);
   const tickets: SpawnTicket[] = [];
   for (const group of wave.enemies) {
     for (let i = 0; i < group.count; i++) tickets.push({ defId: group.defId, delay: i * wave.spawnIntervalMs });
@@ -328,8 +332,10 @@ function spawnAtEdge(defId: EnemyId): void {
   else if (edge === 1) { x = run.arenaW - pad; y = Math.random() * run.arenaH; }
   else if (edge === 2) { x = Math.random() * run.arenaW; y = pad; }
   else { x = Math.random() * run.arenaW; y = run.arenaH - pad; }
-  // Elite-instance chance climbs with room progress — near-zero in the opening rooms, capped at 22% by the last non-boss room, so lategame runs get real elite pressure without the first room ever surprising a new player.
-  const eliteChance = Math.min(0.22, run.roomIndex * 0.025);
+  // Elite-instance chance climbs with room progress — near-zero in the opening rooms, ~22%
+  // by the last story room, and keeps climbing (capped at 50%) through endless rooms past
+  // room 10 so a run that keeps going actually keeps getting harder, not just longer.
+  const eliteChance = Math.min(0.5, run.roomIndex * 0.025);
   const enemy = spawnEnemy(defId, { x, y }, eliteChance);
   run.enemies.push(enemy);
   if (ENEMY_DEFS[defId].isElite || enemy.eliteMod) {
@@ -442,9 +448,26 @@ function update(dt: number): void {
       r.vfx.deathBurst(r.boss.pos, '#ff5d7a');
       r.vfx.shake(16);
       TacticalSound.waveClear();
-      r.roomsCleared = TOTAL_ROOMS;
+      r.roomsCleared = r.roomIndex + 1;
       if (!meta.bossesDefeated.includes(r.boss.bossId)) meta.bossesDefeated.push(r.boss.bossId);
-      endRun(true);
+      const firstBossThisRun = !r.beatFirstBoss;
+      r.beatFirstBoss = true;
+      // Beating a boss no longer ends the run — the mission keeps going in endless mode with
+      // another batch of rooms (and rising elite pressure, see spawnAtEdge), so there's an
+      // actual skill ceiling on the leaderboard instead of everyone capping out at room 10.
+      r.roomSequence = r.roomSequence.concat(buildRoomSequence());
+      toast(
+        firstBossThisRun
+          ? '<span class="toast-icon">🏆</span> MISSION FULDFØRT — fortsætter i endeløs tilstand'
+          : '<span class="toast-icon">🏆</span> Endnu en boss besejret — videre!',
+        'achievement',
+      );
+      const nextIndex = r.roomIndex + 1;
+      r.phase = 'playing';
+      setTimeout(() => {
+        if (!run || run.phase !== 'playing') return;
+        startRoom(nextIndex);
+      }, 900);
       return;
     }
   }
@@ -453,7 +476,7 @@ function update(dt: number): void {
   hud.updateHpBar(r.player.hp, r.player.maxHp);
 
   if (r.player.isDead()) {
-    endRun(false);
+    endRun(r.beatFirstBoss);
     return;
   }
 
@@ -1109,13 +1132,15 @@ function showResultsScreen(score: number, victory: boolean, isNewBest: boolean, 
   if (run?.rafId != null) cancelAnimationFrame(run.rafId);
   run?.input.destroy();
   const rating = ScoreKinds.tactical_rooms.rating(score);
+  const bonusRooms = Math.max(0, score - TOTAL_ROOMS);
+  const scoreSuffix = bonusRooms > 0 ? `<span style="font-size:20px"> rum · +${bonusRooms} BONUS</span>` : `<span style="font-size:20px"> / ${TOTAL_ROOMS} rum</span>`;
   const main = document.getElementById('main')!;
   main.innerHTML = `
     <div class="page">
       <div class="game-shell">
         <div class="final-wrap">
           <div class="final-label">${victory ? 'MISSION FULDFØRT' : 'MISSION MISLYKKEDES'}</div>
-          <div class="final-score">${score}<span style="font-size:20px"> / ${TOTAL_ROOMS} rum</span></div>
+          <div class="final-score">${score}${scoreSuffix}</div>
           <div class="final-rating" style="color:${rating.color}">${rating.label}</div>
           ${isNewBest ? '<div class="pb-flag">★ NY PERSONLIG REKORD</div>' : ''}
           <div class="xp-toast">✦ +${xpGain} XP optjent${rank && rank <= 3 ? ' · TOP 3-BONUS' : ''}</div>

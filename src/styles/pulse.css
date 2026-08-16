@@ -1,0 +1,84 @@
+/* ============================= PULSE ============================= */
+.pulse-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.pulse-combo {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--violet);
+  min-height: 16px;
+}
+.pulse-track {
+  position: relative;
+  width: min(66vw, 300px);
+  height: min(58vh, 460px);
+  background: linear-gradient(180deg, var(--void-2), var(--surface));
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.pulse-notes {
+  position: absolute;
+  inset: 0;
+}
+.pulse-note {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 62%;
+  height: 14px;
+  margin-left: -31%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--cyan), var(--violet));
+  box-shadow: 0 0 14px -2px var(--violet-glow);
+}
+.pulse-note.strong {
+  height: 18px;
+  background: linear-gradient(90deg, var(--lime), var(--cyan));
+  box-shadow: 0 0 18px -2px var(--lime-glow);
+}
+.pulse-hitline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 64px;
+  height: 3px;
+  background: var(--violet);
+  box-shadow: 0 0 16px 2px var(--violet-glow);
+}
+.pulse-judge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 84px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  pointer-events: none;
+}
+.pulse-judge.pop {
+  animation: pulse-judge-pop 0.4s var(--ease);
+}
+@keyframes pulse-judge-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(6px);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1) translateY(-8px);
+  }
+}

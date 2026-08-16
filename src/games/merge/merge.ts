@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { storage } from '../../storage';
 
 const SIZE = 4;
 const SWIPE_THRESHOLD = 24;
@@ -26,6 +27,22 @@ interface MergeState {
   phase: Phase;
   best: number;
   moves: number;
+}
+
+interface SavedMergeState {
+  grid: Grid;
+  best: number;
+  moves: number;
+  nextId: number;
+}
+const SAVE_KEY = 'inprogress:merge';
+
+async function saveInProgress(): Promise<void> {
+  await storage.set<SavedMergeState>(SAVE_KEY, { grid: state.grid, best: state.best, moves: state.moves, nextId }, false);
+}
+
+async function clearInProgress(): Promise<void> {
+  await storage.remove(SAVE_KEY, false);
 }
 
 let nextId = 1;
@@ -181,6 +198,20 @@ export function renderMergeGame(): void {
   swipeTriggered = false;
   tileEls = new Map();
   drawShell();
+  void restoreInProgressIfAny();
+}
+
+/** Resumes an autosaved in-progress board (see saveInProgress) instead of leaving the player's
+ * last session stranded — the idle "Klar?" screen renders first (synchronously, no flash) and
+ * this swaps it out once the storage read resolves, unless the player already started fresh
+ * (or navigated away) in the meantime. */
+async function restoreInProgressIfAny(): Promise<void> {
+  const saved = await storage.get<SavedMergeState>(SAVE_KEY, false);
+  if (!saved || !saved.grid) return;
+  if (state.phase !== 'idle' || !document.getElementById('mergeArea')) return;
+  state = { grid: saved.grid, phase: 'playing', best: saved.best, moves: saved.moves };
+  nextId = saved.nextId;
+  drawArea();
 }
 
 function drawShell(): void {
@@ -324,12 +355,12 @@ function attemptMove(dir: Direction): void {
   if (result.tileMerges.length === 0) {
     Sound.click();
   } else {
-    Sound.hit();
+    Sound.merge(biggestMergeValue);
     Haptics.hit();
     if (result.tileMerges.length >= 2) {
       // A multi-merge swipe reads as a combo — a second, slightly delayed beat on top of the
       // normal merge feedback, using the same existing cue rather than inventing new audio.
-      setTimeout(() => Sound.hit(), 90);
+      setTimeout(() => Sound.merge(biggestMergeValue), 90);
     }
     if (biggestMergeValue > prevBest && biggestMergeValue >= BIG_MERGE_THRESHOLD) {
       setTimeout(() => {
@@ -341,6 +372,8 @@ function attemptMove(dir: Direction): void {
 
   if (!hasMovesLeft(state.grid)) {
     endGame();
+  } else {
+    void saveInProgress();
   }
 }
 
@@ -372,6 +405,7 @@ function wireControls(): void {
 
 async function endGame(): Promise<void> {
   state.phase = 'gameover';
+  void clearInProgress();
   Sound.mistake();
   Haptics.miss();
   const board = document.getElementById('mergeBoard');

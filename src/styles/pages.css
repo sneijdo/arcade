@@ -98,6 +98,23 @@
   font-weight: 700;
   font-size: 15px;
 }
+.hof-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 3px;
+}
+.hof-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+  background: var(--void-2);
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
 
 /* ============================= PROFILE ============================= */
 .profile-head {
@@ -247,7 +264,8 @@
   background: var(--void-2);
   color: var(--text);
   font-family: var(--font-body);
-  font-size: 14px;
+  /* 16px+ so iOS Safari doesn't auto-zoom the viewport on focus. */
+  font-size: 16px;
 }
 .settings-input:focus {
   outline: none;

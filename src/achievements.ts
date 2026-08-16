@@ -47,6 +47,26 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'merge_512', icon: '🔢', title: 'TALKNUSER', desc: 'Nå 512 i Merge.', check: (s) => (s.bestScores.merge ?? 0) >= 512 },
   { id: 'merge_1024', icon: '🌟', title: 'TALGENI', desc: 'Nå 1024 i Merge.', check: (s) => (s.bestScores.merge ?? 0) >= 1024 },
 
+  // Overclock
+  { id: 'overclock_charged', icon: '⚛️', title: 'OPLADT', desc: '1200+ point i Overclock.', check: (s) => (s.bestScores.overclock ?? 0) >= 1200 },
+  { id: 'overclock_meltdown', icon: '🌋', title: 'GRÆNSESØGER', desc: '2500+ point i Overclock.', check: (s) => (s.bestScores.overclock ?? 0) >= 2500 },
+
+  // Glitch Grid
+  { id: 'glitchgrid_hunter', icon: '🐛', title: 'FEJLJÆGER', desc: '35+ point i Glitch Grid.', check: (s) => (s.bestScores.glitchgrid ?? 0) >= 35 },
+  { id: 'glitchgrid_debugger', icon: '🧬', title: 'DEBUGGER', desc: '90+ point i Glitch Grid.', check: (s) => (s.bestScores.glitchgrid ?? 0) >= 90 },
+
+  // Pulse
+  { id: 'pulse_onbeat', icon: '🎧', title: 'I TAKT', desc: '5000+ point i Pulse.', check: (s) => (s.bestScores.pulse ?? 0) >= 5000 },
+  { id: 'pulse_flawless', icon: '🎼', title: 'PLETFRI RYTME', desc: '15000+ point i Pulse.', check: (s) => (s.bestScores.pulse ?? 0) >= 15000 },
+
+  // Drop Zone
+  { id: 'dropzone_lucky', icon: '🎱', title: 'HELDIG HÅND', desc: '800+ point i Drop Zone.', check: (s) => (s.bestScores.dropzone ?? 0) >= 800 },
+  { id: 'dropzone_jackpot', icon: '💰', title: 'JACKPOT', desc: '3000+ point i Drop Zone.', check: (s) => (s.bestScores.dropzone ?? 0) >= 3000 },
+
+  // Rule Breaker
+  { id: 'ruleswitch_sharp', icon: '🔀', title: 'SKARP TÆNKER', desc: '12+ point i Rule Breaker.', check: (s) => (s.bestScores.ruleswitch ?? 0) >= 12 },
+  { id: 'ruleswitch_unbreakable', icon: '🧠', title: 'UBRYDELIG', desc: '24+ point i Rule Breaker.', check: (s) => (s.bestScores.ruleswitch ?? 0) >= 24 },
+
   // Daily streak
   { id: 'streak_starter', icon: '🔥', title: 'I ILD', desc: 'Nå en 3-dages spillestime.', check: (s) => s.longestStreak >= 3 },
   { id: 'streak_legend', icon: '🌋', title: 'UUDSLUKKELIG', desc: 'Nå en 30-dages spillestime.', check: (s) => s.longestStreak >= 30 },

@@ -263,6 +263,16 @@
      Kept faint deliberately: combat readability outranks atmosphere. */
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 8px 28px -12px var(--violet-glow), inset 0 0 40px rgba(0, 0, 0, 0.5);
 }
+/* A 4:3 wrap on a narrow, TALL phone screen is width-capped, so it renders as a
+   short letterboxed strip that wastes most of the vertical room a phone actually
+   has. Below this width, flip to a taller ratio and let it use more of that
+   height instead. */
+@media (max-width: 560px) {
+  .tactical-canvas-wrap {
+    aspect-ratio: 3 / 4;
+    max-height: 72vh;
+  }
+}
 #tacticalCanvas {
   display: block;
   width: 100%;

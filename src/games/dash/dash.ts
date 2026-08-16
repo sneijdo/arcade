@@ -376,7 +376,7 @@ function triggerNearMissFlash(): void {
     void player.offsetWidth;
     player.classList.add('near-miss');
   }
-  Sound.target();
+  Sound.whoosh();
   Haptics.tap();
 }
 

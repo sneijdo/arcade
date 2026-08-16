@@ -1,0 +1,72 @@
+/* ============================= OVERCLOCK ============================= */
+.oc-core {
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 35% 30%, #332e52, var(--surface-2) 65%);
+  border: 2px solid var(--violet);
+  --oc-glow: 0;
+  box-shadow:
+    0 0 calc(24px + var(--oc-glow) * 70px) calc(4px + var(--oc-glow) * 16px) rgba(139, 107, 255, calc(0.35 + var(--oc-glow) * 0.45)),
+    inset 0 0 30px rgba(0, 0, 0, 0.3);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+.oc-core.charging {
+  animation: oc-pulse 0.55s ease-in-out infinite alternate;
+  border-color: var(--coral);
+}
+.oc-core.banked {
+  border-color: var(--lime);
+  box-shadow: 0 0 60px 10px var(--lime-glow);
+  animation: pb-pop 0.4s var(--ease);
+}
+.oc-core.busted {
+  border-color: var(--coral);
+  box-shadow: 0 0 60px 14px var(--coral-glow);
+  animation: oc-shake 0.4s var(--ease);
+}
+@keyframes oc-pulse {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.04);
+  }
+}
+@keyframes oc-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-8px) rotate(-2deg);
+  }
+  40% {
+    transform: translateX(8px) rotate(2deg);
+  }
+  60% {
+    transform: translateX(-6px) rotate(-1deg);
+  }
+  80% {
+    transform: translateX(6px) rotate(1deg);
+  }
+}
+.oc-mult {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text);
+}
+.oc-hint {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  text-align: center;
+  min-height: 18px;
+}

@@ -6,7 +6,7 @@ import { XP_RULES } from './xp';
 import { toast } from './toast';
 import { Sound } from './sound';
 import { refreshHeader } from './header';
-import type { AchievementStats, LeaderboardEntry, Profile } from './types';
+import type { AchievementStats, HallOfFameEntry, LeaderboardEntry, PlayerMeta, Profile } from './types';
 import { getTodayChallenge, meetsChallengeTarget } from './dailyChallenge';
 import { findAvatar } from './shop';
 
@@ -56,6 +56,7 @@ export async function loadProfile(): Promise<Profile | null> {
     if (!p.unlockedTitles) p.unlockedTitles = [];
     if (p.equippedAvatar === undefined) p.equippedAvatar = null;
     if (p.equippedTitle === undefined) p.equippedTitle = null;
+    if (p.hofCheckedThroughWeek === undefined) p.hofCheckedThroughWeek = null;
     profile = p;
   }
   return profile;
@@ -64,6 +65,11 @@ export async function loadProfile(): Promise<Profile | null> {
 export async function saveProfile(): Promise<void> {
   if (!profile) return;
   await storage.set('profile', profile, false);
+  // Mirror the public-facing identity fields to a shared record so leaderboard/Hall
+  // of Fame rows can resolve a player's *current* avatar/title/name instead of a
+  // stale snapshot from whenever they last posted a score (see getCombinedLeaderboard).
+  const meta: PlayerMeta = { name: profile.name, avatar: profile.equippedAvatar, title: profile.equippedTitle };
+  await storage.set('playerMeta:' + profile.id, meta, true);
 }
 
 export function clearProfile(): void {
@@ -97,15 +103,28 @@ export async function createProfile(name: string, id?: string): Promise<void> {
     unlockedTitles: [],
     equippedAvatar: null,
     equippedTitle: null,
+    hofCheckedThroughWeek: null,
   };
   await saveProfile();
 }
 
-const STREAK_MILESTONE_XP: Record<number, number> = { 3: 30, 7: 75, 14: 150, 30: 400 };
+const STREAK_MILESTONE_XP: Record<number, number> = { 3: 15, 7: 35, 14: 75, 30: 200 };
 
 export function todayLocalDateString(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** ISO-8601 week key (e.g. "2026-W33", Monday-start) — the leaderboard's weekly reset boundary. */
+export function isoWeekKey(d: Date): string {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = (date.getUTCDay() + 6) % 7; // Mon=0..Sun=6
+  date.setUTCDate(date.getUTCDate() - dayNum + 3); // nearest Thursday determines the ISO week/year
+  const firstThursday = new Date(Date.UTC(date.getUTCFullYear(), 0, 4));
+  const firstDayNum = (firstThursday.getUTCDay() + 6) % 7;
+  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNum + 3);
+  const weekNum = 1 + Math.round((date.getTime() - firstThursday.getTime()) / (7 * 24 * 3600 * 1000));
+  return `${date.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
 }
 
 /**
@@ -159,17 +178,23 @@ export async function checkDailyChallenge(gameId: string, score: number): Promis
   Sound.achievement();
 }
 
+/** Entries are keyed per ISO week, so a new week naturally starts empty — that IS the weekly reset, no cron/migration needed. Pre-existing (pre-weekly-key) entries keep matching the wider 'alltime' prefix below, so historical scores aren't lost, they just don't count for the current week until replayed. */
 export async function pushLeaderboardEntry(gameId: string, score: number): Promise<void> {
   if (!profile) return;
+  const week = isoWeekKey(new Date());
   await storage.set(
-    `lb:${gameId}:` + profile.id,
+    `lb:${gameId}:${week}:` + profile.id,
     { name: profile.name, score, id: profile.id, avatar: profile.equippedAvatar, title: profile.equippedTitle },
     true,
   );
 }
 
-export async function getCombinedLeaderboard(gameId: string): Promise<LeaderboardEntry[]> {
-  const keys = await storage.list(`lb:${gameId}:`, true);
+function lbPrefix(gameId: string, week: string | null): string {
+  return week ? `lb:${gameId}:${week}:` : `lb:${gameId}:`;
+}
+
+async function readLeaderboard(gameId: string, week: string | null): Promise<LeaderboardEntry[]> {
+  const keys = await storage.list(lbPrefix(gameId, week), true);
   const entries: LeaderboardEntry[] = [];
   for (const k of keys) {
     const r = await storage.get<LeaderboardEntry>(k, true);
@@ -185,6 +210,87 @@ export async function getCombinedLeaderboard(gameId: string): Promise<Leaderboar
   const combined = Object.values(byId);
   combined.sort((a, b) => (dir === 'asc' ? a.score - b.score : b.score - a.score));
   return combined;
+}
+
+export async function getCombinedLeaderboard(gameId: string, scope: 'week' | 'alltime' = 'week'): Promise<LeaderboardEntry[]> {
+  const combined = await readLeaderboard(gameId, scope === 'week' ? isoWeekKey(new Date()) : null);
+  // Overlay each player's live avatar/title/name so an equip change shows up
+  // immediately instead of waiting for that player's next score push.
+  await Promise.all(
+    combined.map(async (e) => {
+      const meta = await storage.get<PlayerMeta>('playerMeta:' + e.id, true);
+      if (meta) {
+        e.name = meta.name;
+        e.avatar = meta.avatar;
+        e.title = meta.title;
+      }
+    }),
+  );
+  return combined;
+}
+
+/**
+ * Lazily credits *this* signed-in player's own Hall of Fame #1 finishes —
+ * call whenever the Hall of Fame view is opened (or any time it's convenient;
+ * cheap no-op once caught up). Walks backward from last week checking each
+ * implemented game's #1 finisher, capped at 8 weeks back so a long-unused
+ * app doesn't do unbounded work (older gaps are a known, accepted limitation
+ * — a win that's never credited because the player never came back stays
+ * uncredited).
+ *
+ * This is deliberately self-scoped rather than one client finalizing
+ * everyone's wins: the `kv` table's RLS only allows a row to be written by
+ * its own owner (see supabase/schema.sql), and `hof:<id>` is keyed by
+ * *winner* id, not writer id — so only the winner's own client is ever
+ * allowed to write it. `profile.hofCheckedThroughWeek` (a private field)
+ * is this player's own "already checked up to here" bookmark, standing in
+ * for what would otherwise need a shared cross-user marker.
+ */
+export async function creditMyHallOfFameWins(): Promise<void> {
+  if (!profile) return;
+  const implementedGameIds = GAMES.filter((g) => g.implemented).map((g) => g.id);
+  const now = Date.now();
+  let latestChecked = profile.hofCheckedThroughWeek;
+  let hof: HallOfFameEntry | null = null;
+
+  for (let weeksAgo = 1; weeksAgo <= 8; weeksAgo++) {
+    const week = isoWeekKey(new Date(now - weeksAgo * 7 * 24 * 3600 * 1000));
+    if (profile.hofCheckedThroughWeek != null && week <= profile.hofCheckedThroughWeek) break;
+    for (const gameId of implementedGameIds) {
+      const board = await readLeaderboard(gameId, week);
+      if (board.length > 0 && board[0].id === profile.id) {
+        if (!hof) hof = (await storage.get<HallOfFameEntry>('hof:' + profile.id, true)) ?? { id: profile.id, wins: {}, totalWins: 0 };
+        hof.wins[gameId] = (hof.wins[gameId] ?? 0) + 1;
+        hof.totalWins++;
+      }
+    }
+    if (latestChecked == null || week > latestChecked) latestChecked = week;
+  }
+
+  if (latestChecked !== profile.hofCheckedThroughWeek) {
+    profile.hofCheckedThroughWeek = latestChecked;
+    await saveProfile();
+  }
+  if (hof) {
+    await storage.set('hof:' + profile.id, hof, true);
+    toast(`<span class="toast-icon">🏆</span> Du er kommet i Hall of Fame for en #1-placering!`, 'achievement');
+    Sound.achievement();
+  }
+}
+
+export async function getPlayerMeta(id: string): Promise<PlayerMeta | null> {
+  return storage.get<PlayerMeta>('playerMeta:' + id, true);
+}
+
+export async function getHallOfFame(): Promise<HallOfFameEntry[]> {
+  const keys = await storage.list('hof:', true);
+  const entries: HallOfFameEntry[] = [];
+  for (const k of keys) {
+    const r = await storage.get<HallOfFameEntry>(k, true);
+    if (r) entries.push(r);
+  }
+  entries.sort((a, b) => b.totalWins - a.totalWins);
+  return entries;
 }
 
 export async function awardXP(amount: number, reasonLabel?: string): Promise<void> {

@@ -10,10 +10,13 @@ const SWIPE_THRESHOLD = 20;
 type Vec = { x: number; y: number };
 type Phase = 'idle' | 'playing' | 'gameover';
 
+const MAX_QUEUED_TURNS = 2;
+
 interface SnakeState {
   snake: Vec[];
   direction: Vec;
-  queuedDirection: Vec | null;
+  /** Buffered turns (see queueDirection) — a small queue instead of a single overwritable value so a quick double-swipe/key-tap doesn't drop a turn. */
+  queuedDirection: Vec[];
   food: Vec;
   phase: Phase;
   tickId: ReturnType<typeof setInterval> | null;
@@ -48,7 +51,7 @@ function makeInitialState(): SnakeState {
   return {
     snake: start,
     direction: { x: 1, y: 0 },
-    queuedDirection: null,
+    queuedDirection: [],
     food: randomEmptyCell(start),
     phase: 'idle',
     tickId: null,
@@ -107,12 +110,6 @@ function drawArea(): void {
     area.innerHTML = `
       <div class="snake-wrap">
         <div class="snake-grid" id="snakeGrid"></div>
-        <div class="dpad">
-          <button class="dpad-btn dpad-up" data-dir="up" aria-label="Op">▲</button>
-          <button class="dpad-btn dpad-left" data-dir="left" aria-label="Venstre">◀</button>
-          <button class="dpad-btn dpad-right" data-dir="right" aria-label="Højre">▶</button>
-          <button class="dpad-btn dpad-down" data-dir="down" aria-label="Ned">▼</button>
-        </div>
       </div>
     `;
     renderGrid();
@@ -130,14 +127,45 @@ function isReversal(next: Vec, current: Vec): boolean {
   return next.x === -current.x && next.y === -current.y;
 }
 
+/** The direction a newly-queued turn should be checked against: the last already-buffered turn if there is one, otherwise the snake's current live direction. */
+function lastEffectiveDirection(): Vec {
+  const q = state.queuedDirection;
+  return q.length > 0 ? q[q.length - 1] : state.direction;
+}
+
 function queueDirection(next: Vec): void {
-  if (isReversal(next, state.direction)) return;
-  state.queuedDirection = next;
+  if (state.queuedDirection.length >= MAX_QUEUED_TURNS) return;
+  const prev = lastEffectiveDirection();
+  if (isReversal(next, prev)) return;
+  if (next.x === prev.x && next.y === prev.y) return; // no-op turn, don't waste a buffer slot
+  state.queuedDirection.push(next);
+}
+
+const ARROW_KEY_DIRS: Record<string, Vec> = {
+  ArrowUp: DIRS.up,
+  ArrowDown: DIRS.down,
+  ArrowLeft: DIRS.left,
+  ArrowRight: DIRS.right,
+};
+
+function handleKeyDown(e: KeyboardEvent): void {
+  // Stale listener from a round the player has since navigated away from — see the
+  // matching DOM-presence bail-out pattern in tick(). Without this it'd keep
+  // preventDefault()-ing arrow keys (and queueing phantom turns) on other pages.
+  if (!document.getElementById('snakeGrid')) return;
+  const dir = ARROW_KEY_DIRS[e.key];
+  if (!dir || state.phase !== 'playing') return;
+  e.preventDefault();
+  queueDirection(dir);
 }
 
 function wireControls(): void {
   const grid = document.getElementById('snakeGrid')!;
 
+  // The whole grid is one large swipe surface — no on-screen D-pad. Small,
+  // precisely-targeted buttons proved fiddly on mobile; a full-arena swipe
+  // (which pointer events already give us for free, mouse or touch) doesn't
+  // require any precision at all.
   grid.addEventListener('pointerdown', (e) => {
     if (!e.isPrimary) return;
     e.preventDefault();
@@ -160,14 +188,11 @@ function wireControls(): void {
   grid.addEventListener('pointerup', endSwipe);
   grid.addEventListener('pointercancel', endSwipe);
 
-  document.querySelectorAll<HTMLElement>('.dpad-btn').forEach((btn) => {
-    btn.addEventListener('pointerdown', (e) => {
-      if (!(e as PointerEvent).isPrimary) return;
-      e.preventDefault();
-      const dir = DIRS[btn.dataset.dir!];
-      if (dir) queueDirection(dir);
-    });
-  });
+  // Desktop had no touch D-pad to begin with — arrow keys keep it fully playable
+  // without a mouse-drag swipe. Remove-then-add so replaying doesn't stack duplicate
+  // listeners (handleKeyDown is a stable function reference, so this dedupes cleanly).
+  document.removeEventListener('keydown', handleKeyDown);
+  document.addEventListener('keydown', handleKeyDown);
 }
 
 function tick(): void {
@@ -179,11 +204,11 @@ function tick(): void {
     state.tickId = null;
     return;
   }
-  if (state.queuedDirection) {
-    if (!isReversal(state.queuedDirection, state.direction)) {
-      state.direction = state.queuedDirection;
+  if (state.queuedDirection.length > 0) {
+    const next = state.queuedDirection.shift()!;
+    if (!isReversal(next, state.direction)) {
+      state.direction = next;
     }
-    state.queuedDirection = null;
   }
 
   const head = state.snake[0];
@@ -204,7 +229,7 @@ function tick(): void {
   if (willEat) {
     state.score++;
     state.food = randomEmptyCell(state.snake);
-    Sound.hit();
+    Sound.eat();
     Haptics.hit();
     const scoreEl = document.getElementById('snakeScore');
     if (scoreEl) scoreEl.textContent = `POINT: ${state.score}`;
@@ -239,7 +264,7 @@ async function endGame(): Promise<void> {
   if (state.tickId) clearInterval(state.tickId);
   state.tickId = null;
   state.phase = 'gameover';
-  Sound.mistake();
+  Sound.death();
   Haptics.miss();
   const { isNewBest, xpGain, rank } = await finishGameSession('snake', state.score);
   Sound.complete();

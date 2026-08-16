@@ -44,9 +44,7 @@ function renderGrid(): void {
     grid.className = 'shop-avatar-grid';
     grid.innerHTML = AVATARS.map((a) => avatarCardHtml(a)).join('');
     grid.querySelectorAll<HTMLElement>('[data-avatar]').forEach((el) => {
-      el.addEventListener('pointerdown', (e) => {
-        if (!(e as PointerEvent).isPrimary) return;
-        e.preventDefault();
+      el.addEventListener('click', () => {
         handleAvatarTap(el.dataset.avatar!);
       });
     });
@@ -54,9 +52,7 @@ function renderGrid(): void {
     grid.className = 'shop-title-grid';
     grid.innerHTML = TITLES.map((t) => titleCardHtml(t)).join('');
     grid.querySelectorAll<HTMLElement>('[data-title]').forEach((el) => {
-      el.addEventListener('pointerdown', (e) => {
-        if (!(e as PointerEvent).isPrimary) return;
-        e.preventDefault();
+      el.addEventListener('click', () => {
         handleTitleTap(el.dataset.title!);
       });
     });

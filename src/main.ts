@@ -2,7 +2,7 @@ import './styles/index.css';
 import { Sound } from './sound';
 import { loadProfile, saveProfile, profile } from './state';
 import { refreshHeader } from './header';
-import { initRouter, navigate } from './router';
+import { initRouter, navigate, currentHashRoute } from './router';
 import { showOnboarding, showAuthModal, closeAnyModal } from './onboarding';
 import { authAvailable, onAuthStateChange } from './auth';
 import type { Session } from '@supabase/supabase-js';
@@ -33,7 +33,7 @@ async function initLocalMode(): Promise<void> {
   }
   Sound.setMuted(!!p.muted);
   refreshHeader();
-  navigate('home');
+  navigate(currentHashRoute());
 }
 
 /** Supabase configured — username/password session gates everything. */
@@ -60,7 +60,7 @@ async function initSupabaseMode(): Promise<void> {
     }
     Sound.setMuted(!!p.muted);
     refreshHeader();
-    navigate('home');
+    navigate(currentHashRoute());
   };
 
   onAuthStateChange((event, session) => {
@@ -70,9 +70,15 @@ async function initSupabaseMode(): Promise<void> {
   });
 }
 
+function wireAudioUnlock(): void {
+  const unlock = () => Sound.unlock();
+  document.addEventListener('pointerdown', unlock, { once: true });
+}
+
 async function init(): Promise<void> {
   initRouter();
   wireMuteButton();
+  wireAudioUnlock();
   if (authAvailable()) await initSupabaseMode();
   else await initLocalMode();
 }

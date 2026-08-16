@@ -141,6 +141,12 @@ function handleArenaPointerDown(e: PointerEvent): void {
   if (aimState.phase !== 'playing') return;
   e.preventDefault();
 
+  const hitTarget = (e.target as HTMLElement).closest('.target-hit');
+  if (!hitTarget) {
+    Sound.mistake();
+    return;
+  }
+
   aimState.score++;
   updateScoreLabel();
   Sound.hit();

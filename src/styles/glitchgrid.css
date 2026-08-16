@@ -1,0 +1,79 @@
+/* ============================= GLITCH GRID ============================= */
+.gg-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.gg-combo {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--violet);
+  min-height: 16px;
+}
+.gg-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 9px;
+  width: min(82vw, 52vh, 380px);
+  aspect-ratio: 1;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.gg-cell {
+  position: relative;
+  border-radius: 12px;
+  background: var(--void-2);
+  border: 1px solid var(--border-2);
+  overflow: hidden;
+  transition: background 0.1s var(--ease), border-color 0.1s var(--ease), transform 0.1s var(--ease);
+}
+.gg-cell.glitch {
+  background: radial-gradient(circle at 35% 30%, rgba(201, 247, 62, 0.35), rgba(201, 247, 62, 0.1));
+  border-color: var(--lime);
+  box-shadow: 0 0 18px -2px var(--lime-glow);
+  animation: gg-pop-in 0.14s var(--ease);
+}
+.gg-cell.corrupt {
+  background: radial-gradient(circle at 35% 30%, rgba(255, 93, 122, 0.35), rgba(255, 93, 122, 0.1));
+  border-color: var(--coral);
+  box-shadow: 0 0 18px -2px var(--coral-glow);
+  animation: gg-pop-in 0.14s var(--ease), gg-flicker 0.35s steps(2) infinite;
+}
+@keyframes gg-pop-in {
+  from {
+    transform: scale(0.6);
+    opacity: 0.3;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes gg-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+.gg-life {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 4px;
+  background: currentColor;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.gg-cell.glitch .gg-life {
+  color: var(--lime);
+}
+.gg-cell.corrupt .gg-life {
+  color: var(--coral);
+}
