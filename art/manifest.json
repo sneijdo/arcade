@@ -1,0 +1,674 @@
+{
+  "version": "1.0",
+  "name": "ARCADE Cosmetics Production V1",
+  "status": "production-candidate",
+  "counts": {
+    "avatars": 16,
+    "frames": 16,
+    "badges": 16,
+    "themes": 6,
+    "titles": 40
+  },
+  "note": "Avatars, frames and badges are transparent PNG cutouts; themes are opaque profile backgrounds; titles are scalable SVGs.",
+  "avatars": [
+    {
+      "id": "avatar-pixel-kid",
+      "type": "avatar",
+      "name": "Pixel Kid",
+      "rarity": "common",
+      "asset": "/cosmetics/avatars/common/pixel-kid.png"
+    },
+    {
+      "id": "avatar-alien",
+      "type": "avatar",
+      "name": "Alien",
+      "rarity": "common",
+      "asset": "/cosmetics/avatars/common/alien.png"
+    },
+    {
+      "id": "avatar-arcade-bot",
+      "type": "avatar",
+      "name": "Arcade Bot",
+      "rarity": "common",
+      "asset": "/cosmetics/avatars/common/arcade-bot.png"
+    },
+    {
+      "id": "avatar-ghost",
+      "type": "avatar",
+      "name": "Ghost",
+      "rarity": "common",
+      "asset": "/cosmetics/avatars/common/ghost.png"
+    },
+    {
+      "id": "avatar-cyber-kid",
+      "type": "avatar",
+      "name": "Cyber Kid",
+      "rarity": "rare",
+      "asset": "/cosmetics/avatars/rare/cyber-kid.png"
+    },
+    {
+      "id": "avatar-racer",
+      "type": "avatar",
+      "name": "Racer",
+      "rarity": "rare",
+      "asset": "/cosmetics/avatars/rare/racer.png"
+    },
+    {
+      "id": "avatar-ninja",
+      "type": "avatar",
+      "name": "Ninja",
+      "rarity": "rare",
+      "asset": "/cosmetics/avatars/rare/ninja.png"
+    },
+    {
+      "id": "avatar-space-cat",
+      "type": "avatar",
+      "name": "Space Cat",
+      "rarity": "rare",
+      "asset": "/cosmetics/avatars/rare/space-cat.png"
+    },
+    {
+      "id": "avatar-cyber-samurai",
+      "type": "avatar",
+      "name": "Cyber Samurai",
+      "rarity": "epic",
+      "asset": "/cosmetics/avatars/epic/cyber-samurai.png"
+    },
+    {
+      "id": "avatar-neon-hacker",
+      "type": "avatar",
+      "name": "Neon Hacker",
+      "rarity": "epic",
+      "asset": "/cosmetics/avatars/epic/neon-hacker.png"
+    },
+    {
+      "id": "avatar-arcade-wizard",
+      "type": "avatar",
+      "name": "Arcade Wizard",
+      "rarity": "epic",
+      "asset": "/cosmetics/avatars/epic/arcade-wizard.png"
+    },
+    {
+      "id": "avatar-glitch",
+      "type": "avatar",
+      "name": "Glitch",
+      "rarity": "epic",
+      "asset": "/cosmetics/avatars/epic/glitch.png"
+    },
+    {
+      "id": "avatar-arcade-king",
+      "type": "avatar",
+      "name": "Arcade King",
+      "rarity": "legendary",
+      "asset": "/cosmetics/avatars/legendary/arcade-king.png"
+    },
+    {
+      "id": "avatar-glitch-god",
+      "type": "avatar",
+      "name": "Glitch God",
+      "rarity": "legendary",
+      "asset": "/cosmetics/avatars/legendary/glitch-god.png"
+    },
+    {
+      "id": "avatar-void",
+      "type": "avatar",
+      "name": "Void",
+      "rarity": "legendary",
+      "asset": "/cosmetics/avatars/legendary/void.png"
+    },
+    {
+      "id": "avatar-8-bit-legend",
+      "type": "avatar",
+      "name": "8-Bit Legend",
+      "rarity": "legendary",
+      "asset": "/cosmetics/avatars/legendary/8-bit-legend.png"
+    }
+  ],
+  "frames": [
+    {
+      "id": "frame-pixel",
+      "type": "frame",
+      "name": "Pixel",
+      "rarity": "common",
+      "asset": "/cosmetics/frames/common/pixel.png"
+    },
+    {
+      "id": "frame-retro",
+      "type": "frame",
+      "name": "Retro",
+      "rarity": "common",
+      "asset": "/cosmetics/frames/common/retro.png"
+    },
+    {
+      "id": "frame-arcade",
+      "type": "frame",
+      "name": "Arcade",
+      "rarity": "common",
+      "asset": "/cosmetics/frames/common/arcade.png"
+    },
+    {
+      "id": "frame-circuit",
+      "type": "frame",
+      "name": "Circuit",
+      "rarity": "common",
+      "asset": "/cosmetics/frames/common/circuit.png"
+    },
+    {
+      "id": "frame-neon",
+      "type": "frame",
+      "name": "Neon",
+      "rarity": "rare",
+      "asset": "/cosmetics/frames/rare/neon.png"
+    },
+    {
+      "id": "frame-cyber",
+      "type": "frame",
+      "name": "Cyber",
+      "rarity": "rare",
+      "asset": "/cosmetics/frames/rare/cyber.png"
+    },
+    {
+      "id": "frame-holographic",
+      "type": "frame",
+      "name": "Holographic",
+      "rarity": "rare",
+      "asset": "/cosmetics/frames/rare/holographic.png"
+    },
+    {
+      "id": "frame-digital",
+      "type": "frame",
+      "name": "Digital",
+      "rarity": "rare",
+      "asset": "/cosmetics/frames/rare/digital.png"
+    },
+    {
+      "id": "frame-glitch",
+      "type": "frame",
+      "name": "Glitch",
+      "rarity": "epic",
+      "asset": "/cosmetics/frames/epic/glitch.png"
+    },
+    {
+      "id": "frame-plasma",
+      "type": "frame",
+      "name": "Plasma",
+      "rarity": "epic",
+      "asset": "/cosmetics/frames/epic/plasma.png"
+    },
+    {
+      "id": "frame-galaxy",
+      "type": "frame",
+      "name": "Galaxy",
+      "rarity": "epic",
+      "asset": "/cosmetics/frames/epic/galaxy.png"
+    },
+    {
+      "id": "frame-dragon",
+      "type": "frame",
+      "name": "Dragon",
+      "rarity": "epic",
+      "asset": "/cosmetics/frames/epic/dragon.png"
+    },
+    {
+      "id": "frame-golden",
+      "type": "frame",
+      "name": "Golden",
+      "rarity": "legendary",
+      "asset": "/cosmetics/frames/legendary/golden.png"
+    },
+    {
+      "id": "frame-diamond",
+      "type": "frame",
+      "name": "Diamond",
+      "rarity": "legendary",
+      "asset": "/cosmetics/frames/legendary/diamond.png"
+    },
+    {
+      "id": "frame-arcade-king",
+      "type": "frame",
+      "name": "Arcade King",
+      "rarity": "legendary",
+      "asset": "/cosmetics/frames/legendary/arcade-king.png"
+    },
+    {
+      "id": "frame-void",
+      "type": "frame",
+      "name": "Void",
+      "rarity": "legendary",
+      "asset": "/cosmetics/frames/legendary/void.png"
+    }
+  ],
+  "badges": [
+    {
+      "id": "badge-first-win",
+      "type": "badge",
+      "name": "First Win",
+      "rarity": "common",
+      "asset": "/cosmetics/badges/first-win.png"
+    },
+    {
+      "id": "badge-10-games",
+      "type": "badge",
+      "name": "10 Games",
+      "rarity": "common",
+      "asset": "/cosmetics/badges/10-games.png"
+    },
+    {
+      "id": "badge-50-games",
+      "type": "badge",
+      "name": "50 Games",
+      "rarity": "common",
+      "asset": "/cosmetics/badges/50-games.png"
+    },
+    {
+      "id": "badge-100-games",
+      "type": "badge",
+      "name": "100 Games",
+      "rarity": "common",
+      "asset": "/cosmetics/badges/100-games.png"
+    },
+    {
+      "id": "badge-7-day-streak",
+      "type": "badge",
+      "name": "7 Day Streak",
+      "rarity": "rare",
+      "asset": "/cosmetics/badges/7-day-streak.png"
+    },
+    {
+      "id": "badge-speedrunner",
+      "type": "badge",
+      "name": "Speedrunner",
+      "rarity": "rare",
+      "asset": "/cosmetics/badges/speedrunner.png"
+    },
+    {
+      "id": "badge-diamond",
+      "type": "badge",
+      "name": "Diamond",
+      "rarity": "rare",
+      "asset": "/cosmetics/badges/diamond.png"
+    },
+    {
+      "id": "badge-top-10",
+      "type": "badge",
+      "name": "Top 10",
+      "rarity": "rare",
+      "asset": "/cosmetics/badges/top-10.png"
+    },
+    {
+      "id": "badge-no-death",
+      "type": "badge",
+      "name": "No Death",
+      "rarity": "epic",
+      "asset": "/cosmetics/badges/no-death.png"
+    },
+    {
+      "id": "badge-planker",
+      "type": "badge",
+      "name": "Planker",
+      "rarity": "epic",
+      "asset": "/cosmetics/badges/planker.png"
+    },
+    {
+      "id": "badge-unstoppable",
+      "type": "badge",
+      "name": "Unstoppable",
+      "rarity": "rare",
+      "asset": "/cosmetics/badges/unstoppable.png"
+    },
+    {
+      "id": "badge-dragon",
+      "type": "badge",
+      "name": "Dragon",
+      "rarity": "epic",
+      "asset": "/cosmetics/badges/dragon.png"
+    },
+    {
+      "id": "badge-elite",
+      "type": "badge",
+      "name": "Elite",
+      "rarity": "epic",
+      "asset": "/cosmetics/badges/elite.png"
+    },
+    {
+      "id": "badge-legend",
+      "type": "badge",
+      "name": "Legend",
+      "rarity": "legendary",
+      "asset": "/cosmetics/badges/legend.png"
+    },
+    {
+      "id": "badge-global",
+      "type": "badge",
+      "name": "Global",
+      "rarity": "legendary",
+      "asset": "/cosmetics/badges/global.png"
+    },
+    {
+      "id": "badge-void-walker",
+      "type": "badge",
+      "name": "Void Walker",
+      "rarity": "legendary",
+      "asset": "/cosmetics/badges/void-walker.png"
+    }
+  ],
+  "themes": [
+    {
+      "id": "theme-retro",
+      "type": "theme",
+      "name": "Retro",
+      "rarity": "common",
+      "asset": "/cosmetics/themes/retro.png"
+    },
+    {
+      "id": "theme-cyber",
+      "type": "theme",
+      "name": "Cyber",
+      "rarity": "rare",
+      "asset": "/cosmetics/themes/cyber.png"
+    },
+    {
+      "id": "theme-space",
+      "type": "theme",
+      "name": "Space",
+      "rarity": "rare",
+      "asset": "/cosmetics/themes/space.png"
+    },
+    {
+      "id": "theme-glitch",
+      "type": "theme",
+      "name": "Glitch",
+      "rarity": "epic",
+      "asset": "/cosmetics/themes/glitch.png"
+    },
+    {
+      "id": "theme-gold",
+      "type": "theme",
+      "name": "Gold",
+      "rarity": "legendary",
+      "asset": "/cosmetics/themes/gold.png"
+    },
+    {
+      "id": "theme-void",
+      "type": "theme",
+      "name": "Void",
+      "rarity": "legendary",
+      "asset": "/cosmetics/themes/void.png"
+    }
+  ],
+  "titles": [
+    {
+      "id": "title-new-player",
+      "type": "title",
+      "name": "NEW PLAYER",
+      "rarity": "common",
+      "asset": "/cosmetics/titles/new-player.svg"
+    },
+    {
+      "id": "title-rookie",
+      "type": "title",
+      "name": "ROOKIE",
+      "rarity": "common",
+      "asset": "/cosmetics/titles/rookie.svg"
+    },
+    {
+      "id": "title-player-one",
+      "type": "title",
+      "name": "PLAYER ONE",
+      "rarity": "common",
+      "asset": "/cosmetics/titles/player-one.svg"
+    },
+    {
+      "id": "title-arcade-one",
+      "type": "title",
+      "name": "ARCADE ONE",
+      "rarity": "common",
+      "asset": "/cosmetics/titles/arcade-one.svg"
+    },
+    {
+      "id": "title-fan",
+      "type": "title",
+      "name": "FAN",
+      "rarity": "common",
+      "asset": "/cosmetics/titles/fan.svg"
+    },
+    {
+      "id": "title-beginner",
+      "type": "title",
+      "name": "BEGINNER",
+      "rarity": "common",
+      "asset": "/cosmetics/titles/beginner.svg"
+    },
+    {
+      "id": "title-arcade-fan",
+      "type": "title",
+      "name": "ARCADE FAN",
+      "rarity": "common",
+      "asset": "/cosmetics/titles/arcade-fan.svg"
+    },
+    {
+      "id": "title-grinder",
+      "type": "title",
+      "name": "GRINDER",
+      "rarity": "common",
+      "asset": "/cosmetics/titles/grinder.svg"
+    },
+    {
+      "id": "title-score-chaser",
+      "type": "title",
+      "name": "SCORE CHASER",
+      "rarity": "rare",
+      "asset": "/cosmetics/titles/score-chaser.svg"
+    },
+    {
+      "id": "title-high-scorer",
+      "type": "title",
+      "name": "HIGH SCORER",
+      "rarity": "rare",
+      "asset": "/cosmetics/titles/high-scorer.svg"
+    },
+    {
+      "id": "title-coin-collector",
+      "type": "title",
+      "name": "COIN COLLECTOR",
+      "rarity": "rare",
+      "asset": "/cosmetics/titles/coin-collector.svg"
+    },
+    {
+      "id": "title-progress",
+      "type": "title",
+      "name": "PROGRESS",
+      "rarity": "rare",
+      "asset": "/cosmetics/titles/progress.svg"
+    },
+    {
+      "id": "title-ranked",
+      "type": "title",
+      "name": "RANKED",
+      "rarity": "rare",
+      "asset": "/cosmetics/titles/ranked.svg"
+    },
+    {
+      "id": "title-speedrunner",
+      "type": "title",
+      "name": "SPEEDRUNNER",
+      "rarity": "rare",
+      "asset": "/cosmetics/titles/speedrunner.svg"
+    },
+    {
+      "id": "title-unstoppable",
+      "type": "title",
+      "name": "UNSTOPPABLE",
+      "rarity": "rare",
+      "asset": "/cosmetics/titles/unstoppable.svg"
+    },
+    {
+      "id": "title-high-roller",
+      "type": "title",
+      "name": "HIGH ROLLER",
+      "rarity": "rare",
+      "asset": "/cosmetics/titles/high-roller.svg"
+    },
+    {
+      "id": "title-top-10",
+      "type": "title",
+      "name": "TOP 10",
+      "rarity": "rare",
+      "asset": "/cosmetics/titles/top-10.svg"
+    },
+    {
+      "id": "title-streaker",
+      "type": "title",
+      "name": "STREAKER",
+      "rarity": "rare",
+      "asset": "/cosmetics/titles/streaker.svg"
+    },
+    {
+      "id": "title-arcade-hero",
+      "type": "title",
+      "name": "ARCADE HERO",
+      "rarity": "epic",
+      "asset": "/cosmetics/titles/arcade-hero.svg"
+    },
+    {
+      "id": "title-cyber-master",
+      "type": "title",
+      "name": "CYBER MASTER",
+      "rarity": "epic",
+      "asset": "/cosmetics/titles/cyber-master.svg"
+    },
+    {
+      "id": "title-the-chosen-one",
+      "type": "title",
+      "name": "THE CHOSEN ONE",
+      "rarity": "epic",
+      "asset": "/cosmetics/titles/the-chosen-one.svg"
+    },
+    {
+      "id": "title-dragon-rider",
+      "type": "title",
+      "name": "DRAGON RIDER",
+      "rarity": "epic",
+      "asset": "/cosmetics/titles/dragon-rider.svg"
+    },
+    {
+      "id": "title-perfect-run",
+      "type": "title",
+      "name": "PERFECT RUN",
+      "rarity": "epic",
+      "asset": "/cosmetics/titles/perfect-run.svg"
+    },
+    {
+      "id": "title-planker",
+      "type": "title",
+      "name": "PLANKER",
+      "rarity": "epic",
+      "asset": "/cosmetics/titles/planker.svg"
+    },
+    {
+      "id": "title-diamond-title",
+      "type": "title",
+      "name": "DIAMOND",
+      "rarity": "epic",
+      "asset": "/cosmetics/titles/diamond-title.svg"
+    },
+    {
+      "id": "title-no-death",
+      "type": "title",
+      "name": "NO DEATH",
+      "rarity": "epic",
+      "asset": "/cosmetics/titles/no-death.svg"
+    },
+    {
+      "id": "title-elite",
+      "type": "title",
+      "name": "ELITE",
+      "rarity": "epic",
+      "asset": "/cosmetics/titles/elite.svg"
+    },
+    {
+      "id": "title-global",
+      "type": "title",
+      "name": "GLOBAL",
+      "rarity": "epic",
+      "asset": "/cosmetics/titles/global.svg"
+    },
+    {
+      "id": "title-void-walker",
+      "type": "title",
+      "name": "VOID WALKER",
+      "rarity": "epic",
+      "asset": "/cosmetics/titles/void-walker.svg"
+    },
+    {
+      "id": "title-score-king",
+      "type": "title",
+      "name": "SCORE KING",
+      "rarity": "legendary",
+      "asset": "/cosmetics/titles/score-king.svg"
+    },
+    {
+      "id": "title-arcade-legend",
+      "type": "title",
+      "name": "ARCADE LEGEND",
+      "rarity": "legendary",
+      "asset": "/cosmetics/titles/arcade-legend.svg"
+    },
+    {
+      "id": "title-the-king",
+      "type": "title",
+      "name": "THE KING",
+      "rarity": "legendary",
+      "asset": "/cosmetics/titles/the-king.svg"
+    },
+    {
+      "id": "title-8-bit-legend",
+      "type": "title",
+      "name": "8-BIT LEGEND",
+      "rarity": "legendary",
+      "asset": "/cosmetics/titles/8-bit-legend.svg"
+    },
+    {
+      "id": "title-dragon-lord",
+      "type": "title",
+      "name": "DRAGON LORD",
+      "rarity": "legendary",
+      "asset": "/cosmetics/titles/dragon-lord.svg"
+    },
+    {
+      "id": "title-cosmic",
+      "type": "title",
+      "name": "COSMIC",
+      "rarity": "legendary",
+      "asset": "/cosmetics/titles/cosmic.svg"
+    },
+    {
+      "id": "title-the-ultimate",
+      "type": "title",
+      "name": "THE ULTIMATE",
+      "rarity": "legendary",
+      "asset": "/cosmetics/titles/the-ultimate.svg"
+    },
+    {
+      "id": "title-god-mode",
+      "type": "title",
+      "name": "GOD MODE",
+      "rarity": "legendary",
+      "asset": "/cosmetics/titles/god-mode.svg"
+    },
+    {
+      "id": "title-secret-01",
+      "type": "title",
+      "name": "???",
+      "rarity": "secret",
+      "asset": "/cosmetics/titles/secret-01.svg"
+    },
+    {
+      "id": "title-secret-02",
+      "type": "title",
+      "name": "???",
+      "rarity": "secret",
+      "asset": "/cosmetics/titles/secret-02.svg"
+    }
+  ]
+}

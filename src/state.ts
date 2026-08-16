@@ -1,14 +1,15 @@
 import { storage } from './storage';
 import { ACHIEVEMENTS } from './achievements';
+import { BADGES } from './badges';
 import { GAMES } from './games/registry';
 import { ScoreKinds } from './scoring';
-import { XP_RULES } from './xp';
+import { XP_RULES, levelInfo } from './xp';
 import { toast } from './toast';
 import { Sound } from './sound';
 import { refreshHeader } from './header';
 import type { AchievementStats, HallOfFameEntry, LeaderboardEntry, PlayerMeta, Profile } from './types';
 import { getTodayChallenge, meetsChallengeTarget } from './dailyChallenge';
-import { findAvatar } from './shop';
+import { findAvatar, findFrame, AVATARS, FRAMES, TITLES } from './shop';
 
 export let profile: Profile | null = null;
 
@@ -24,10 +25,28 @@ export function initials(name: string): string {
   );
 }
 
-/** What to render in an avatar slot — resolves the equipped avatar id (see shop.ts) to its emoji if set, else the classic initials fallback. Works on any {name, avatar} shape so leaderboard entries (not just Profile) can use it too. */
+/** What to render in an avatar slot — resolves the equipped avatar id (see shop.ts) to its art if set, else the classic initials fallback. Works on any {name, avatar} shape so leaderboard entries (not just Profile) can use it too. Callers just interpolate the returned string as HTML, so swapping emoji text for an <img> here needed no call-site changes. */
 export function avatarContent(name: string, avatarId?: string | null): string {
   const def = findAvatar(avatarId);
-  return def ? def.emoji : initials(name);
+  return def ? `<img src="${def.asset}" alt="${def.name}" class="avatar-img" draggable="false">` : initials(name);
+}
+
+/**
+ * Avatar + equipped frame, composited into a square wrapper sized to `sizePx`. Frames (116×116)
+ * don't share avatars' aspect ratio (130×140) or shape (some square, some circular in the source
+ * art), so the avatar is object-fit:cover'd to fill the square and the frame — which already
+ * carries its own transparent cutout — sits on top at 100%. Used everywhere an avatar is shown
+ * so equipped frames render consistently (header, profile, leaderboard, Hall of Fame).
+ */
+export function avatarFrameHtml(name: string, avatarId: string | null | undefined, frameId: string | null | undefined, sizePx: number): string {
+  const frame = findFrame(frameId);
+  const inner = avatarContent(name, avatarId);
+  return `
+    <div class="avatar-frame-wrap" style="width:${sizePx}px;height:${sizePx}px;font-size:${Math.round(sizePx * 0.4)}px">
+      <div class="avatar-frame-inner">${inner}</div>
+      ${frame ? `<img src="${frame.asset}" alt="${frame.name}" class="avatar-frame-overlay" draggable="false">` : ''}
+    </div>
+  `;
 }
 
 /** The single place `xp` ever increases — keeps `xpBalance` (spendable in the shop) in lockstep with `xp` (lifetime, used for level) without every award site needing to remember both. */
@@ -57,6 +76,9 @@ export async function loadProfile(): Promise<Profile | null> {
     if (p.equippedAvatar === undefined) p.equippedAvatar = null;
     if (p.equippedTitle === undefined) p.equippedTitle = null;
     if (p.hofCheckedThroughWeek === undefined) p.hofCheckedThroughWeek = null;
+    if (!p.unlockedFrames) p.unlockedFrames = [];
+    if (p.equippedFrame === undefined) p.equippedFrame = null;
+    if (!p.unlockedBadges) p.unlockedBadges = [];
     profile = p;
   }
   return profile;
@@ -68,7 +90,7 @@ export async function saveProfile(): Promise<void> {
   // Mirror the public-facing identity fields to a shared record so leaderboard/Hall
   // of Fame rows can resolve a player's *current* avatar/title/name instead of a
   // stale snapshot from whenever they last posted a score (see getCombinedLeaderboard).
-  const meta: PlayerMeta = { name: profile.name, avatar: profile.equippedAvatar, title: profile.equippedTitle };
+  const meta: PlayerMeta = { name: profile.name, avatar: profile.equippedAvatar, title: profile.equippedTitle, frame: profile.equippedFrame };
   await storage.set('playerMeta:' + profile.id, meta, true);
 }
 
@@ -104,6 +126,9 @@ export async function createProfile(name: string, id?: string): Promise<void> {
     equippedAvatar: null,
     equippedTitle: null,
     hofCheckedThroughWeek: null,
+    unlockedFrames: [],
+    equippedFrame: null,
+    unlockedBadges: [],
   };
   await saveProfile();
 }
@@ -184,7 +209,7 @@ export async function pushLeaderboardEntry(gameId: string, score: number): Promi
   const week = isoWeekKey(new Date());
   await storage.set(
     `lb:${gameId}:${week}:` + profile.id,
-    { name: profile.name, score, id: profile.id, avatar: profile.equippedAvatar, title: profile.equippedTitle },
+    { name: profile.name, score, id: profile.id, avatar: profile.equippedAvatar, title: profile.equippedTitle, frame: profile.equippedFrame },
     true,
   );
 }
@@ -223,6 +248,7 @@ export async function getCombinedLeaderboard(gameId: string, scope: 'week' | 'al
         e.name = meta.name;
         e.avatar = meta.avatar;
         e.title = meta.title;
+        e.frame = meta.frame;
       }
     }),
   );
@@ -276,10 +302,25 @@ export async function creditMyHallOfFameWins(): Promise<void> {
     toast(`<span class="toast-icon">🏆</span> Du er kommet i Hall of Fame for en #1-placering!`, 'achievement');
     Sound.achievement();
   }
+
+  // Legendary cosmetics/badges gate off cumulative HoF wins and "am I #1 overall" — checked every
+  // call (not just when a new win was just credited above), so a player who crossed the
+  // threshold in an earlier session still gets credited the next time this runs.
+  const currentHof = hof ?? (await storage.get<HallOfFameEntry>('hof:' + profile.id, true));
+  const hofList = await getHallOfFame();
+  const hofIsRankOne = hofList.length > 0 && hofList[0].id === profile.id && hofList[0].totalWins > 0;
+  await checkAchievements({ hofTotalWins: currentHof?.totalWins ?? 0, hofIsRankOne });
 }
 
 export async function getPlayerMeta(id: string): Promise<PlayerMeta | null> {
   return storage.get<PlayerMeta>('playerMeta:' + id, true);
+}
+
+/** This player's own cumulative Hall of Fame #1-week wins — the legendary-cosmetics gate (see shop.ts). */
+export async function getMyHofWins(): Promise<number> {
+  if (!profile) return 0;
+  const entry = await storage.get<HallOfFameEntry>('hof:' + profile.id, true);
+  return entry?.totalWins ?? 0;
 }
 
 export async function getHallOfFame(): Promise<HallOfFameEntry[]> {
@@ -324,6 +365,7 @@ export async function checkAchievements(extra: Partial<AchievementStats> = {}): 
     longestStreak: profile.longestStreak,
     unlockedAvatarsCount: profile.unlockedAvatars.length,
     unlockedTitlesCount: profile.unlockedTitles.length,
+    level: levelInfo(profile.xp).level,
     ...extra,
   };
   let changed = false;
@@ -339,9 +381,44 @@ export async function checkAchievements(extra: Partial<AchievementStats> = {}): 
       );
     }
   }
+
+  // Badges — auto-earned medals (see badges.ts), same check(stats) pattern and statObj as
+  // achievements above, just a separate collection (never purchased, no "equipped" concept).
+  for (const b of BADGES) {
+    if (!profile.unlockedBadges.includes(b.id) && b.check(statObj)) {
+      profile.unlockedBadges.push(b.id);
+      changed = true;
+      addXp(XP_RULES.badge);
+      Sound.achievement();
+      toast(
+        `<span class="toast-icon">🎖️</span><div><b>${b.name}</b> <span style="color:var(--lime)">+${XP_RULES.badge} XP</span><br><span style="color:var(--text-dim);font-size:11.5px">${b.desc}</span></div>`,
+        'achievement',
+      );
+    }
+  }
+
+  // Secret titles — same auto-grant pattern, but the two conditions need direct profile access
+  // (collection-completeness checks) rather than anything in the shared AchievementStats shape.
+  if (!profile.unlockedTitles.includes('title-secret-01') && statObj.gamesPlayed >= 15) {
+    profile.unlockedTitles.push('title-secret-01');
+    changed = true;
+    toast(`<span class="toast-icon">🔮</span><div><b>Hemmelig titel fundet!</b><br><span style="color:var(--text-dim);font-size:11.5px">Du har spillet alle spil — tjek butikken.</span></div>`, 'achievement');
+    Sound.achievement();
+  }
+  const allLegendaryOwned =
+    AVATARS.filter((a) => a.rarity === 'legendary').every((a) => profile!.unlockedAvatars.includes(a.id)) &&
+    FRAMES.filter((f) => f.rarity === 'legendary').every((f) => profile!.unlockedFrames.includes(f.id)) &&
+    TITLES.filter((t) => t.rarity === 'legendary').every((t) => profile!.unlockedTitles.includes(t.id));
+  if (!profile.unlockedTitles.includes('title-secret-02') && allLegendaryOwned) {
+    profile.unlockedTitles.push('title-secret-02');
+    changed = true;
+    toast(`<span class="toast-icon">🔮</span><div><b>Hemmelig titel fundet!</b><br><span style="color:var(--text-dim);font-size:11.5px">Du ejer nu alt legendarisk — tjek butikken.</span></div>`, 'achievement');
+    Sound.achievement();
+  }
+
   if (changed) {
     await saveProfile();
-    refreshHeader(); // achievements can award XP now — the header's XP/level may already be stale by the time we get here
+    refreshHeader(); // achievements/badges can award XP now — the header's XP/level may already be stale by the time we get here
   }
 }
 

@@ -1,4 +1,4 @@
-import { profile, avatarContent } from './state';
+import { profile, avatarFrameHtml } from './state';
 import { levelInfo } from './xp';
 import { Sound } from './sound';
 
@@ -18,7 +18,9 @@ export function refreshHeader(): void {
   const xpEl = document.getElementById('headerXp');
   const muteBtn = document.getElementById('muteBtn');
   const streakChip = document.getElementById('streakChip');
-  if (avatarEl) avatarEl.textContent = avatarContent(profile.name, profile.equippedAvatar);
+  // .innerHTML, not .textContent — avatarFrameHtml() returns markup (an <img>, or an <img>
+  // plus a frame overlay), not plain text.
+  if (avatarEl) avatarEl.innerHTML = avatarFrameHtml(profile.name, profile.equippedAvatar, profile.equippedFrame, 30);
   if (nameEl) nameEl.textContent = profile.name;
   if (levelEl) levelEl.textContent = String(li.level);
   if (xpEl) xpEl.textContent = profile.xp + ' XP';

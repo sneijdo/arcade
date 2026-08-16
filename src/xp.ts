@@ -1,4 +1,4 @@
-export const XP_RULES = { complete: 10, personalBest: 25, top3: 15, achievement: 25 };
+export const XP_RULES = { complete: 10, personalBest: 25, top3: 15, achievement: 25, badge: 20 };
 
 export interface LevelInfo {
   level: number;

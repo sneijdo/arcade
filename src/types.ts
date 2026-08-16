@@ -27,6 +27,11 @@ export interface Profile {
   equippedTitle: string | null;
   /** Most recent ISO week (see isoWeekKey in state.ts) already checked for this player's own Hall of Fame #1 finishes — see creditMyHallOfFameWins(). null = never checked. Self-scoped (rather than a single global marker) because RLS only lets a player write their own `hof:<id>` row — see supabase/schema.sql. */
   hofCheckedThroughWeek: string | null;
+  unlockedFrames: string[];
+  /** null = no frame — see avatarFrameHtml() in state.ts. */
+  equippedFrame: string | null;
+  /** Badges are auto-earned (see checkBadges() in state.ts), never purchased — no "equipped" concept, just a collection shown on Profile. */
+  unlockedBadges: string[];
 }
 
 export interface ReactionSession {
@@ -66,6 +71,17 @@ export interface Achievement {
   check: (stats: AchievementStats) => boolean;
 }
 
+export type Rarity = 'common' | 'rare' | 'epic' | 'legendary' | 'secret';
+
+export interface Badge {
+  id: string;
+  name: string;
+  desc: string;
+  asset: string;
+  rarity: Rarity;
+  check: (stats: AchievementStats) => boolean;
+}
+
 export interface AchievementStats {
   bestReaction: number | null;
   bestAvg: number | null;
@@ -82,26 +98,33 @@ export interface AchievementStats {
   longestStreak: number;
   unlockedAvatarsCount: number;
   unlockedTitlesCount: number;
+  /** Current level, derived from lifetime XP (levelInfo(profile.xp).level) — several badges/legendary cosmetics key off this. */
+  level: number;
   /** Breach Protocol cross-run counters — passed in as extra stats from finishGameSession's optional param, not derived from Profile like the fields above. Optional since only tactical.ts ever supplies them. */
   tacticalEliteKills?: number;
   tacticalVaultsUsed?: number;
   tacticalBossesDefeated?: string[];
+  /** Hall of Fame stats — only supplied when checkBadges() is called from creditMyHallOfFameWins(), since they're not part of the normal per-session stat set. */
+  hofTotalWins?: number;
+  hofIsRankOne?: boolean;
 }
 
 export interface LeaderboardEntry {
   id: string;
   name: string;
   score: number;
-  /** Snapshot of the equipped avatar/title at the moment this entry was last pushed (see pushLeaderboardEntry in state.ts) — overlaid with the player's live PlayerMeta at read time (see getCombinedLeaderboard), so this only matters as a fallback for a player with no meta record yet. */
+  /** Snapshot of the equipped avatar/title/frame at the moment this entry was last pushed (see pushLeaderboardEntry in state.ts) — overlaid with the player's live PlayerMeta at read time (see getCombinedLeaderboard), so this only matters as a fallback for a player with no meta record yet. */
   avatar?: string | null;
   title?: string | null;
+  frame?: string | null;
 }
 
-/** Public, shared mirror of a profile's display identity — written every saveProfile() so leaderboard/Hall of Fame rows can show a player's *current* avatar/title/name instead of whatever was equipped the last time they posted a score. */
+/** Public, shared mirror of a profile's display identity — written every saveProfile() so leaderboard/Hall of Fame rows can show a player's *current* avatar/title/frame/name instead of whatever was equipped the last time they posted a score. */
 export interface PlayerMeta {
   name: string;
   avatar: string | null;
   title: string | null;
+  frame: string | null;
 }
 
 /** Cross-week aggregate of #1 finishes, keyed by profile id. See finalizePastWeeks() in state.ts. */

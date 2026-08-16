@@ -1,0 +1,160 @@
+/* ============================= COSMETICS PACK V1 ============================= */
+/* Avatar + frame composite (see avatarFrameHtml in state.ts). Frames don't share avatars' aspect
+   ratio or shape, so the avatar is cropped to fill this square and the frame — carrying its own
+   transparent cutout — sits on top. Sized entirely via the inline width/height/font-size set by
+   avatarFrameHtml; font-size here only matters for the plain-initials fallback. */
+.avatar-frame-wrap {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--violet), var(--violet-2));
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: #fff;
+}
+.avatar-frame-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  image-rendering: pixelated;
+}
+.avatar-frame-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* Title SVGs are self-contained badges (name + color + glow already baked in) — rendered
+   directly, not as a text tag. Height-constrained, width follows the SVG's own ~4.5:1 aspect. */
+.title-badge-img {
+  height: 15px;
+  width: auto;
+  vertical-align: middle;
+  display: inline-block;
+}
+.profile-title-badge {
+  height: 22px;
+  margin-left: 4px;
+}
+
+/* Rarity system — shared across avatars/frames/titles/badges. */
+.rarity-tag {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+.rarity-tag.rarity-common {
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.07);
+}
+.rarity-tag.rarity-rare {
+  color: var(--cyan);
+  background: rgba(92, 208, 255, 0.12);
+}
+.rarity-tag.rarity-epic {
+  color: var(--violet);
+  background: rgba(139, 107, 255, 0.14);
+}
+.rarity-tag.rarity-legendary {
+  color: var(--gold);
+  background: rgba(255, 201, 60, 0.14);
+}
+.rarity-tag.rarity-secret {
+  color: var(--coral);
+  background: rgba(255, 93, 122, 0.12);
+}
+.shop-avatar-card.rarity-rare,
+.shop-title-card.rarity-rare,
+.badge-card.rarity-rare {
+  border-color: rgba(92, 208, 255, 0.25);
+}
+.shop-avatar-card.rarity-epic,
+.shop-title-card.rarity-epic,
+.badge-card.rarity-epic {
+  border-color: rgba(139, 107, 255, 0.3);
+}
+.shop-avatar-card.rarity-legendary,
+.shop-title-card.rarity-legendary,
+.badge-card.rarity-legendary {
+  border-color: rgba(255, 201, 60, 0.35);
+  box-shadow: 0 0 16px -8px var(--gold-glow);
+}
+
+/* Shop item thumbnails (avatars/frames use a square slot, titles use their own wide SVG). */
+.shop-item-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.shop-avatar-emoji {
+  width: 44px;
+  height: 44px;
+}
+.shop-title-thumb {
+  height: 30px;
+  width: auto;
+  max-width: 100%;
+}
+.shop-next-thumb {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+/* Badges — Profile collection grid, same visual language as the achievements grid (.ach-grid). */
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.badge-card {
+  background: var(--void-2);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+.badge-card.locked {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+}
+.badge-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+.badge-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+}
+.badge-desc {
+  font-size: 10px;
+  color: var(--text-faint);
+  line-height: 1.4;
+}

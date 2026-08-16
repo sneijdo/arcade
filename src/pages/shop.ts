@@ -1,20 +1,59 @@
-import { profile, saveProfile } from '../state';
+import { profile, saveProfile, getMyHofWins, checkAchievements } from '../state';
 import { refreshHeader } from '../header';
 import { toast } from '../toast';
 import { Sound } from '../sound';
 import { Haptics } from '../haptics';
-import { AVATARS, TITLES, type AvatarDef, type TitleDef } from '../shop';
+import { AVATARS, FRAMES, TITLES, SECRET_TITLES, findAvatar, findTitle, type AvatarDef, type FrameDef, type TitleDef } from '../shop';
 import { levelInfo } from '../xp';
+
+type ShopTab = 'avatars' | 'frames' | 'titles';
+type ShopItem = AvatarDef | FrameDef | TitleDef;
+
+let shopTab: ShopTab = 'avatars';
+/** Fetched once per renderShop() call — the legendary-cosmetics gate needs it synchronously in every card's render, so it's resolved up front rather than per-card. */
+let myHofWins = 0;
 
 function myLevel(): number {
   return profile ? levelInfo(profile.xp).level : 1;
 }
 
-let shopTab: 'avatars' | 'titles' = 'avatars';
+function itemsFor(tab: ShopTab): ShopItem[] {
+  if (tab === 'avatars') return AVATARS;
+  if (tab === 'frames') return FRAMES;
+  // Secret titles are invisible until owned (see checkAchievements in state.ts) — once granted
+  // they need to appear here like any other title, or they'd be permanently unequippable.
+  const ownedSecrets = SECRET_TITLES.filter((t) => profile?.unlockedTitles.includes(t.id));
+  return [...TITLES, ...ownedSecrets];
+}
+
+function ownedIds(tab: ShopTab): string[] {
+  if (!profile) return [];
+  return tab === 'avatars' ? profile.unlockedAvatars : tab === 'frames' ? profile.unlockedFrames : profile.unlockedTitles;
+}
+
+function equippedId(tab: ShopTab): string | null {
+  if (!profile) return null;
+  return tab === 'avatars' ? profile.equippedAvatar : tab === 'frames' ? profile.equippedFrame : profile.equippedTitle;
+}
+
+function displayName(item: ShopItem): string {
+  return 'label' in item ? item.label : item.name;
+}
+
+/** Why an unowned item can't be bought yet, if at all — null means it's just a normal cost-gated buy. */
+function gateReason(item: ShopItem): string | null {
+  if (item.requiresHofWins && myHofWins < item.requiresHofWins) return `🏆 HALL OF FAME ${item.requiresHofWins}`;
+  if (item.unlockLevel && myLevel() < item.unlockLevel) return `🔒 LEVEL ${item.unlockLevel}`;
+  return null;
+}
 
 export async function renderShop(): Promise<void> {
   const main = document.getElementById('main')!;
   if (!profile) return;
+  myHofWins = await getMyHofWins();
+  // Bail if the player navigated away while that fetch was in flight.
+  if (!document.getElementById('main') || !profile) return;
+
   main.innerHTML = `
     <div class="page">
       <div class="section-label">Brug din XP</div>
@@ -26,12 +65,14 @@ export async function renderShop(): Promise<void> {
       </div>
 
       <div class="shop-collection-row">
-        <span>🎭 ${profile.unlockedAvatars.length} / ${AVATARS.length} avatarer</span>
-        <span>🏷️ ${profile.unlockedTitles.length} / ${TITLES.length} titler</span>
+        <span>🎭 ${profile.unlockedAvatars.filter((id) => findAvatar(id)).length} / ${AVATARS.length} avatarer</span>
+        <span>🖼️ ${profile.unlockedFrames.length} / ${FRAMES.length} rammer</span>
+        <span>🏷️ ${profile.unlockedTitles.filter((id) => findTitle(id)).length} / ${TITLES.length + SECRET_TITLES.length} titler</span>
       </div>
 
       <div class="tabs" style="margin-top:18px">
         <button class="tab-btn ${shopTab === 'avatars' ? 'active' : ''}" data-tab="avatars">AVATARER</button>
+        <button class="tab-btn ${shopTab === 'frames' ? 'active' : ''}" data-tab="frames">RAMMER</button>
         <button class="tab-btn ${shopTab === 'titles' ? 'active' : ''}" data-tab="titles">TITLER</button>
       </div>
 
@@ -41,45 +82,59 @@ export async function renderShop(): Promise<void> {
   `;
   document.querySelectorAll<HTMLElement>('[data-tab]').forEach((b) => {
     b.addEventListener('click', () => {
-      shopTab = b.dataset.tab as 'avatars' | 'titles';
+      shopTab = b.dataset.tab as ShopTab;
       renderShop();
     });
   });
   renderGrid();
 }
 
-/** The cheapest not-yet-owned, not-yet-affordable item — a concrete "you're this close" hook instead of a static catalog. Omitted if everything owned is already affordable (nothing to anticipate) or already owned. */
+/** The cheapest not-yet-owned item that's gate-unlocked but still short on XP — a concrete "you're this close" hook. Items still behind a level/Hall of Fame gate are skipped: earning more XP doesn't get you any closer to those, so the message would be misleading. */
 function nextItemHtml(): string {
   if (!profile) return '';
   const balance = profile.xpBalance;
-  const level = myLevel();
-  if (shopTab === 'avatars') {
-    const next = AVATARS.filter((a) => !profile!.unlockedAvatars.includes(a.id) && a.cost > balance && (!a.unlockLevel || a.unlockLevel <= level)).sort(
-      (a, b) => a.cost - b.cost,
-    )[0];
-    if (!next) return '';
-    return `
-      <div class="shop-next-card">
-        <div class="shop-next-emoji">${next.emoji}</div>
-        <div class="shop-next-body">
-          <div class="shop-next-label">NÆSTE</div>
-          <div class="shop-next-cost mono">${next.cost - balance} XP mangler</div>
-        </div>
-      </div>
-    `;
-  }
-  const next = TITLES.filter((t) => !profile!.unlockedTitles.includes(t.id) && t.cost > balance && (!t.unlockLevel || t.unlockLevel <= level)).sort(
-    (a, b) => a.cost - b.cost,
-  )[0];
+  const owned = ownedIds(shopTab);
+  const next = itemsFor(shopTab)
+    .filter((it) => !owned.includes(it.id) && it.cost > balance && !gateReason(it))
+    .sort((a, b) => a.cost - b.cost)[0];
   if (!next) return '';
   return `
     <div class="shop-next-card">
-      <div class="shop-next-emoji">🏷️</div>
+      <div class="shop-next-emoji"><img src="${next.asset}" alt="" class="shop-next-thumb"></div>
       <div class="shop-next-body">
-        <div class="shop-next-label">NÆSTE — "${next.label}"</div>
+        <div class="shop-next-label">NÆSTE — "${displayName(next)}"</div>
         <div class="shop-next-cost mono">${next.cost - balance} XP mangler</div>
       </div>
     </div>
+  `;
+}
+
+const RARITY_LABEL: Record<string, string> = { common: 'COMMON', rare: 'RARE', epic: 'EPIC', legendary: 'LEGENDARY', secret: '???' };
+
+function itemCardHtml(item: ShopItem, tab: ShopTab): string {
+  const owned = ownedIds(tab).includes(item.id);
+  const equipped = equippedId(tab) === item.id;
+  const affordable = profile!.xpBalance >= item.cost;
+  const gate = !owned ? gateReason(item) : null;
+  const tag = equipped
+    ? '<div class="shop-equipped-tag">TAGET PÅ</div>'
+    : owned
+      ? '<div class="shop-owned-tag">EJET</div>'
+      : gate
+        ? `<div class="shop-locked-tag">${gate}</div>`
+        : `<div class="shop-cost-tag">✦ ${item.cost}</div>`;
+  const attr = tab === 'titles' ? 'data-title' : tab === 'frames' ? 'data-frame' : 'data-avatar';
+  const cardClass = tab === 'titles' ? 'shop-title-card' : 'shop-avatar-card';
+  const media =
+    tab === 'titles'
+      ? `<img src="${item.asset}" alt="${displayName(item)}" class="shop-title-thumb">`
+      : `<div class="shop-avatar-emoji"><img src="${item.asset}" alt="${displayName(item)}" class="shop-item-thumb"></div>`;
+  return `
+    <button class="${cardClass} rarity-${item.rarity} ${equipped ? 'equipped' : ''} ${!owned && !affordable ? 'unaffordable' : ''} ${gate ? 'level-locked' : ''}" ${attr}="${item.id}">
+      <div class="rarity-tag rarity-${item.rarity}">${RARITY_LABEL[item.rarity]}</div>
+      ${media}
+      ${tag}
+    </button>
   `;
 }
 
@@ -88,119 +143,62 @@ function renderGrid(): void {
   const next = document.getElementById('shopNext');
   if (!grid || !next || !profile) return;
   next.innerHTML = nextItemHtml();
-  if (shopTab === 'avatars') {
-    grid.className = 'shop-avatar-grid';
-    grid.innerHTML = AVATARS.map((a) => avatarCardHtml(a)).join('');
-    grid.querySelectorAll<HTMLElement>('[data-avatar]').forEach((el) => {
-      el.addEventListener('click', () => {
-        handleAvatarTap(el.dataset.avatar!);
-      });
-    });
-  } else {
-    grid.className = 'shop-title-grid';
-    grid.innerHTML = TITLES.map((t) => titleCardHtml(t)).join('');
-    grid.querySelectorAll<HTMLElement>('[data-title]').forEach((el) => {
-      el.addEventListener('click', () => {
-        handleTitleTap(el.dataset.title!);
-      });
-    });
-  }
+  grid.className = shopTab === 'titles' ? 'shop-title-grid' : 'shop-avatar-grid';
+  grid.innerHTML = itemsFor(shopTab)
+    .map((it) => itemCardHtml(it, shopTab))
+    .join('');
+  const attr = shopTab === 'titles' ? 'data-title' : shopTab === 'frames' ? 'data-frame' : 'data-avatar';
+  grid.querySelectorAll<HTMLElement>(`[${attr}]`).forEach((el) => {
+    el.addEventListener('click', () => handleTap(shopTab, el.dataset[attr === 'data-title' ? 'title' : attr === 'data-frame' ? 'frame' : 'avatar']!));
+  });
 }
 
-function avatarCardHtml(a: AvatarDef): string {
-  const owned = profile!.unlockedAvatars.includes(a.id);
-  const equipped = profile!.equippedAvatar === a.id;
-  const affordable = profile!.xpBalance >= a.cost;
-  const levelLocked = !owned && !!a.unlockLevel && myLevel() < a.unlockLevel;
-  const tag = equipped
-    ? '<div class="shop-equipped-tag">TAGET PÅ</div>'
-    : owned
-      ? '<div class="shop-owned-tag">EJET</div>'
-      : levelLocked
-        ? `<div class="shop-locked-tag">🔒 LEVEL ${a.unlockLevel}</div>`
-        : `<div class="shop-cost-tag">✦ ${a.cost}</div>`;
-  return `
-    <button class="shop-avatar-card ${equipped ? 'equipped' : ''} ${!owned && !affordable ? 'unaffordable' : ''} ${levelLocked ? 'level-locked' : ''}" data-avatar="${a.id}">
-      <div class="shop-avatar-emoji">${a.emoji}</div>
-      ${tag}
-    </button>
-  `;
-}
-
-function titleCardHtml(t: TitleDef): string {
-  const owned = profile!.unlockedTitles.includes(t.id);
-  const equipped = profile!.equippedTitle === t.id;
-  const affordable = profile!.xpBalance >= t.cost;
-  const levelLocked = !owned && !!t.unlockLevel && myLevel() < t.unlockLevel;
-  const tag = equipped
-    ? '<div class="shop-equipped-tag">TAGET PÅ</div>'
-    : owned
-      ? '<div class="shop-owned-tag">EJET</div>'
-      : levelLocked
-        ? `<div class="shop-locked-tag">🔒 LEVEL ${t.unlockLevel}</div>`
-        : `<div class="shop-cost-tag">✦ ${t.cost}</div>`;
-  return `
-    <button class="shop-title-card ${equipped ? 'equipped' : ''} ${!owned && !affordable ? 'unaffordable' : ''} ${levelLocked ? 'level-locked' : ''}" data-title="${t.id}">
-      <div class="shop-title-label">${t.label}</div>
-      ${tag}
-    </button>
-  `;
-}
-
-async function handleAvatarTap(id: string): Promise<void> {
+async function handleTap(tab: ShopTab, id: string): Promise<void> {
   if (!profile) return;
-  const def = AVATARS.find((a) => a.id === id);
+  const def = itemsFor(tab).find((it) => it.id === id);
   if (!def) return;
-  const owned = profile.unlockedAvatars.includes(id);
+  const owned = ownedIds(tab).includes(id);
+  let justPurchased = false;
+
   if (owned) {
-    profile.equippedAvatar = profile.equippedAvatar === id ? null : id;
+    if (tab === 'avatars') profile.equippedAvatar = profile.equippedAvatar === id ? null : id;
+    else if (tab === 'frames') profile.equippedFrame = profile.equippedFrame === id ? null : id;
+    else profile.equippedTitle = profile.equippedTitle === id ? null : id;
     Sound.click();
   } else {
-    if (def.unlockLevel && myLevel() < def.unlockLevel) {
-      toast(`Låst op ved level ${def.unlockLevel} — du er level ${myLevel()}`);
+    const gate = gateReason(def);
+    if (gate) {
+      toast(
+        def.requiresHofWins
+          ? `Kræver ${def.requiresHofWins} #1-uger i Hall of Fame — du har ${myHofWins}`
+          : `Låst op ved level ${def.unlockLevel} — du er level ${myLevel()}`,
+      );
       return;
     }
     if (profile.xpBalance < def.cost) {
-      toast('Ikke nok XP til den her avatar endnu');
+      toast('Ikke nok XP endnu');
       return;
     }
     profile.xpBalance -= def.cost;
-    profile.unlockedAvatars.push(id);
-    profile.equippedAvatar = id;
+    if (tab === 'avatars') {
+      profile.unlockedAvatars.push(id);
+      profile.equippedAvatar = id;
+    } else if (tab === 'frames') {
+      profile.unlockedFrames.push(id);
+      profile.equippedFrame = id;
+    } else {
+      profile.unlockedTitles.push(id);
+      profile.equippedTitle = id;
+    }
     Sound.pb();
     Haptics.personalBest();
-    toast(`${def.emoji} Avatar låst op og taget på`);
+    toast(`${displayName(def)} låst op og taget på`);
+    justPurchased = true;
   }
   await saveProfile();
   refreshHeader();
-  renderGrid();
-}
-
-async function handleTitleTap(id: string): Promise<void> {
-  if (!profile) return;
-  const def = TITLES.find((t) => t.id === id);
-  if (!def) return;
-  const owned = profile.unlockedTitles.includes(id);
-  if (owned) {
-    profile.equippedTitle = profile.equippedTitle === id ? null : id;
-    Sound.click();
-  } else {
-    if (def.unlockLevel && myLevel() < def.unlockLevel) {
-      toast(`Låst op ved level ${def.unlockLevel} — du er level ${myLevel()}`);
-      return;
-    }
-    if (profile.xpBalance < def.cost) {
-      toast('Ikke nok XP til den her titel endnu');
-      return;
-    }
-    profile.xpBalance -= def.cost;
-    profile.unlockedTitles.push(id);
-    profile.equippedTitle = id;
-    Sound.pb();
-    Haptics.personalBest();
-    toast(`"${def.label}" låst op og taget på`);
-  }
-  await saveProfile();
-  refreshHeader();
+  // Owning the last legendary item can itself unlock a secret title (see checkAchievements in
+  // state.ts) — check right away instead of leaving it stale until the player's next game.
+  if (justPurchased) await checkAchievements();
   renderGrid();
 }

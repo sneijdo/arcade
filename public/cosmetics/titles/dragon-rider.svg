@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="116" viewBox="0 0 520 116">
+<defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#19052d"/><stop offset=".55" stop-color="#071226"/><stop offset="1" stop-color="#19052d"/></linearGradient>
+<filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<path d="M28 10H492L510 58L492 106H28L10 58Z" fill="url(#g)" stroke="#d24cff" stroke-width="5"/>
+<path d="M42 24H478L491 58L478 92H42L29 58Z" fill="none" stroke="#d24cff" stroke-opacity=".35" stroke-width="2"/>
+<text x="260" y="68" text-anchor="middle" dominant-baseline="middle" font-family="Arial,Helvetica,sans-serif" font-size="28" font-weight="900" letter-spacing="1.2" fill="#fff" filter="url(#glow)">DRAGON RIDER</text></svg>

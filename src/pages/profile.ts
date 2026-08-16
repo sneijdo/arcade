@@ -1,13 +1,14 @@
-import { profile, getCombinedLeaderboard, avatarContent, clearProfile, bestScoreForGame } from '../state';
+import { profile, getCombinedLeaderboard, avatarFrameHtml, clearProfile, bestScoreForGame } from '../state';
 import { levelInfo } from '../xp';
 import { ACHIEVEMENTS } from '../achievements';
+import { BADGES } from '../badges';
 import { authAvailable, signOut, changePassword } from '../auth';
 import { showRecoveryCodeReveal, showAuthModal } from '../onboarding';
 import { isGuestMode } from '../storage';
 import { GAMES } from '../games/registry';
 import { ScoreKinds } from '../scoring';
 import { toast } from '../toast';
-import { findTitle } from '../shop';
+import { findTitle, findAvatar, AVATARS, FRAMES, TITLES, SECRET_TITLES } from '../shop';
 
 export async function renderProfile(): Promise<void> {
   const main = document.getElementById('main')!;
@@ -21,9 +22,9 @@ export async function renderProfile(): Promise<void> {
     <div class="page">
       <div class="panel">
         <div class="profile-head">
-          <div class="avatar-lg">${avatarContent(profile.name, profile.equippedAvatar)}</div>
+          ${avatarFrameHtml(profile.name, profile.equippedAvatar, profile.equippedFrame, 74)}
           <div>
-            <div class="profile-name">${profile.name}${(() => { const t = findTitle(profile!.equippedTitle); return t ? ` <span class="profile-title-tag">${t.label}</span>` : ''; })()}</div>
+            <div class="profile-name">${profile.name}${(() => { const t = findTitle(profile!.equippedTitle); return t ? ` <img src="${t.asset}" alt="${t.label}" class="title-badge-img profile-title-badge">` : ''; })()}</div>
             <div class="xp-bar-track"><div class="xp-bar-fill" style="width:${li.pct}%"></div></div>
             <div class="xp-bar-label">LEVEL ${li.level} · ${li.into} / ${li.need} XP ${rank ? `· PLACERING #${rank} GLOBALT (REACTION)` : ''}</div>
           </div>
@@ -36,6 +37,12 @@ export async function renderProfile(): Promise<void> {
           <div class="shop-balance-value">✦ ${profile.xpBalance} XP</div>
         </div>
         <button class="btn btn-primary" data-nav="shop">GÅ TIL BUTIK</button>
+      </div>
+
+      <div class="shop-collection-row" style="margin-top:12px">
+        <span>🎭 ${profile.unlockedAvatars.filter((id) => findAvatar(id)).length} / ${AVATARS.length} avatarer</span>
+        <span>🖼️ ${profile.unlockedFrames.length} / ${FRAMES.length} rammer</span>
+        <span>🏷️ ${profile.unlockedTitles.filter((id) => findTitle(id)).length} / ${TITLES.length + SECRET_TITLES.length} titler</span>
       </div>
 
       <div class="section-title" style="margin-top:32px">Personlige rekorder</div>
@@ -61,6 +68,18 @@ export async function renderProfile(): Promise<void> {
           return `<div class="ach-card ${unlocked ? '' : 'locked'}">
             <div class="ach-icon">${a.icon}</div>
             <div><div class="ach-title">${a.title}</div><div class="ach-desc">${a.desc}</div></div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div class="section-title" style="margin-top:32px">Badges (${profile.unlockedBadges.length} / ${BADGES.length})</div>
+      <div class="badge-grid">
+        ${BADGES.map((b) => {
+          const unlocked = profile!.unlockedBadges.includes(b.id);
+          return `<div class="badge-card rarity-${b.rarity} ${unlocked ? '' : 'locked'}">
+            <img src="${b.asset}" alt="${b.name}" class="badge-icon">
+            <div class="badge-name">${unlocked ? b.name : '???'}</div>
+            <div class="badge-desc">${b.desc}</div>
           </div>`;
         }).join('')}
       </div>

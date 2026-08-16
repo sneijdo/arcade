@@ -1,4 +1,4 @@
-import { profile, getCombinedLeaderboard, avatarContent, creditMyHallOfFameWins, getHallOfFame, getPlayerMeta } from '../state';
+import { profile, getCombinedLeaderboard, avatarFrameHtml, creditMyHallOfFameWins, getHallOfFame, getPlayerMeta } from '../state';
 import { findTitle } from '../shop';
 import { GAMES } from '../games/registry';
 import { ScoreKinds } from '../scoring';
@@ -79,10 +79,10 @@ async function renderGameBoard(gameId: string, scoreKindId: string | null): Prom
       <div class="lb-row ${isMe ? 'me' : ''}">
         <div class="lb-rank ${i < 3 ? 'medal' : ''}">${i < 3 ? medals[i] : '#' + (i + 1)}</div>
         <div class="lb-player">
-          <div class="avatar" style="width:28px;height:28px;font-size:14px">${avatarContent(e.name, e.avatar)}</div>
+          ${avatarFrameHtml(e.name, e.avatar, e.frame, 28)}
           <div class="lb-name-col">
             <span class="lb-name">${e.name}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
-            ${title ? `<span class="lb-title-tag">${title.label}</span>` : ''}
+            ${title ? `<img src="${title.asset}" alt="${title.label}" class="title-badge-img">` : ''}
           </div>
         </div>
         <div class="lb-score mono">${scoreText}</div>
@@ -169,10 +169,10 @@ async function renderHallOfFame(): Promise<void> {
       <div class="lb-row ${isMe ? 'me' : ''}">
         <div class="lb-rank ${i < 3 ? 'medal' : ''}">${i < 3 ? medals[i] : '#' + (i + 1)}</div>
         <div class="lb-player">
-          <div class="avatar" style="width:28px;height:28px;font-size:14px">${avatarContent(name, meta?.avatar)}</div>
+          ${avatarFrameHtml(name, meta?.avatar, meta?.frame, 28)}
           <div class="lb-name-col">
             <span class="lb-name">${name}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
-            ${title ? `<span class="lb-title-tag">${title.label}</span>` : ''}
+            ${title ? `<img src="${title.asset}" alt="${title.label}" class="title-badge-img">` : ''}
             <span class="hof-badges">${gameBadges}</span>
           </div>
         </div>
