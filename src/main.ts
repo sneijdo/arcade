@@ -1,4 +1,5 @@
 import './styles/index.css';
+import { inject } from '@vercel/analytics';
 import { Sound } from './sound';
 import { loadProfile, saveProfile, profile } from './state';
 import { refreshHeader } from './header';
@@ -77,6 +78,7 @@ function wireAudioUnlock(): void {
 }
 
 async function init(): Promise<void> {
+  inject();
   initRouter();
   wireMuteButton();
   wireAudioUnlock();
