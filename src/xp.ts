@@ -1,5 +1,5 @@
 /** Halved across the board (was complete:10, personalBest:25, top3:15, achievement:25, badge:20) — everything now takes roughly twice as long to earn, on top of the earlier shop cost increases, so progression stays meaningful as more cosmetics/legendary content keeps getting added. Relative proportions (top3/personalBest still worth more than a plain completion) are preserved. */
-export const XP_RULES = { complete: 5, personalBest: 13, top3: 8, achievement: 13, badge: 10 };
+export const XP_RULES = { complete: 5, personalBest: 13, top3: 8, achievement: 13, badge: 10, duelWin: 13, duelDraw: 5, duelLoss: 3 };
 
 export interface LevelInfo {
   level: number;

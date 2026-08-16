@@ -6,6 +6,7 @@ import { isSupabaseConfigured } from '../supabaseClient';
 import { fetchRecentActivity, subscribeActivity, onPresenceChange, type ActivityEntry, type PresenceUser } from '../activity';
 import { playerLinkTarget } from './playerProfile';
 import { renderLegendaryRaceWidget, startCountdownTicker, maybeShowLegendaryReveal } from '../legendary';
+import { challengePlayer } from '../duel/inviteBanner';
 
 const MAX_FEED_ROWS = 40;
 
@@ -31,8 +32,15 @@ function scoreText(gameId: string, score: number): string {
   return kind ? `${kind.format(score)}${scoreUnitSuffix(kind)}` : String(Math.round(score));
 }
 
+function duelResultSub(e: ActivityEntry): string {
+  const opponent = escapeHtml(e.opponentName ?? 'en modstander');
+  const verb = e.score === 1 ? 'besejrede' : e.score === 0.5 ? 'spillede uafgjort mod' : 'tabte til';
+  return `🏍 ${verb} ${opponent} i Light Cycles`;
+}
+
 function activityRowHtml(e: ActivityEntry): string {
   const isMe = profile?.id === e.ownerId;
+  const isDuel = e.kind === 'duel_result';
   const { icon, title } = gameLabel(e.gameId);
   const target = playerLinkTarget(e.ownerId);
   return `
@@ -43,7 +51,7 @@ function activityRowHtml(e: ActivityEntry): string {
           <span class="activity-name">${escapeHtml(e.name)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
           ${e.kind === 'personal_best' ? '<span class="activity-pb-tag">★ NY REKORD</span>' : ''}
         </div>
-        <div class="activity-row-sub">${icon} ${title} · <span class="mono">${scoreText(e.gameId, e.score)}</span></div>
+        <div class="activity-row-sub">${isDuel ? duelResultSub(e) : `${icon} ${title} · <span class="mono">${scoreText(e.gameId, e.score)}</span>`}</div>
       </div>
       <div class="activity-time" data-ts="${e.createdAt}">${timeAgo(e.createdAt)}</div>
     </a>
@@ -55,9 +63,30 @@ function onlineListHtml(users: PresenceUser[]): string {
   return `<div class="activity-online-list">${users
     .map((u) => {
       const target = playerLinkTarget(u.id);
-      return `<a class="activity-online-chip" href="#/${target}" data-nav="${target}">${avatarFrameHtml(u.name, u.avatar, null, 26)}<span>${escapeHtml(u.name)}</span></a>`;
+      const isSelf = profile?.id === u.id;
+      return `
+        <div class="activity-online-chip">
+          <a class="activity-online-link" href="#/${target}" data-nav="${target}">${avatarFrameHtml(u.name, u.avatar, null, 26)}<span>${escapeHtml(u.name)}</span></a>
+          ${isSelf ? '' : `<button class="btn btn-ghost btn-sm duel-challenge-btn" data-duel-challenge="${u.id}">🏍</button>`}
+        </div>`;
     })
     .join('')}</div>`;
+}
+
+function wireOnlineListButtons(el: HTMLElement, users: PresenceUser[]): void {
+  el.querySelectorAll<HTMLButtonElement>('[data-duel-challenge]').forEach((btn) => {
+    btn.title = 'Udfordr til Light Cycles';
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const user = users.find((u) => u.id === btn.dataset.duelChallenge);
+      if (!user) return;
+      btn.disabled = true;
+      void challengePlayer(user).finally(() => {
+        btn.disabled = false;
+      });
+    });
+  });
 }
 
 export async function renderActivity(): Promise<void> {
@@ -116,6 +145,7 @@ export async function renderActivity(): Promise<void> {
       return;
     }
     el.innerHTML = onlineListHtml(users);
+    wireOnlineListButtons(el, users);
   });
 
   const feedEl = () => document.getElementById('activityFeed');

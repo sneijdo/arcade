@@ -7,6 +7,8 @@ import { showOnboarding, showAuthModal, closeAnyModal } from './onboarding';
 import { authAvailable, onAuthStateChange } from './auth';
 import { hasLocalGuestProfile, useLocalGuestStorage } from './storage';
 import { startPresence } from './activity';
+import { startInviteListener } from './duel/challenges';
+import { mountInviteBanner } from './duel/inviteBanner';
 import type { Session } from '@supabase/supabase-js';
 
 function wireMuteButton(): void {
@@ -63,6 +65,8 @@ async function initSupabaseMode(): Promise<void> {
     Sound.setMuted(!!p.muted);
     refreshHeader();
     startPresence(p.id, p.name, p.equippedAvatar);
+    startInviteListener(p.id);
+    mountInviteBanner();
     // Refreshes this player's public PlayerMeta snapshot (see saveProfile in state.ts)
     // just from opening the app — not only from playing/equipping something. Otherwise
     // a player who's genuinely progressed but hasn't triggered a save since a new

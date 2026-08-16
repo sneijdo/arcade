@@ -718,19 +718,31 @@
 .activity-online-chip {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 5px 12px 5px 6px;
+  padding: 5px 6px;
   font-size: 12.5px;
   font-weight: 600;
-  text-decoration: none;
-  color: inherit;
   transition: border-color 0.15s var(--ease);
 }
 .activity-online-chip:hover {
   border-color: var(--border-2);
+}
+.activity-online-link {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+  color: inherit;
+  padding-right: 4px;
+}
+.duel-challenge-btn {
+  padding: 4px 9px !important;
+  font-size: 13px !important;
+  border-radius: 999px !important;
+  line-height: 1;
 }
 .activity-row {
   display: flex;

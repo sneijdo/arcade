@@ -90,6 +90,9 @@ export async function loadProfile(): Promise<Profile | null> {
     if (!p.unlockedFrames) p.unlockedFrames = [];
     if (p.equippedFrame === undefined) p.equippedFrame = null;
     if (!p.unlockedBadges) p.unlockedBadges = [];
+    if (p.duelWins == null) p.duelWins = 0;
+    if (p.duelLosses == null) p.duelLosses = 0;
+    if (p.duelDraws == null) p.duelDraws = 0;
     profile = p;
   }
   return profile;
@@ -114,6 +117,9 @@ export async function saveProfile(): Promise<void> {
     longestStreak: profile.longestStreak,
     unlockedAchievements: profile.unlockedAchievements,
     unlockedBadges: profile.unlockedBadges,
+    duelWins: profile.duelWins,
+    duelLosses: profile.duelLosses,
+    duelDraws: profile.duelDraws,
   };
   await storage.set('playerMeta:' + profile.id, meta, true);
 }
@@ -153,6 +159,9 @@ export async function createProfile(name: string, id?: string): Promise<void> {
     unlockedFrames: [],
     equippedFrame: null,
     unlockedBadges: [],
+    duelWins: 0,
+    duelLosses: 0,
+    duelDraws: 0,
   };
   await saveProfile();
 }
@@ -572,4 +581,25 @@ async function settleSessionExtras(gameId: string, score: number, extraAchieveme
   } catch (e) {
     console.error('post-session bookkeeping failed', e);
   }
+}
+
+/**
+ * "Duel just ended" bookkeeping — deliberately separate from finishGameSession
+ * above: a duel has no personal-best/leaderboard/streak/daily-challenge concept,
+ * just a win/loss/draw counter and a flat XP award (see XP_RULES.duelWin/Draw/Loss
+ * in xp.ts). Pushes a 'duel_result' row to the shared activity feed (see
+ * pushActivity in activity.ts) so the outcome shows up live for other players.
+ */
+export async function finishDuelSession(outcome: 'win' | 'loss' | 'draw', opponentName: string): Promise<{ xpGain: number }> {
+  if (!profile) return { xpGain: 0 };
+  if (outcome === 'win') profile.duelWins++;
+  else if (outcome === 'loss') profile.duelLosses++;
+  else profile.duelDraws++;
+  const xpGain = outcome === 'win' ? XP_RULES.duelWin : outcome === 'draw' ? XP_RULES.duelDraw : XP_RULES.duelLoss;
+  addXp(xpGain);
+  await saveProfile();
+  refreshHeader();
+  const score = outcome === 'win' ? 1 : outcome === 'draw' ? 0.5 : 0;
+  void pushActivity('duel', score, 'duel_result', profile.name, profile.equippedAvatar, profile.equippedFrame, opponentName);
+  return { xpGain };
 }

@@ -17,13 +17,15 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 export interface ActivityEntry {
   id: number;
   ownerId: string;
-  kind: 'session' | 'personal_best';
+  kind: 'session' | 'personal_best' | 'duel_result';
   gameId: string;
   score: number;
   name: string;
   avatar: string | null;
   frame: string | null;
   createdAt: string;
+  /** Only set on 'duel_result' rows — the opponent's name, so the feed can render a full sentence without joining anything (see finishDuelSession in state.ts). */
+  opponentName: string | null;
 }
 
 export interface PresenceUser {
@@ -43,6 +45,7 @@ function rowToEntry(row: Record<string, unknown>): ActivityEntry {
     avatar: (row.avatar as string | null) ?? null,
     frame: (row.frame as string | null) ?? null,
     createdAt: row.created_at as string,
+    opponentName: (row.opponent_name as string | null) ?? null,
   };
 }
 
@@ -52,13 +55,14 @@ function rowToEntry(row: Record<string, unknown>): ActivityEntry {
 export async function pushActivity(
   gameId: string,
   score: number,
-  kind: 'session' | 'personal_best',
+  kind: 'session' | 'personal_best' | 'duel_result',
   name: string,
   avatar: string | null,
   frame: string | null,
+  opponentName: string | null = null,
 ): Promise<void> {
   if (!supabase || isGuestMode()) return;
-  const { error } = await supabase.from('activity').insert({ kind, game_id: gameId, score, name, avatar, frame });
+  const { error } = await supabase.from('activity').insert({ kind, game_id: gameId, score, name, avatar, frame, opponent_name: opponentName });
   if (error) console.error('activity push failed', error);
 }
 

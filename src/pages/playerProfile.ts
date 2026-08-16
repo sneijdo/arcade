@@ -71,6 +71,7 @@ export async function renderPlayerProfile(id: string): Promise<void> {
         <div class="pb-card"><div class="g">Runder spillet</div><div class="v">${meta.sessionsPlayed ?? 0}</div></div>
         <div class="pb-card"><div class="g">Nuværende stime</div><div class="v">🔥 ${meta.currentStreak ?? 0}</div></div>
         <div class="pb-card"><div class="g">Længste stime</div><div class="v">${meta.longestStreak ?? 0}</div></div>
+        <div class="pb-card"><div class="g">🏍 Light Cycles</div><div class="v">${meta.duelWins ?? 0}-${meta.duelLosses ?? 0}-${meta.duelDraws ?? 0}</div></div>
       </div>
 
       <h2 class="section-title" style="margin-top:32px">Bedrifter</h2>

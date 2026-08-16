@@ -1,0 +1,116 @@
+/* ============================= LIGHT CYCLES DUEL ============================= */
+.duel-loading {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 40px 0;
+  text-align: center;
+}
+
+.duel-players {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  justify-content: center;
+}
+.duel-player-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.duel-player-chip.me {
+  color: var(--lime);
+}
+.duel-vs {
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--text-faint);
+  letter-spacing: 0.08em;
+}
+
+.duel-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.duel-field canvas {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  touch-action: none;
+  border-radius: var(--radius);
+  background: var(--void);
+}
+.duel-leadin {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 64px;
+  color: var(--lime);
+  text-shadow: 0 0 40px var(--lime-glow);
+  pointer-events: none;
+}
+
+/* ---- invite banner — mirrors #toast-container's fixed + pointer-events isolation
+   trick (see modal.css) so it can never block or steal input from whatever page/game
+   is underneath. Anchored to the opposite corner from toasts so the two never collide. ---- */
+#duel-invite-container {
+  position: fixed;
+  top: calc(70px + env(safe-area-inset-top));
+  left: 20px;
+  z-index: 310;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: calc(100vw - 40px);
+  pointer-events: none;
+}
+.duel-invite-card {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  width: 300px;
+  max-width: 100%;
+  box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.6);
+  animation: toast-in 0.3s var(--ease);
+}
+.duel-invite-card.duel-ready {
+  border-color: var(--lime);
+}
+.duel-invite-body {
+  flex: 1;
+  min-width: 0;
+}
+.duel-invite-title {
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+.duel-invite-sub {
+  color: var(--text-dim);
+  font-size: 11.5px;
+  margin-bottom: 8px;
+}
+.duel-invite-actions {
+  display: flex;
+  gap: 8px;
+}
+.duel-invite-actions .btn {
+  flex: 1;
+}

@@ -7,6 +7,7 @@ import { renderProfile } from './pages/profile';
 import { renderPlayerProfile } from './pages/playerProfile';
 import { renderShop } from './pages/shop';
 import { renderGuide } from './pages/guide';
+import { renderDuelMatch } from './pages/duel';
 import { GAME_RENDERERS } from './games';
 import type { Route } from './types';
 
@@ -38,6 +39,7 @@ export async function navigate(r: string): Promise<void> {
   else if (r === 'guide') renderGuide();
   else if (r.startsWith('play-')) GAME_RENDERERS[r.slice(5)]?.();
   else if (r.startsWith('player-')) await renderPlayerProfile(r.slice('player-'.length));
+  else if (r.startsWith('duel-')) await renderDuelMatch(r.slice('duel-'.length));
 }
 
 const KNOWN_ROUTES = ['home', 'games', 'leaderboard', 'activity', 'profile', 'shop', 'guide'];
@@ -49,6 +51,7 @@ export function currentHashRoute(): string {
   if (r.startsWith('play-')) return GAME_RENDERERS[r.slice(5)] ? r : 'home';
   if (r.startsWith('leaderboard-')) return r;
   if (r.startsWith('player-')) return r;
+  if (r.startsWith('duel-')) return r;
   return KNOWN_ROUTES.includes(r) ? r : 'home';
 }
 

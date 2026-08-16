@@ -32,6 +32,10 @@ export interface Profile {
   equippedFrame: string | null;
   /** Badges are auto-earned (see checkBadges() in state.ts), never purchased — no "equipped" concept, just a collection shown on Profile. */
   unlockedBadges: string[];
+  /** Light Cycles duel record — see finishDuelSession() in state.ts. */
+  duelWins: number;
+  duelLosses: number;
+  duelDraws: number;
 }
 
 export interface ReactionSession {
@@ -141,6 +145,9 @@ export interface PlayerMeta {
   longestStreak?: number;
   unlockedAchievements?: string[];
   unlockedBadges?: string[];
+  duelWins?: number;
+  duelLosses?: number;
+  duelDraws?: number;
 }
 
 /** Cross-week aggregate of #1 finishes, keyed by profile id. See creditMyHallOfFameWins() in state.ts. */
@@ -152,4 +159,4 @@ export interface HallOfFameEntry {
   legendaryWeeks: number;
 }
 
-export type Route = 'home' | 'games' | 'leaderboard' | 'activity' | 'profile' | 'shop' | 'guide' | `play-${string}` | `player-${string}`;
+export type Route = 'home' | 'games' | 'leaderboard' | 'activity' | 'profile' | 'shop' | 'guide' | `play-${string}` | `player-${string}` | `duel-${string}`;

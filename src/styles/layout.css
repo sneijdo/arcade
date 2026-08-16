@@ -114,6 +114,11 @@
   font-size: 15.5px;
   border-radius: 13px;
 }
+.btn-sm {
+  padding: 7px 14px;
+  font-size: 12px;
+  border-radius: 8px;
+}
 
 /* ============================= HOME XP CARD ============================= */
 .home-xp-card {

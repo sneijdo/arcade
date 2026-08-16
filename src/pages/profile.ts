@@ -61,6 +61,7 @@ export async function renderProfile(): Promise<void> {
         <div class="pb-card"><div class="g">Total XP</div><div class="v">${profile.xp}</div></div>
         <div class="pb-card"><div class="g">Nuværende stime</div><div class="v">🔥 ${profile.currentStreak}</div></div>
         <div class="pb-card"><div class="g">Længste stime</div><div class="v">${profile.longestStreak}</div></div>
+        <div class="pb-card"><div class="g">🏍 Light Cycles</div><div class="v">${profile.duelWins}-${profile.duelLosses}-${profile.duelDraws}</div></div>
       </div>
 
       <h2 class="section-title" style="margin-top:32px">Bedrifter</h2>
