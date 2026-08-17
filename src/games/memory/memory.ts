@@ -115,6 +115,12 @@ function lightTile(index: number, on: boolean): void {
 }
 
 function startGame(): void {
+  // Guards against a double-tap on START firing this twice — without it, a second
+  // call didn't cancel the first playback()'s already-scheduled setTimeouts (only
+  // renderMemoryGame(), i.e. a fresh page load, ever did that), so both sequences'
+  // flashes would fire interleaved on top of each other: a couple of tiles light up
+  // correctly, then it turns to chaos as the two schedules collide.
+  if (state.phase !== 'idle') return;
   state.sequence = [Math.floor(Math.random() * TILE_COUNT)];
   state.playerIndex = 0;
   updateTopbar();
@@ -122,6 +128,10 @@ function startGame(): void {
 }
 
 function playback(): void {
+  // Defensive even beyond the startGame() guard above — makes playback() itself
+  // immune to ever having two overlapping timeout batches in flight, regardless of
+  // what re-triggers it in the future.
+  clearPendingTimeouts();
   state.phase = 'playback';
   updateTopbar();
   drawStage();
