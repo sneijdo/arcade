@@ -460,3 +460,36 @@ export function pickQuestions(matchId: string, senderCategoryId: string, recipie
   }
   return interleaved;
 }
+
+/**
+ * Extra tie-break question for Quiz Duel's sudden death (see QuizEngine.startRound in
+ * quizEngine.ts) — same determinism contract as pickQuestions() above: seeded off
+ * (matchId, roundIndex) rather than coordinated over the wire, so both clients
+ * independently compute the identical extra question. Drawn from the combined
+ * sender+recipient category pool (both categories stay in play for tie-breaks, even
+ * though the regular 10 questions are done), excluding whatever's already been asked
+ * this match so a tie-break never repeats one of the first 10.
+ */
+export function pickSuddenDeathQuestion(
+  matchId: string,
+  senderCategoryId: string,
+  recipientCategoryId: string,
+  roundIndex: number,
+  usedQuestionTexts: Set<string>,
+): PickedQuestion {
+  const catSender = QUIZ_CATEGORIES.find((c) => c.id === senderCategoryId)!;
+  const catRecipient = QUIZ_CATEGORIES.find((c) => c.id === recipientCategoryId)!;
+  const combined: PickedQuestion[] =
+    senderCategoryId === recipientCategoryId
+      ? catSender.questions.map((question) => ({ categoryId: catSender.id, question }))
+      : [
+          ...catSender.questions.map((question) => ({ categoryId: catSender.id, question })),
+          ...catRecipient.questions.map((question) => ({ categoryId: catRecipient.id, question })),
+        ];
+  const fresh = combined.filter((pq) => !usedQuestionTexts.has(pq.question.q));
+  // Only reachable if a match somehow burns through an entire category's pool — allow
+  // a repeat rather than crash the match over an unpickable tie-break.
+  const pool = fresh.length > 0 ? fresh : combined;
+  const seed = hashSeed(matchId + ':sd:' + roundIndex);
+  return seededShuffle(pool, mulberry32(seed))[0];
+}

@@ -1,6 +1,6 @@
 import { supabase } from '../supabaseClient';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { pickQuestions, type PickedQuestion, type QuizQuestion } from './questionBank';
+import { pickQuestions, pickSuddenDeathQuestion, type PickedQuestion, type QuizQuestion } from './questionBank';
 
 /**
  * Quiz Duel's netcode — much simpler than a physics duel would need, deliberately.
@@ -25,12 +25,19 @@ const FORFEIT_GRACE_MS = 5000;
 const BASE_POINTS = 10;
 const MAX_BONUS = 10;
 const TOTAL_QUESTIONS = 10;
+/** Extra tie-break questions if the score's still level after TOTAL_QUESTIONS — capped
+ * so two players who both keep timing out (an exact repeated 0-0 tie) can't loop
+ * forever; beyond this, finishByScore() just calls it a draw. */
+const SUDDEN_DEATH_MAX = 3;
 
 export interface RoundState {
   index: number;
   total: number;
   categoryId: string;
   question: QuizQuestion;
+  /** True once index has moved past TOTAL_QUESTIONS into a tie-break question — lets
+   * the page swap the "SPØRGSMÅL 7/10" header for a "SUDDEN DEATH" banner instead. */
+  sudden: boolean;
 }
 
 export interface RevealState extends RoundState {
@@ -41,6 +48,9 @@ export interface RevealState extends RoundState {
   oppGain: number;
   myTotal: number;
   oppTotal: number;
+  /** Consecutive correct answers through this reveal, inclusive — 0 if this round was wrong/missed. */
+  myStreak: number;
+  oppStreak: number;
 }
 
 export type MatchOutcome = { winner: Slot | 'draw' | null; reason: 'score' | 'forfeit'; myTotal: number; oppTotal: number };
@@ -67,6 +77,8 @@ export class QuizEngine {
   private answered = false;
   private questionShownAt = 0;
   private scores: Record<Slot, number> = { sender: 0, recipient: 0 };
+  private streaks: Record<Slot, number> = { sender: 0, recipient: 0 };
+  private suddenDeathRound = 0;
   private roundAnswers: Partial<Record<Slot, { optionIndex: number | null; elapsedMs: number }>> = {};
   private questionTimer: ReturnType<typeof setTimeout> | null = null;
   private revealTimer: ReturnType<typeof setTimeout> | null = null;
@@ -179,10 +191,19 @@ export class QuizEngine {
     this.leadinTimer = setTimeout(() => this.startRound(0), LEAD_IN_MS);
   }
 
+  /** index can run past TOTAL_QUESTIONS — see the sudden-death branch below, which
+   * grows `this.questions` on demand instead of ending the match on a tie. */
   private startRound(index: number): void {
-    if (index >= TOTAL_QUESTIONS) {
-      this.finishByScore();
-      return;
+    if (index >= this.questions.length) {
+      const tied = this.scores.sender === this.scores.recipient;
+      if (tied && this.suddenDeathRound < SUDDEN_DEATH_MAX) {
+        this.suddenDeathRound++;
+        const usedTexts = new Set(this.questions.map((pq) => pq.question.q));
+        this.questions.push(pickSuddenDeathQuestion(this.matchId, this.categories.sender!, this.categories.recipient!, index, usedTexts));
+      } else {
+        this.finishByScore();
+        return;
+      }
     }
     this.roundIndex = index;
     this.roundAnswers = {};
@@ -190,7 +211,7 @@ export class QuizEngine {
     this.questionShownAt = performance.now();
     this.setPhase('question');
     const picked = this.questions[index];
-    this.onRound({ index, total: TOTAL_QUESTIONS, categoryId: picked.categoryId, question: picked.question });
+    this.onRound({ index, total: TOTAL_QUESTIONS, categoryId: picked.categoryId, question: picked.question, sudden: index >= TOTAL_QUESTIONS });
     this.questionTimer = setTimeout(() => {
       if (this.phase === 'question' && !this.answered) this.submitAnswer(null);
     }, QUESTION_MS);
@@ -217,12 +238,15 @@ export class QuizEngine {
     const oppGain = this.scoreFor(theirs, correctIndex);
     this.scores[this.mySlot] += myGain;
     this.scores[otherSlot(this.mySlot)] += oppGain;
+    this.streaks[this.mySlot] = mine.optionIndex === correctIndex ? this.streaks[this.mySlot] + 1 : 0;
+    this.streaks[otherSlot(this.mySlot)] = theirs.optionIndex === correctIndex ? this.streaks[otherSlot(this.mySlot)] + 1 : 0;
     this.setPhase('reveal');
     this.onReveal({
       index: this.roundIndex,
       total: TOTAL_QUESTIONS,
       categoryId: picked.categoryId,
       question: picked.question,
+      sudden: this.roundIndex >= TOTAL_QUESTIONS,
       correctIndex,
       myAnswer: mine.optionIndex,
       oppAnswer: theirs.optionIndex,
@@ -230,6 +254,8 @@ export class QuizEngine {
       oppGain,
       myTotal: this.scores[this.mySlot],
       oppTotal: this.scores[otherSlot(this.mySlot)],
+      myStreak: this.streaks[this.mySlot],
+      oppStreak: this.streaks[otherSlot(this.mySlot)],
     });
     const next = this.roundIndex + 1;
     this.revealTimer = setTimeout(() => this.startRound(next), REVEAL_MS);
