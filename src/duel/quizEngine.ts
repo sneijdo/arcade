@@ -75,6 +75,7 @@ export class QuizEngine {
   private onPhaseChange: (phase: QuizPhase) => void;
   private onCategoryState: (mine: string | null, theirs: string | null) => void;
   private onRound: (state: RoundState) => void;
+  private onLocked: (optionIndex: number | null) => void;
   private onReveal: (state: RevealState) => void;
   private onEnd: (outcome: MatchOutcome) => void;
 
@@ -86,6 +87,7 @@ export class QuizEngine {
     onPhaseChange: (phase: QuizPhase) => void;
     onCategoryState: (mine: string | null, theirs: string | null) => void;
     onRound: (state: RoundState) => void;
+    onLocked: (optionIndex: number | null) => void;
     onReveal: (state: RevealState) => void;
     onEnd: (outcome: MatchOutcome) => void;
   }) {
@@ -95,6 +97,7 @@ export class QuizEngine {
     this.onPhaseChange = opts.onPhaseChange;
     this.onCategoryState = opts.onCategoryState;
     this.onRound = opts.onRound;
+    this.onLocked = opts.onLocked;
     this.onReveal = opts.onReveal;
     this.onEnd = opts.onEnd;
 
@@ -252,7 +255,14 @@ export class QuizEngine {
     this.maybeAdvanceFromCategory();
   }
 
-  /** null = explicit "time's up, no pick" (auto-submitted by the question timer). */
+  /** null = explicit "time's up, no pick" (auto-submitted by the question timer).
+   * The question timer and the page's cosmetic CSS timer-bar animation are two
+   * independent clocks (see this file's module doc) that can drift under real-world
+   * jank — without onLocked, a click that lands just after the engine's own timer
+   * already auto-submitted null would silently no-op here (the `this.answered` guard
+   * below) while the page had no idea and kept the button clickable, making it look
+   * like the late click worked when it didn't. onLocked is the single place the page
+   * learns "your answer is locked in" regardless of which path (click vs. timeout) did it. */
   submitAnswer(optionIndex: number | null): void {
     if (this.phase !== 'question' || this.answered) return;
     this.answered = true;
@@ -262,6 +272,7 @@ export class QuizEngine {
     }
     const elapsedMs = performance.now() - this.questionShownAt;
     this.roundAnswers[this.mySlot] = { optionIndex, elapsedMs };
+    this.onLocked(optionIndex);
     void this.broadcast({ kind: 'answer', slot: this.mySlot, qIndex: this.roundIndex, optionIndex, elapsedMs });
     this.maybeReveal();
   }

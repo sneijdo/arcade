@@ -116,6 +116,10 @@ function startEngine(matchId: string): void {
       if (!stillHere()) return;
       renderQuestion(state);
     },
+    onLocked: (optionIndex) => {
+      if (!stillHere()) return;
+      renderAnswerLocked(optionIndex);
+    },
     onReveal: (state) => {
       if (!stillHere()) return;
       renderReveal(state);
@@ -219,15 +223,23 @@ function renderQuestion(round: RoundState): void {
 
 function handleAnswerClick(idx: number): void {
   if (myAnswerThisRound != null) return;
-  myAnswerThisRound = idx;
   Sound.click();
   engine?.submitAnswer(idx);
+}
+
+/** The single place the round's answer buttons get locked — fired by the engine's
+ * onLocked callback for BOTH a real click and an auto-timeout, so a click that loses
+ * the race against the engine's own question timer (see quizEngine.ts's submitAnswer)
+ * can never show a false "your answer was accepted" state: this only ever reflects
+ * what the engine actually locked in. */
+function renderAnswerLocked(optionIndex: number | null): void {
+  myAnswerThisRound = optionIndex;
   document.querySelectorAll<HTMLButtonElement>('.quiz-answer-btn').forEach((btn, i) => {
     btn.disabled = true;
-    if (i === idx) btn.classList.add('selected');
+    if (optionIndex != null && i === optionIndex) btn.classList.add('selected');
   });
   const status = document.getElementById('quizStatus');
-  if (status) status.textContent = 'Venter på modstanderens svar…';
+  if (status) status.textContent = optionIndex == null ? 'Tiden er udløbet — venter på modstanderens svar…' : 'Venter på modstanderens svar…';
 }
 
 function renderReveal(state: RevealState): void {
