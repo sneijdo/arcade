@@ -39,6 +39,14 @@ export async function renderProfile(): Promise<void> {
         <button class="btn btn-primary" data-nav="shop">GÅ TIL BUTIK</button>
       </div>
 
+      <div class="shop-balance casino-teaser" style="margin-top:10px">
+        <div>
+          <div class="shop-balance-label">🎰 PRØV LYKKEN</div>
+          <div class="shop-balance-value casino-teaser-value">Gambl din XP-saldo</div>
+        </div>
+        <button class="btn btn-casino" data-nav="kasino">KASINO</button>
+      </div>
+
       <button class="btn btn-ghost" style="margin-top:10px;width:100%" data-nav="guide">ⓘ SÅDAN VIRKER DET</button>
 
       <div class="shop-collection-row" style="margin-top:12px">

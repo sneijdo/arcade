@@ -162,4 +162,4 @@ export interface HallOfFameEntry {
   legendaryWeeks: number;
 }
 
-export type Route = 'home' | 'games' | 'leaderboard' | 'activity' | 'profile' | 'shop' | 'guide' | `play-${string}` | `player-${string}` | `duel-${string}`;
+export type Route = 'home' | 'games' | 'leaderboard' | 'activity' | 'profile' | 'shop' | 'guide' | 'kasino' | `play-${string}` | `player-${string}` | `duel-${string}`;
