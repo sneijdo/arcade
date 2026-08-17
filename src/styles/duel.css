@@ -15,6 +15,7 @@
   justify-content: center;
 }
 .duel-player-chip {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -29,6 +30,106 @@
   font-size: 12px;
   color: var(--text-faint);
   letter-spacing: 0.08em;
+}
+
+/* ---- emoji reactions — a lightweight, purely-cosmetic broadcast alongside the
+   real game messages (see QuizEngine.sendEmoji in quizEngine.ts): no db writes,
+   nothing persisted, just a quick way to gloat or groan mid-match. ---- */
+.duel-reactions {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-top: -4px;
+}
+.duel-emoji-toggle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s var(--ease), transform 0.15s var(--ease), opacity 0.15s var(--ease);
+}
+.duel-emoji-toggle:hover:not(:disabled) {
+  border-color: var(--violet);
+}
+.duel-emoji-toggle:active:not(:disabled) {
+  transform: scale(0.92);
+}
+.duel-emoji-toggle:disabled {
+  opacity: 0.5;
+}
+.duel-emoji-tray {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  padding: 6px;
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
+  animation: duel-tray-in 0.15s var(--ease);
+  z-index: 5;
+}
+@keyframes duel-tray-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+.duel-emoji-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 17px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s var(--ease), transform 0.15s var(--ease);
+}
+.duel-emoji-btn:hover {
+  background: var(--surface-3);
+}
+.duel-emoji-btn:active {
+  transform: scale(1.15);
+}
+.duel-emoji-pop {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  font-size: 22px;
+  line-height: 1;
+  pointer-events: none;
+  animation: duel-emoji-float 1.6s var(--ease) forwards;
+}
+@keyframes duel-emoji-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -6px) scale(1.15);
+  }
+  30% {
+    transform: translate(-50%, -10px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -46px) scale(1);
+  }
 }
 
 /* .arena is normally a fixed-height, non-scrolling game surface (see game.css) — Quiz

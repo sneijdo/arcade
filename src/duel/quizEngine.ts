@@ -48,7 +48,8 @@ export type MatchOutcome = { winner: Slot | 'draw' | null; reason: 'score' | 'fo
 type BroadcastMsg =
   | { kind: 'category'; slot: Slot; categoryId: string }
   | { kind: 'answer'; slot: Slot; qIndex: number; optionIndex: number | null; elapsedMs: number }
-  | { kind: 'result'; winner: Slot | 'draw' | null; reason: MatchOutcome['reason'] };
+  | { kind: 'result'; winner: Slot | 'draw' | null; reason: MatchOutcome['reason'] }
+  | { kind: 'emoji'; slot: Slot; emoji: string };
 
 function otherSlot(s: Slot): Slot {
   return s === 'sender' ? 'recipient' : 'sender';
@@ -78,6 +79,7 @@ export class QuizEngine {
   private onLocked: (optionIndex: number | null) => void;
   private onReveal: (state: RevealState) => void;
   private onEnd: (outcome: MatchOutcome) => void;
+  private onEmoji: (slot: Slot, emoji: string) => void;
 
   constructor(opts: {
     matchId: string;
@@ -90,6 +92,7 @@ export class QuizEngine {
     onLocked: (optionIndex: number | null) => void;
     onReveal: (state: RevealState) => void;
     onEnd: (outcome: MatchOutcome) => void;
+    onEmoji: (slot: Slot, emoji: string) => void;
   }) {
     this.matchId = opts.matchId;
     this.mySlot = opts.mySlot;
@@ -99,6 +102,7 @@ export class QuizEngine {
     this.onRound = opts.onRound;
     this.onLocked = opts.onLocked;
     this.onReveal = opts.onReveal;
+    this.onEmoji = opts.onEmoji;
     this.onEnd = opts.onEnd;
 
     if (!supabase) throw new Error('duel requires Supabase');
@@ -157,6 +161,7 @@ export class QuizEngine {
       return;
     }
     if (msg.kind === 'result' && this.phase !== 'ended') this.finish(msg.winner, msg.reason);
+    if (msg.kind === 'emoji') this.onEmoji(msg.slot, msg.emoji);
   }
 
   /** Only picks questions once BOTH categories are known, and always in fixed
@@ -275,6 +280,17 @@ export class QuizEngine {
     this.onLocked(optionIndex);
     void this.broadcast({ kind: 'answer', slot: this.mySlot, qIndex: this.roundIndex, optionIndex, elapsedMs });
     this.maybeReveal();
+  }
+
+  /** Pure banter — never gates or is gated by match state beyond "the match is still
+   * live", so it can't be used to stall or signal anything about the actual game (no
+   * reveal-timing information leaks through it). Echoes to the sender's own onEmoji
+   * too (see broadcast's self:false in the constructor — without this echo, the
+   * sender would never see their own reaction pop). */
+  sendEmoji(emoji: string): void {
+    if (this.phase === 'waiting' || this.phase === 'ended') return;
+    this.onEmoji(this.mySlot, emoji);
+    void this.broadcast({ kind: 'emoji', slot: this.mySlot, emoji });
   }
 
   destroy(): void {

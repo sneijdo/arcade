@@ -15,6 +15,10 @@ let oppName = '';
 let oppAvatar: string | null = null;
 let oppFrame: string | null = null;
 let myAnswerThisRound: number | null = null;
+let emojiOnCooldown = false;
+
+const QUICK_EMOJIS = ['😂', '😮', '🔥', '👏', '😤', '💀'];
+const EMOJI_COOLDOWN_MS = 1200;
 
 function main(): HTMLElement {
   return document.getElementById('main')!;
@@ -91,10 +95,56 @@ function drawShell(matchId: string): void {
         <div class="arena duel-arena" id="duelArena">
           <div class="arena-inner"><div class="arena-title">Venter på modstander…</div></div>
         </div>
+        <div class="duel-reactions">
+          <button class="duel-emoji-toggle" id="duelEmojiToggle" title="Send en reaktion">😀</button>
+          <div class="duel-emoji-tray" id="duelEmojiTray" hidden>
+            ${QUICK_EMOJIS.map((e) => `<button class="duel-emoji-btn" data-emoji="${e}">${e}</button>`).join('')}
+          </div>
+        </div>
       </div>
     </div>
   `;
+  emojiOnCooldown = false;
+  wireEmojiReactions();
   startEngine(matchId);
+}
+
+function wireEmojiReactions(): void {
+  const toggle = document.getElementById('duelEmojiToggle') as HTMLButtonElement | null;
+  const tray = document.getElementById('duelEmojiTray');
+  if (!toggle || !tray) return;
+  toggle.addEventListener('click', () => {
+    tray.hidden = !tray.hidden;
+  });
+  tray.querySelectorAll<HTMLButtonElement>('[data-emoji]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (emojiOnCooldown) return;
+      const emoji = btn.dataset.emoji!;
+      engine?.sendEmoji(emoji);
+      tray.hidden = true;
+      emojiOnCooldown = true;
+      toggle.disabled = true;
+      setTimeout(() => {
+        emojiOnCooldown = false;
+        if (toggle.isConnected) toggle.disabled = false;
+      }, EMOJI_COOLDOWN_MS);
+    });
+  });
+}
+
+/** Floats a brief reaction bubble up from whichever player chip sent it — the same
+ * handler for both the local echo (see QuizEngine.sendEmoji) and an incoming opponent
+ * message, so sending and receiving look identical. */
+function showEmojiPop(slot: Slot, emoji: string): void {
+  const chip = document.querySelector<HTMLElement>(slot === mySlot ? '.duel-player-chip.me' : '.duel-player-chip:not(.me)');
+  if (!chip) return;
+  const pop = document.createElement('span');
+  pop.className = 'duel-emoji-pop';
+  pop.textContent = emoji;
+  chip.appendChild(pop);
+  pop.addEventListener('animationend', () => pop.remove(), { once: true });
+  if (slot === mySlot) Sound.click();
+  else Haptics.tap();
 }
 
 function startEngine(matchId: string): void {
@@ -127,6 +177,10 @@ function startEngine(matchId: string): void {
     onEnd: (outcome) => {
       if (!stillHere()) return;
       void handleEnd(outcome);
+    },
+    onEmoji: (slot, emoji) => {
+      if (!stillHere()) return;
+      showEmojiPop(slot, emoji);
     },
   });
 }
