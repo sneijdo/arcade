@@ -1,4 +1,4 @@
-import { profile, getPlayerMeta, getCombinedLeaderboard, avatarFrameHtml, escapeHtml } from '../state';
+import { profile, getPlayerMeta, getCombinedLeaderboard, avatarFrameHtml, escapeHtml, duelTierForRating, DUEL_RATING_DEFAULT } from '../state';
 import { levelInfo } from '../xp';
 import { ACHIEVEMENTS } from '../achievements';
 import { BADGES } from '../badges';
@@ -72,6 +72,7 @@ export async function renderPlayerProfile(id: string): Promise<void> {
         <div class="pb-card"><div class="g">Nuværende stime</div><div class="v">🔥 ${meta.currentStreak ?? 0}</div></div>
         <div class="pb-card"><div class="g">Længste stime</div><div class="v">${meta.longestStreak ?? 0}</div></div>
         <div class="pb-card"><div class="g">🧠 Quiz Duel</div><div class="v">${meta.duelWins ?? 0}-${meta.duelLosses ?? 0}-${meta.duelDraws ?? 0}</div></div>
+        <div class="pb-card"><div class="g">Duel-rang</div><div class="v">${duelTierForRating(meta.duelRating ?? DUEL_RATING_DEFAULT).icon} ${meta.duelRating ?? DUEL_RATING_DEFAULT}</div></div>
       </div>
 
       <h2 class="section-title" style="margin-top:32px">Bedrifter</h2>

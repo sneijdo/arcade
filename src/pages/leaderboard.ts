@@ -1,4 +1,4 @@
-import { profile, getCombinedLeaderboard, avatarFrameHtml, creditMyHallOfFameWins, getHallOfFame, getDuelLeaderboard, getPlayerMeta, getWeeklyLeadStandings, LEGENDARY_WEEK_THRESHOLD, escapeHtml } from '../state';
+import { profile, getCombinedLeaderboard, avatarFrameHtml, creditMyHallOfFameWins, getHallOfFame, getDuelLeaderboard, duelTierForRating, getPlayerMeta, getWeeklyLeadStandings, LEGENDARY_WEEK_THRESHOLD, escapeHtml } from '../state';
 import { findTitle } from '../shop';
 import { playerLinkTarget } from './playerProfile';
 import { GAMES } from '../games/registry';
@@ -188,9 +188,10 @@ async function renderLegendaryProgress(): Promise<void> {
       .join('');
 }
 
-/** Quiz Duel win/loss standings — ranked by wins (ties broken by fewest losses), same
- * list-then-sort shape as renderHallOfFame() below but reading playerMeta rows directly
- * (see getDuelLeaderboard in state.ts) since duel records aren't a per-game score board. */
+/** Quiz Duel standings — ranked by Elo-style rating (see getDuelLeaderboard/
+ * duelTierForRating in state.ts), same list-then-sort shape as renderHallOfFame()
+ * below but reading playerMeta rows directly since duel records aren't a per-game
+ * score board. */
 async function renderDuelBoard(): Promise<void> {
   const entries = await getDuelLeaderboard();
   const panel = document.getElementById('lbPanel');
@@ -208,6 +209,7 @@ async function renderDuelBoard(): Promise<void> {
       const target = playerLinkTarget(e.id);
       const played = e.wins + e.losses + e.draws;
       const winRate = played > 0 ? Math.round((e.wins / played) * 100) : 0;
+      const tier = duelTierForRating(e.rating);
       return `
       <a class="lb-row ${isMe ? 'me' : ''}" href="#/${target}" data-nav="${target}">
         <div class="lb-rank ${i < 3 ? 'medal' : ''}">${i < 3 ? medals[i] : '#' + (i + 1)}</div>
@@ -216,10 +218,10 @@ async function renderDuelBoard(): Promise<void> {
           <div class="lb-name-col">
             <span class="lb-name">${escapeHtml(e.name)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
             ${title ? `<img src="${title.asset}" alt="${title.label}" class="title-badge-img">` : ''}
-            <span class="hof-badges"><span class="hof-badge">${winRate}% sejrsrate</span></span>
+            <span class="hof-badges"><span class="hof-badge">${tier.icon} ${tier.label}</span><span class="hof-badge">${e.wins}-${e.losses}-${e.draws} · ${winRate}% sejrsrate</span></span>
           </div>
         </div>
-        <div class="lb-score mono">${e.wins}-${e.losses}-${e.draws}</div>
+        <div class="lb-score mono">${e.rating}</div>
       </a>
     `;
     })

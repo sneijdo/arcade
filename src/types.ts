@@ -36,6 +36,8 @@ export interface Profile {
   duelWins: number;
   duelLosses: number;
   duelDraws: number;
+  /** Elo-style rating driving the Duel rank tier (see duelTierForRating() in state.ts) — starts at DUEL_RATING_DEFAULT (1000), updated in finishDuelSession(). */
+  duelRating: number;
 }
 
 export interface ReactionSession {
@@ -148,6 +150,7 @@ export interface PlayerMeta {
   duelWins?: number;
   duelLosses?: number;
   duelDraws?: number;
+  duelRating?: number;
 }
 
 /** Cross-week aggregate of #1 finishes, keyed by profile id. See creditMyHallOfFameWins() in state.ts. */

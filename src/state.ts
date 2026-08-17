@@ -93,6 +93,7 @@ export async function loadProfile(): Promise<Profile | null> {
     if (p.duelWins == null) p.duelWins = 0;
     if (p.duelLosses == null) p.duelLosses = 0;
     if (p.duelDraws == null) p.duelDraws = 0;
+    if (p.duelRating == null) p.duelRating = DUEL_RATING_DEFAULT;
     profile = p;
   }
   return profile;
@@ -120,6 +121,7 @@ export async function saveProfile(): Promise<void> {
     duelWins: profile.duelWins,
     duelLosses: profile.duelLosses,
     duelDraws: profile.duelDraws,
+    duelRating: profile.duelRating,
   };
   await storage.set('playerMeta:' + profile.id, meta, true);
 }
@@ -162,6 +164,7 @@ export async function createProfile(name: string, id?: string): Promise<void> {
     duelWins: 0,
     duelLosses: 0,
     duelDraws: 0,
+    duelRating: DUEL_RATING_DEFAULT,
   };
   await saveProfile();
 }
@@ -442,11 +445,15 @@ export interface DuelLeaderboardEntry {
   wins: number;
   losses: number;
   draws: number;
+  rating: number;
 }
 
 /** Same "list keys, fetch each, sort" shape as getHallOfFame() above, reading the same
  * playerMeta:<id> rows getPlayerMeta() reads one at a time — only players with at least
- * one recorded duel show up, so a fresh account with 0-0-0 doesn't pad out the list. */
+ * one recorded duel show up, so a fresh account with 0-0-0 doesn't pad out the list.
+ * Ranked by rating (see duelTierForRating/finishDuelSession above) rather than raw win
+ * count, so an established player who's played a lot doesn't out-rank someone with a
+ * shorter but more dominant streak. */
 export async function getDuelLeaderboard(): Promise<DuelLeaderboardEntry[]> {
   const keys = await storage.list('playerMeta:', true);
   const entries: DuelLeaderboardEntry[] = [];
@@ -457,9 +464,19 @@ export async function getDuelLeaderboard(): Promise<DuelLeaderboardEntry[]> {
     const losses = meta.duelLosses ?? 0;
     const draws = meta.duelDraws ?? 0;
     if (wins + losses + draws === 0) continue;
-    entries.push({ id: k.slice('playerMeta:'.length), name: meta.name, avatar: meta.avatar, frame: meta.frame, title: meta.title, wins, losses, draws });
+    entries.push({
+      id: k.slice('playerMeta:'.length),
+      name: meta.name,
+      avatar: meta.avatar,
+      frame: meta.frame,
+      title: meta.title,
+      wins,
+      losses,
+      draws,
+      rating: meta.duelRating ?? DUEL_RATING_DEFAULT,
+    });
   }
-  entries.sort((a, b) => b.wins - a.wins || a.losses - b.losses);
+  entries.sort((a, b) => b.rating - a.rating || b.wins - a.wins);
   return entries;
 }
 
@@ -616,20 +633,69 @@ async function settleSessionExtras(gameId: string, score: number, extraAchieveme
 /**
  * "Duel just ended" bookkeeping — deliberately separate from finishGameSession
  * above: a duel has no personal-best/leaderboard/streak/daily-challenge concept,
- * just a win/loss/draw counter and a flat XP award (see XP_RULES.duelWin/Draw/Loss
- * in xp.ts). Pushes a 'duel_result' row to the shared activity feed (see
- * pushActivity in activity.ts) so the outcome shows up live for other players.
+ * just a win/loss/draw counter, an Elo-style rating, and a flat XP award (see
+ * XP_RULES.duelWin/Draw/Loss in xp.ts). Pushes a 'duel_result' row to the shared
+ * activity feed (see pushActivity in activity.ts) so the outcome shows up live
+ * for other players.
+ *
+ * The rating update reads the opponent's CURRENT rating (via getPlayerMeta) and
+ * computes the swing with the standard Elo formula, purely from this client's own
+ * side — same "everything client-computed, nobody's authoritative" posture as the
+ * rest of this app (see kv/duel_challenges RLS policies). Both players do this
+ * independently right after the same match, so in the near-simultaneous case each
+ * side's expected-score input is a few hundred ms stale relative to the other's
+ * write — a harmless, self-correcting drift for a casual rank, not a ledger.
  */
-export async function finishDuelSession(outcome: 'win' | 'loss' | 'draw', opponentName: string): Promise<{ xpGain: number }> {
-  if (!profile) return { xpGain: 0 };
+export const DUEL_RATING_DEFAULT = 1000;
+const DUEL_K_FACTOR = 32;
+
+export interface DuelTier {
+  label: string;
+  icon: string;
+}
+
+const DUEL_TIERS: (DuelTier & { min: number })[] = [
+  { min: 0, label: 'Bronze', icon: '🥉' },
+  { min: 900, label: 'Sølv', icon: '🥈' },
+  { min: 1100, label: 'Guld', icon: '🥇' },
+  { min: 1300, label: 'Platin', icon: '💠' },
+  { min: 1500, label: 'Diamant', icon: '💎' },
+];
+
+/** Highest tier whose threshold the rating clears — DUEL_TIERS is ascending by
+ * `min` so the last match wins. */
+export function duelTierForRating(rating: number): DuelTier {
+  let tier = DUEL_TIERS[0];
+  for (const t of DUEL_TIERS) {
+    if (rating >= t.min) tier = t;
+  }
+  return tier;
+}
+
+export async function finishDuelSession(
+  outcome: 'win' | 'loss' | 'draw',
+  opponentName: string,
+  opponentId: string,
+): Promise<{ xpGain: number; ratingChange: number; newRating: number }> {
+  if (!profile) return { xpGain: 0, ratingChange: 0, newRating: DUEL_RATING_DEFAULT };
   if (outcome === 'win') profile.duelWins++;
   else if (outcome === 'loss') profile.duelLosses++;
   else profile.duelDraws++;
+
+  const oppMeta = await getPlayerMeta(opponentId);
+  const oppRating = oppMeta?.duelRating ?? DUEL_RATING_DEFAULT;
+  const myRating = profile.duelRating ?? DUEL_RATING_DEFAULT;
+  const expected = 1 / (1 + Math.pow(10, (oppRating - myRating) / 400));
+  const actual = outcome === 'win' ? 1 : outcome === 'draw' ? 0.5 : 0;
+  const newRating = Math.max(100, Math.round(myRating + DUEL_K_FACTOR * (actual - expected)));
+  const ratingChange = newRating - myRating;
+  profile.duelRating = newRating;
+
   const xpGain = outcome === 'win' ? XP_RULES.duelWin : outcome === 'draw' ? XP_RULES.duelDraw : XP_RULES.duelLoss;
   addXp(xpGain);
   await saveProfile();
   refreshHeader();
   const score = outcome === 'win' ? 1 : outcome === 'draw' ? 0.5 : 0;
   void pushActivity('duel', score, 'duel_result', profile.name, profile.equippedAvatar, profile.equippedFrame, opponentName);
-  return { xpGain };
+  return { xpGain, ratingChange, newRating };
 }
