@@ -31,6 +31,23 @@
   letter-spacing: 0.08em;
 }
 
+/* .arena is normally a fixed-height, non-scrolling game surface (see game.css) — Quiz
+   Duel's category picker can have more chips than fit that height on short phone
+   screens, so it needs to opt back into vertical scrolling. `align-items: safe center`
+   keeps content centered when it fits and falls back to top-aligned + scrollable when
+   it doesn't (the plain `center` above it is the fallback for browsers that don't
+   understand the `safe` keyword). */
+.arena.duel-arena {
+  height: auto;
+  min-height: min(58vh, 440px);
+  max-height: min(75vh, 560px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  touch-action: pan-y;
+  align-items: center;
+  align-items: safe center;
+}
+
 .quiz-category-picker {
   display: flex;
   flex-direction: column;
