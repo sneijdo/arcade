@@ -147,16 +147,17 @@ function wireEmojiReactions(): void {
   });
 }
 
-/** Floats a brief reaction bubble up from whichever player chip sent it — the same
- * handler for both the local echo (see QuizEngine.sendEmoji) and an incoming opponent
- * message, so sending and receiving look identical. */
+/** Floats a big reaction bubble over the whole game shell (not the tiny player chip —
+ * that read as too subtle to actually notice mid-match) — the same handler for both
+ * the local echo (see QuizEngine.sendEmoji) and an incoming opponent message, so
+ * sending and receiving look identical. */
 function showEmojiPop(slot: Slot, emoji: string): void {
-  const chip = document.querySelector<HTMLElement>(slot === mySlot ? '.duel-player-chip.me' : '.duel-player-chip:not(.me)');
-  if (!chip) return;
+  const shell = document.querySelector<HTMLElement>('.game-shell');
+  if (!shell) return;
   const pop = document.createElement('span');
-  pop.className = 'duel-emoji-pop';
+  pop.className = 'duel-emoji-pop ' + (slot === mySlot ? 'mine' : 'theirs');
   pop.textContent = emoji;
-  chip.appendChild(pop);
+  shell.appendChild(pop);
   pop.addEventListener('animationend', () => pop.remove(), { once: true });
   if (slot === mySlot) Sound.click();
   else Haptics.tap();

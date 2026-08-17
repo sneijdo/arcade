@@ -1,5 +1,6 @@
 /* ============================= REACTION GAME ============================= */
 .game-shell {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;

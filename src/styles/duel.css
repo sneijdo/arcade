@@ -142,6 +142,14 @@
   animation: duel-tray-in 0.15s var(--ease);
   z-index: 5;
 }
+/* The `hidden` attribute's UA-stylesheet `display: none` has the same specificity as
+   the class rule above (`.duel-emoji-tray { display: flex }`) and author styles always
+   beat UA styles at equal specificity — so without this, `hidden` was never actually
+   hiding the tray, leaving it visible (and, worse, absolutely-positioned right over the
+   bottom of the arena) at all times, silently eating taps meant for the answer buttons. */
+.duel-emoji-tray[hidden] {
+  display: none;
+}
 @keyframes duel-tray-in {
   from {
     opacity: 0;
@@ -169,30 +177,41 @@
 .duel-emoji-btn:active {
   transform: scale(1.15);
 }
+/* Anchored to .game-shell (see position:relative in game.css), not the tiny player
+   chip — a name-badge-sized reaction was easy to miss entirely mid-match. `.mine`/
+   `.theirs` offset left/right so both players' reactions stay legible if they land
+   close together in time. */
 .duel-emoji-pop {
   position: absolute;
-  top: -6px;
-  left: 50%;
-  font-size: 22px;
+  bottom: 38%;
+  font-size: 60px;
   line-height: 1;
   pointer-events: none;
-  animation: duel-emoji-float 1.6s var(--ease) forwards;
+  z-index: 40;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.55));
+  animation: duel-emoji-float 1.8s var(--ease) forwards;
+}
+.duel-emoji-pop.mine {
+  left: 22%;
+}
+.duel-emoji-pop.theirs {
+  right: 22%;
 }
 @keyframes duel-emoji-float {
   0% {
     opacity: 0;
-    transform: translate(-50%, 0) scale(0.6);
+    transform: translateY(0) scale(0.4) rotate(-8deg);
   }
-  15% {
+  18% {
     opacity: 1;
-    transform: translate(-50%, -6px) scale(1.15);
+    transform: translateY(-16px) scale(1.25) rotate(4deg);
   }
-  30% {
-    transform: translate(-50%, -10px) scale(1);
+  35% {
+    transform: translateY(-24px) scale(1.05) rotate(0deg);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -46px) scale(1);
+    transform: translateY(-70px) scale(1);
   }
 }
 
