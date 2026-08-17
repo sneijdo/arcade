@@ -739,10 +739,20 @@
   padding-right: 4px;
 }
 .duel-challenge-btn {
-  padding: 4px 9px !important;
-  font-size: 13px !important;
+  padding: 5px 11px !important;
+  font-size: 12px !important;
   border-radius: 999px !important;
   line-height: 1;
+  background: rgba(139, 107, 255, 0.14);
+  color: var(--violet);
+  border: 1px solid rgba(139, 107, 255, 0.4);
+}
+.duel-challenge-btn:hover {
+  background: rgba(139, 107, 255, 0.24);
+  border-color: var(--violet);
+}
+.duel-challenge-btn:disabled {
+  opacity: 0.5;
 }
 .activity-row {
   display: flex;

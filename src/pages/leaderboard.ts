@@ -1,4 +1,4 @@
-import { profile, getCombinedLeaderboard, avatarFrameHtml, creditMyHallOfFameWins, getHallOfFame, getPlayerMeta, getWeeklyLeadStandings, LEGENDARY_WEEK_THRESHOLD, escapeHtml } from '../state';
+import { profile, getCombinedLeaderboard, avatarFrameHtml, creditMyHallOfFameWins, getHallOfFame, getDuelLeaderboard, getPlayerMeta, getWeeklyLeadStandings, LEGENDARY_WEEK_THRESHOLD, escapeHtml } from '../state';
 import { findTitle } from '../shop';
 import { playerLinkTarget } from './playerProfile';
 import { GAMES } from '../games/registry';
@@ -7,7 +7,7 @@ import { isGuestMode } from '../storage';
 import type { LeaderboardEntry, ScoreKind } from '../types';
 
 let lbGameId = 'reaction';
-type LbView = 'week' | 'alltime' | 'hof' | 'legendary';
+type LbView = 'week' | 'alltime' | 'hof' | 'legendary' | 'duel';
 let lbView: LbView = 'week';
 
 export async function renderLeaderboard(gameId?: string): Promise<void> {
@@ -29,8 +29,9 @@ export async function renderLeaderboard(gameId?: string): Promise<void> {
         <button class="tab-btn ${lbView === 'alltime' ? 'active' : ''}" data-view="alltime">ALL-TIME</button>
         <button class="tab-btn ${lbView === 'legendary' ? 'active' : ''}" data-view="legendary">⭐ MOD LEGENDARY</button>
         <button class="tab-btn ${lbView === 'hof' ? 'active' : ''}" data-view="hof">🏆 HALL OF FAME</button>
+        <button class="tab-btn ${lbView === 'duel' ? 'active' : ''}" data-view="duel">🧠 QUIZ DUEL</button>
       </div>
-      <div class="tabs" id="lbGameTabs" style="${lbView === 'hof' || lbView === 'legendary' ? 'display:none' : ''}">
+      <div class="tabs" id="lbGameTabs" style="${lbView === 'hof' || lbView === 'legendary' || lbView === 'duel' ? 'display:none' : ''}">
         ${implementedGames
           .map((g) => `<button class="tab-btn ${g.id === activeGame.id ? 'active' : ''}" data-game="${g.id}">${g.title.toUpperCase()}</button>`)
           .join('')}
@@ -53,6 +54,7 @@ export async function renderLeaderboard(gameId?: string): Promise<void> {
 
   if (lbView === 'hof') await renderHallOfFame();
   else if (lbView === 'legendary') await renderLegendaryProgress();
+  else if (lbView === 'duel') await renderDuelBoard();
   else await renderGameBoard(activeGame.id, activeGame.scoreKind);
 }
 
@@ -184,6 +186,44 @@ async function renderLegendaryProgress(): Promise<void> {
       `;
       })
       .join('');
+}
+
+/** Quiz Duel win/loss standings — ranked by wins (ties broken by fewest losses), same
+ * list-then-sort shape as renderHallOfFame() below but reading playerMeta rows directly
+ * (see getDuelLeaderboard in state.ts) since duel records aren't a per-game score board. */
+async function renderDuelBoard(): Promise<void> {
+  const entries = await getDuelLeaderboard();
+  const panel = document.getElementById('lbPanel');
+  if (!panel) return;
+
+  if (entries.length === 0) {
+    panel.innerHTML = `<div style="color:var(--text-dim);font-size:13.5px">Ingen har spillet Quiz Duel endnu — <a href="#/activity" data-nav="activity" style="color:var(--violet)">udfordr en modstander</a> for at komme først på listen.</div>`;
+    return;
+  }
+  const medals = ['🥇', '🥈', '🥉'];
+  panel.innerHTML = entries
+    .map((e, i) => {
+      const isMe = e.id === profile!.id;
+      const title = findTitle(e.title);
+      const target = playerLinkTarget(e.id);
+      const played = e.wins + e.losses + e.draws;
+      const winRate = played > 0 ? Math.round((e.wins / played) * 100) : 0;
+      return `
+      <a class="lb-row ${isMe ? 'me' : ''}" href="#/${target}" data-nav="${target}">
+        <div class="lb-rank ${i < 3 ? 'medal' : ''}">${i < 3 ? medals[i] : '#' + (i + 1)}</div>
+        <div class="lb-player">
+          ${avatarFrameHtml(e.name, e.avatar, e.frame, 28)}
+          <div class="lb-name-col">
+            <span class="lb-name">${escapeHtml(e.name)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
+            ${title ? `<img src="${title.asset}" alt="${title.label}" class="title-badge-img">` : ''}
+            <span class="hof-badges"><span class="hof-badge">${winRate}% sejrsrate</span></span>
+          </div>
+        </div>
+        <div class="lb-score mono">${e.wins}-${e.losses}-${e.draws}</div>
+      </a>
+    `;
+    })
+    .join('');
 }
 
 async function renderHallOfFame(): Promise<void> {

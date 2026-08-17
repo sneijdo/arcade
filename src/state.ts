@@ -433,6 +433,36 @@ export async function getHallOfFame(): Promise<HallOfFameEntry[]> {
   return entries;
 }
 
+export interface DuelLeaderboardEntry {
+  id: string;
+  name: string;
+  avatar: string | null;
+  frame: string | null;
+  title: string | null;
+  wins: number;
+  losses: number;
+  draws: number;
+}
+
+/** Same "list keys, fetch each, sort" shape as getHallOfFame() above, reading the same
+ * playerMeta:<id> rows getPlayerMeta() reads one at a time — only players with at least
+ * one recorded duel show up, so a fresh account with 0-0-0 doesn't pad out the list. */
+export async function getDuelLeaderboard(): Promise<DuelLeaderboardEntry[]> {
+  const keys = await storage.list('playerMeta:', true);
+  const entries: DuelLeaderboardEntry[] = [];
+  for (const k of keys) {
+    const meta = await storage.get<PlayerMeta>(k, true);
+    if (!meta) continue;
+    const wins = meta.duelWins ?? 0;
+    const losses = meta.duelLosses ?? 0;
+    const draws = meta.duelDraws ?? 0;
+    if (wins + losses + draws === 0) continue;
+    entries.push({ id: k.slice('playerMeta:'.length), name: meta.name, avatar: meta.avatar, frame: meta.frame, title: meta.title, wins, losses, draws });
+  }
+  entries.sort((a, b) => b.wins - a.wins || a.losses - b.losses);
+  return entries;
+}
+
 export async function awardXP(amount: number, reasonLabel?: string): Promise<void> {
   if (!profile) return;
   addXp(amount);

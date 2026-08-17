@@ -67,7 +67,7 @@ function onlineListHtml(users: PresenceUser[]): string {
       return `
         <div class="activity-online-chip">
           <a class="activity-online-link" href="#/${target}" data-nav="${target}">${avatarFrameHtml(u.name, u.avatar, null, 26)}<span>${escapeHtml(u.name)}</span></a>
-          ${isSelf ? '' : `<button class="btn btn-ghost btn-sm duel-challenge-btn" data-duel-challenge="${u.id}">🧠</button>`}
+          ${isSelf ? '' : `<button class="btn btn-sm duel-challenge-btn" data-duel-challenge="${u.id}">🧠 DUEL</button>`}
         </div>`;
     })
     .join('')}</div>`;
@@ -103,6 +103,11 @@ export async function renderActivity(): Promise<void> {
       <div class="section-label">Live</div>
       <h1 class="section-title">Aktivitet</h1>
       ${
+        live
+          ? `<div style="color:var(--text-dim);font-size:13.5px;margin-top:-8px;margin-bottom:4px">Se hvem der er online lige nu, og udfordr dem til en <a href="#/leaderboard" data-nav="leaderboard" style="color:var(--violet)">🧠 Quiz Duel</a>.</div>`
+          : ''
+      }
+      ${
         !live
           ? `<div class="guest-lb-note">${
               isGuestMode()
@@ -116,7 +121,7 @@ export async function renderActivity(): Promise<void> {
         live
           ? `
       <div class="panel activity-panel" style="margin-top:16px">
-        <div class="activity-panel-header"><span class="activity-live-dot"></span>ONLINE NU</div>
+        <div class="activity-panel-header"><span class="activity-live-dot"></span>ONLINE NU · TRYK 🧠 DUEL FOR AT UDFORDRE</div>
         <div id="onlineList">${onlineListHtml([])}</div>
       </div>
       <div class="panel activity-panel" style="margin-top:16px">
