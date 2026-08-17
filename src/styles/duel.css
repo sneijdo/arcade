@@ -31,6 +31,70 @@
   color: var(--text-faint);
   letter-spacing: 0.08em;
 }
+.duel-tier-badge {
+  font-size: 13px;
+  line-height: 1;
+}
+.duel-streak-badge {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--lime);
+  min-width: 0;
+}
+.duel-h2h {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-faint);
+  margin-top: -6px;
+}
+
+/* ---- live score bar — sits outside the arena (see drawShell in pages/duel.ts) so it
+   persists across rounds instead of being rebuilt from scratch, letting its width
+   transition animate smoothly round to round rather than snapping to the new value. ---- */
+.quiz-score-bar-track {
+  width: 100%;
+  max-width: 420px;
+  height: 7px;
+  border-radius: 4px;
+  background: rgba(255, 93, 122, 0.25);
+  overflow: hidden;
+  margin: 0 auto;
+}
+.quiz-score-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--violet), var(--lime));
+  border-radius: 4px;
+  transition: width 0.6s var(--ease);
+}
+
+/* ---- sudden-death tie-break flourish ---- */
+.quiz-round.sudden .quiz-round-header {
+  color: var(--lime);
+  font-weight: 700;
+  animation: duel-sudden-pulse 1.2s ease-in-out infinite;
+}
+@keyframes duel-sudden-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.duel-rating-toast {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
 
 /* ---- emoji reactions — a lightweight, purely-cosmetic broadcast alongside the
    real game messages (see QuizEngine.sendEmoji in quizEngine.ts): no db writes,

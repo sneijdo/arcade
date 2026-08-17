@@ -1,7 +1,7 @@
-import { profile, getPlayerMeta, escapeHtml, avatarFrameHtml, finishDuelSession } from '../state';
+import { profile, getPlayerMeta, escapeHtml, avatarFrameHtml, finishDuelSession, duelTierForRating, DUEL_RATING_DEFAULT } from '../state';
 import { Sound } from '../sound';
 import { Haptics } from '../haptics';
-import { fetchChallenge, writeDuelResult, type DuelResult } from '../duel/challenges';
+import { fetchChallenge, writeDuelResult, getHeadToHead, type DuelResult, type HeadToHead } from '../duel/challenges';
 import { challengePlayer } from '../duel/inviteBanner';
 import { onPresenceChange } from '../activity';
 import { QuizEngine, QUESTION_TIME_MS, type Slot, type QuizPhase, type RoundState, type RevealState, type MatchOutcome } from '../duel/quizEngine';
@@ -14,6 +14,8 @@ let oppId = '';
 let oppName = '';
 let oppAvatar: string | null = null;
 let oppFrame: string | null = null;
+let oppRating = DUEL_RATING_DEFAULT;
+let h2h: HeadToHead = { wins: 0, losses: 0, draws: 0 };
 let myAnswerThisRound: number | null = null;
 let emojiOnCooldown = false;
 
@@ -64,6 +66,9 @@ export async function renderDuelMatch(matchId: string): Promise<void> {
   oppName = oppMeta?.name ?? (mySlot === 'recipient' ? challenge.senderName : 'Modstander');
   oppAvatar = oppMeta?.avatar ?? (mySlot === 'recipient' ? challenge.senderAvatar : null);
   oppFrame = oppMeta?.frame ?? (mySlot === 'recipient' ? challenge.senderFrame : null);
+  oppRating = oppMeta?.duelRating ?? DUEL_RATING_DEFAULT;
+  h2h = await getHeadToHead(profile.id, oppId);
+  if (!document.querySelector('.duel-loading')) return;
 
   drawShell(matchId);
 }
@@ -79,7 +84,15 @@ function drawInactive(): void {
   `;
 }
 
+function h2hLabel(): string {
+  if (h2h.wins + h2h.losses + h2h.draws === 0) return 'Første opgør!';
+  const record = h2h.draws > 0 ? `${h2h.wins}-${h2h.losses}-${h2h.draws}` : `${h2h.wins}-${h2h.losses}`;
+  return `${record} mod ${escapeHtml(oppName)}`;
+}
+
 function drawShell(matchId: string): void {
+  const myTier = duelTierForRating(profile!.duelRating ?? DUEL_RATING_DEFAULT);
+  const oppTier = duelTierForRating(oppRating);
   main().innerHTML = `
     <div class="page">
       <div class="game-shell">
@@ -88,10 +101,12 @@ function drawShell(matchId: string): void {
           <span class="mono" id="duelStatus">Venter på modstander…</span>
         </div>
         <div class="duel-players">
-          <div class="duel-player-chip me">${avatarFrameHtml(profile!.name, profile!.equippedAvatar, profile!.equippedFrame, 30)}<span>${escapeHtml(profile!.name)}</span></div>
+          <div class="duel-player-chip me">${avatarFrameHtml(profile!.name, profile!.equippedAvatar, profile!.equippedFrame, 30)}<span>${escapeHtml(profile!.name)}</span><span class="duel-tier-badge" title="${myTier.label} · ${profile!.duelRating} rating">${myTier.icon}</span><span class="duel-streak-badge" id="duelStreakMe"></span></div>
           <span class="duel-vs">VS</span>
-          <div class="duel-player-chip">${avatarFrameHtml(oppName, oppAvatar, oppFrame, 30)}<span>${escapeHtml(oppName)}</span></div>
+          <div class="duel-player-chip">${avatarFrameHtml(oppName, oppAvatar, oppFrame, 30)}<span>${escapeHtml(oppName)}</span><span class="duel-tier-badge" title="${oppTier.label} · ${oppRating} rating">${oppTier.icon}</span><span class="duel-streak-badge" id="duelStreakOpp"></span></div>
         </div>
+        <div class="duel-h2h">${h2hLabel()}</div>
+        <div class="quiz-score-bar-track"><div class="quiz-score-bar-fill" id="quizScoreBarFill" style="width:50%"></div></div>
         <div class="arena duel-arena" id="duelArena">
           <div class="arena-inner"><div class="arena-title">Venter på modstander…</div></div>
         </div>
@@ -243,12 +258,17 @@ function renderLeadin(): void {
   setTimeout(tick, 1000);
 }
 
-function questionCardHtml(round: RoundState): string {
+function roundHeaderHtml(round: RoundState): string {
   const cat = QUIZ_CATEGORIES.find((c) => c.id === round.categoryId);
+  if (round.sudden) return `⚡ SUDDEN DEATH · ${cat?.icon ?? ''} ${(cat?.label ?? '').toUpperCase()}`;
+  return `SPØRGSMÅL ${round.index + 1}/${round.total} · ${cat?.icon ?? ''} ${(cat?.label ?? '').toUpperCase()}`;
+}
+
+function questionCardHtml(round: RoundState): string {
   const optionsHtml = round.question.options.map((opt, i) => `<button class="quiz-answer-btn" data-option="${i}">${escapeHtml(opt)}</button>`).join('');
   return `
-    <div class="quiz-round">
-      <div class="quiz-round-header">SPØRGSMÅL ${round.index + 1}/${round.total} · ${cat?.icon ?? ''} ${(cat?.label ?? '').toUpperCase()}</div>
+    <div class="quiz-round ${round.sudden ? 'sudden' : ''}">
+      <div class="quiz-round-header">${roundHeaderHtml(round)}</div>
       <div class="quiz-question">${escapeHtml(round.question.q)}</div>
       <div class="quiz-answer-grid">${optionsHtml}</div>
       <div class="quiz-timer-track"><div class="quiz-timer-bar" id="quizTimerBar"></div></div>
@@ -296,6 +316,25 @@ function renderAnswerLocked(optionIndex: number | null): void {
   if (status) status.textContent = optionIndex == null ? 'Tiden er udløbet — venter på modstanderens svar…' : 'Venter på modstanderens svar…';
 }
 
+/** The score bar and streak badges live outside the arena (see drawShell) and persist
+ * across rounds — unlike the arena's contents (rebuilt from scratch every round), so
+ * their CSS transitions animate smoothly from the previous round's values instead of
+ * snapping in at the new value. */
+function updateScoreBar(myTotal: number, oppTotal: number): void {
+  const fill = document.getElementById('quizScoreBarFill');
+  if (!fill) return;
+  const total = myTotal + oppTotal;
+  const pct = total > 0 ? Math.round((myTotal / total) * 100) : 50;
+  fill.style.width = pct + '%';
+}
+
+function updateStreakBadges(myStreak: number, oppStreak: number): void {
+  const me = document.getElementById('duelStreakMe');
+  const opp = document.getElementById('duelStreakOpp');
+  if (me) me.textContent = myStreak >= 2 ? `🔥${myStreak}` : '';
+  if (opp) opp.textContent = oppStreak >= 2 ? `🔥${oppStreak}` : '';
+}
+
 function renderReveal(state: RevealState): void {
   const arena = arenaEl();
   if (!arena) return;
@@ -308,9 +347,10 @@ function renderReveal(state: RevealState): void {
       return `<button class="${cls}" disabled>${escapeHtml(opt)}</button>`;
     })
     .join('');
+  const suddenLabel = state.sudden ? `⚡ SUDDEN DEATH · ${cat?.icon ?? ''} ${(cat?.label ?? '').toUpperCase()}` : `SPØRGSMÅL ${state.index + 1}/${state.total} · ${cat?.icon ?? ''} ${(cat?.label ?? '').toUpperCase()}`;
   arena.innerHTML = `
-    <div class="quiz-round">
-      <div class="quiz-round-header">SPØRGSMÅL ${state.index + 1}/${state.total} · ${cat?.icon ?? ''} ${(cat?.label ?? '').toUpperCase()}</div>
+    <div class="quiz-round ${state.sudden ? 'sudden' : ''}">
+      <div class="quiz-round-header">${suddenLabel}</div>
       <div class="quiz-question">${escapeHtml(state.question.q)}</div>
       <div class="quiz-answer-grid">${optionsHtml}</div>
       <div class="quiz-score-header">
@@ -320,6 +360,8 @@ function renderReveal(state: RevealState): void {
       </div>
     </div>
   `;
+  updateScoreBar(state.myTotal, state.oppTotal);
+  updateStreakBadges(state.myStreak, state.oppStreak);
   if (state.myAnswer === state.correctIndex) Sound.hit();
   else if (state.myAnswer != null) Sound.mistake();
 }
@@ -345,12 +387,12 @@ async function handleEnd(outcome: MatchOutcome): Promise<void> {
 
   // Recorded even if the player has already navigated away mid-resolution (e.g. right
   // after a forfeit win) — this is bookkeeping, not a render, so it doesn't need stillHere().
-  const { xpGain } = await finishDuelSession(outcomeLabel, oppName);
+  const { xpGain, ratingChange, newRating } = await finishDuelSession(outcomeLabel, oppName, oppId);
   await writeDuelResult(currentMatchId, dbResult);
-  if (stillHere()) drawResult(outcomeLabel, xpGain, outcome);
+  if (stillHere()) drawResult(outcomeLabel, xpGain, outcome, ratingChange, newRating);
 }
 
-function drawResult(outcome: 'win' | 'loss' | 'draw', xpGain: number, matchOutcome: MatchOutcome): void {
+function drawResult(outcome: 'win' | 'loss' | 'draw', xpGain: number, matchOutcome: MatchOutcome, ratingChange: number, newRating: number): void {
   const label = outcome === 'win' ? 'SEJR' : outcome === 'loss' ? 'NEDERLAG' : 'UAFGJORT';
   const color = outcome === 'win' ? 'var(--lime)' : outcome === 'loss' ? 'var(--coral)' : 'var(--text-dim)';
   const reasonLabel =
@@ -362,6 +404,9 @@ function drawResult(outcome: 'win' | 'loss' | 'draw', xpGain: number, matchOutco
   const w = profile?.duelWins ?? 0;
   const l = profile?.duelLosses ?? 0;
   const d = profile?.duelDraws ?? 0;
+  const tier = duelTierForRating(newRating);
+  const ratingSign = ratingChange > 0 ? '+' : '';
+  const ratingColor = ratingChange > 0 ? 'var(--lime)' : ratingChange < 0 ? 'var(--coral)' : 'var(--text-dim)';
 
   main().innerHTML = `
     <div class="page">
@@ -371,6 +416,7 @@ function drawResult(outcome: 'win' | 'loss' | 'draw', xpGain: number, matchOutco
           <div class="final-score duel-result" style="color:${color};font-size:clamp(40px,10vw,64px)">${label}</div>
           <div class="final-rating" style="color:${color}">${reasonLabel}</div>
           <div class="xp-toast">✦ +${xpGain} XP optjent</div>
+          <div class="duel-rating-toast" style="color:${ratingColor}">${ratingSign}${ratingChange} rating → ${newRating} <span class="duel-tier-badge">${tier.icon} ${tier.label}</span></div>
 
           <div class="final-stats">
             <div class="fstat"><div class="n">${w}</div><div class="l">Sejre</div></div>

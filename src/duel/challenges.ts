@@ -83,6 +83,43 @@ export async function writeDuelResult(id: string, result: DuelResult): Promise<v
   await supabase.from('duel_challenges').update({ status: 'completed', result, completed_at: new Date().toISOString() }).eq('id', id);
 }
 
+export interface HeadToHead {
+  wins: number;
+  losses: number;
+  draws: number;
+}
+
+/** Rivalry record for the match screen — every completed challenge between exactly
+ * these two players, from `myId`'s perspective, regardless of who sent the invite
+ * either time (each row only records sender/recipient, not "challenger", so a fair
+ * head-to-head has to check both roles). RLS's "sender_id = auth.uid() or
+ * recipient_id = auth.uid()" policy (see supabase/schema_duels.sql) already allows
+ * this — I'm a participant in every row this query can possibly match. */
+export async function getHeadToHead(myId: string, oppId: string): Promise<HeadToHead> {
+  if (!supabase) return { wins: 0, losses: 0, draws: 0 };
+  const { data, error } = await supabase
+    .from('duel_challenges')
+    .select('sender_id, result')
+    .eq('status', 'completed')
+    .or(`and(sender_id.eq.${myId},recipient_id.eq.${oppId}),and(sender_id.eq.${oppId},recipient_id.eq.${myId})`);
+  if (error || !data) return { wins: 0, losses: 0, draws: 0 };
+  let wins = 0;
+  let losses = 0;
+  let draws = 0;
+  for (const row of data as { sender_id: string; result: DuelResult | null }[]) {
+    if (!row.result) continue;
+    if (row.result === 'draw') {
+      draws++;
+      continue;
+    }
+    const iWasSender = row.sender_id === myId;
+    const iWon = (row.result === 'sender_win' && iWasSender) || (row.result === 'recipient_win' && !iWasSender);
+    if (iWon) wins++;
+    else losses++;
+  }
+  return { wins, losses, draws };
+}
+
 let incomingChannel: RealtimeChannel | null = null;
 const incomingListeners = new Set<(invite: DuelChallenge) => void>();
 const outgoingListeners = new Set<(invite: DuelChallenge) => void>();
