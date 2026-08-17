@@ -138,6 +138,7 @@ export class QuizEngine {
     const present = Object.keys(this.channel.presenceState());
     if (!present.includes(this.oppId) || !present.includes(myId)) return;
     this.setPhase('category');
+    this.onCategoryState(this.categories[this.mySlot] ?? null, this.categories[otherSlot(this.mySlot)] ?? null);
   }
 
   private handleMessage(msg: BroadcastMsg): void {
