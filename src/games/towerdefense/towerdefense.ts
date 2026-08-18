@@ -19,6 +19,27 @@ import { VfxSystem } from '../shared/vfx';
 import type { Vec2 } from '../shared/vec';
 import type { EnemyInstance, TowerInstance, TowerId, WaveTemplate, SpawnTicket } from './types';
 
+/**
+ * Scratch canvas for tinting a sprite on hit/slow. `source-atop` only masks against whatever's
+ * already opaque in the DESTINATION at that spot — drawing straight onto the main canvas meant it
+ * masked against the (fully opaque) terrain behind the sprite too, so the tint filled the sprite's
+ * whole bounding square instead of just its silhouette. Compositing on this empty, fully
+ * transparent buffer first (which contains nothing but the sprite) fixes that, then the tinted
+ * result gets drawn onto the main canvas as one flat image. Reused across every tinted draw rather
+ * than allocated per enemy per frame.
+ */
+let tintCanvas: HTMLCanvasElement | null = null;
+let tintCtx: CanvasRenderingContext2D | null = null;
+function getTintBuffer(): CanvasRenderingContext2D | null {
+  if (!tintCanvas) {
+    tintCanvas = document.createElement('canvas');
+    tintCanvas.width = 96;
+    tintCanvas.height = 96;
+    tintCtx = tintCanvas.getContext('2d');
+  }
+  return tintCtx;
+}
+
 /** Minimum gap (px) a new tower must keep from the road centerline — derived from the road's own
  * rendered width (see terrain.ts's drawRoad) plus a fixed clearance, so towers never blot out the
  * path itself no matter the arena size. */
@@ -602,14 +623,19 @@ function drawEnemySprite(ctx: CanvasRenderingContext2D, e: EnemyInstance): void 
   }
 
   if (isSpriteReady(img)) {
-    ctx.save();
-    ctx.drawImage(img, e.pos.x - size / 2, e.pos.y - size / 2, size, size);
-    if (e.hitFlash > 0 || e.slowFactor < 1) {
-      ctx.globalCompositeOperation = 'source-atop';
-      ctx.fillStyle = e.hitFlash > 0 ? 'rgba(255,255,255,.55)' : 'rgba(140,220,255,.35)';
-      ctx.fillRect(e.pos.x - size / 2, e.pos.y - size / 2, size, size);
+    const needsTint = e.hitFlash > 0 || e.slowFactor < 1;
+    const buf = needsTint ? getTintBuffer() : null;
+    if (buf) {
+      buf.clearRect(0, 0, size, size);
+      buf.drawImage(img, 0, 0, size, size);
+      buf.globalCompositeOperation = 'source-atop';
+      buf.fillStyle = e.hitFlash > 0 ? 'rgba(255,255,255,.55)' : 'rgba(140,220,255,.35)';
+      buf.fillRect(0, 0, size, size);
+      buf.globalCompositeOperation = 'source-over';
+      ctx.drawImage(buf.canvas, 0, 0, size, size, e.pos.x - size / 2, e.pos.y - size / 2, size, size);
+    } else {
+      ctx.drawImage(img, e.pos.x - size / 2, e.pos.y - size / 2, size, size);
     }
-    ctx.restore();
   } else {
     ctx.fillStyle = def.color;
     ctx.beginPath();
