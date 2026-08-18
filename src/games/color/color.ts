@@ -5,6 +5,14 @@ import { finishGameSession } from '../../state';
 
 const COLOR_ROUNDS = 5;
 const MAX_DIST = Math.sqrt(3 * 255 * 255);
+/** Time to lock in a guess before it auto-confirms as-is — without this, nothing punished
+ * endlessly fine-tuning sliders, which is why everyone converged on the same 95-99% cluster. */
+const ROUND_TIME_MS = 7000;
+/** Accuracy = 100 * closeness^ACCURACY_CURVE (closeness = 1 - dist/MAX_DIST). >1 stretches the
+ * top of the scale out (near-perfect guesses spread across a wider range) while compressing bad
+ * guesses toward 0 — the linear version (curve=1) let everyone's "pretty close" guesses land
+ * within a few points of each other at the top. */
+const ACCURACY_CURVE = 1.8;
 
 type ColorPhase = 'idle' | 'guessing' | 'roundresult';
 
@@ -20,12 +28,13 @@ interface ColorState {
   target: RGB;
   guess: RGB;
   results: number[]; // accuracy % per round
+  timeoutId: ReturnType<typeof setTimeout> | null;
 }
 
 let colorState: ColorState = makeInitialState();
 
 function makeInitialState(): ColorState {
-  return { phase: 'idle', round: 0, target: { r: 128, g: 128, b: 128 }, guess: { r: 128, g: 128, b: 128 }, results: [] };
+  return { phase: 'idle', round: 0, target: { r: 128, g: 128, b: 128 }, guess: { r: 128, g: 128, b: 128 }, results: [], timeoutId: null };
 }
 
 function main(): HTMLElement {
@@ -36,6 +45,7 @@ function arenaEl(): HTMLElement {
 }
 
 export function renderColorGame(): void {
+  if (colorState.timeoutId) clearTimeout(colorState.timeoutId);
   colorState = makeInitialState();
   drawShell();
 }
@@ -89,7 +99,8 @@ function distance(a: RGB, b: RGB): number {
 
 function accuracyFor(a: RGB, b: RGB): number {
   const d = distance(a, b);
-  return Math.max(0, 100 * (1 - d / MAX_DIST));
+  const closeness = Math.max(0, 1 - d / MAX_DIST);
+  return 100 * Math.pow(closeness, ACCURACY_CURVE);
 }
 
 /** Live "getting warmer" feedback while dragging — the glow intensity (a CSS custom property, see #guessSwatch in color.css) tracks the same distance formula the final score uses, so the swatch itself telegraphs how close you are before you ever hit BEKRÆFT. */
@@ -99,7 +110,7 @@ function updateGuessSwatch(): void {
   swatch.style.background = rgbCss(colorState.guess);
   const liveAcc = accuracyFor(colorState.target, colorState.guess);
   swatch.style.setProperty('--glow', String(Math.round(liveAcc)));
-  swatch.classList.toggle('is-hot', liveAcc >= 85);
+  swatch.classList.toggle('is-hot', liveAcc >= 75);
 }
 
 function sliderHtml(ch: 'r' | 'g' | 'b', label: string, value: number): string {
@@ -122,6 +133,7 @@ function drawArenaContent(): void {
         <ul class="instructions-list">
           <li>Du får vist en målfarve</li>
           <li>Brug skyderne til at genskabe den så præcist som muligt</li>
+          <li>${(ROUND_TIME_MS / 1000).toFixed(0)} sekunder pr. runde — løber tiden ud, bekræftes gættet som det står</li>
           <li>5 runder — jo tættere du rammer, jo højere nøjagtighed</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="colorStartBtn">START RUNDE 1</button>
@@ -150,9 +162,11 @@ function drawArenaContent(): void {
           ${sliderHtml('g', 'G', colorState.guess.g)}
           ${sliderHtml('b', 'B', colorState.guess.b)}
         </div>
+        <div class="color-timer-track"><div class="color-timer-bar" id="colorTimerBar"></div></div>
         <button class="btn btn-primary btn-lg" id="confirmBtn">BEKRÆFT</button>
       </div>
     `;
+    startRoundTimer();
     (['r', 'g', 'b'] as const).forEach((ch) => {
       const input = document.getElementById(`slider-${ch}`) as HTMLInputElement;
       input.addEventListener('input', () => {
@@ -176,7 +190,7 @@ function drawArenaContent(): void {
     const acc = colorState.results[colorState.results.length - 1];
     const rating = ScoreKinds.color_accuracy.rating(acc);
     const isLast = colorState.round >= COLOR_ROUNDS - 1;
-    const isTopTier = acc >= 90;
+    const isTopTier = acc >= 82;
     a.innerHTML = `
       <div class="arena-inner reveal-pop">
         ${isTopTier ? '<div class="result-flash"></div>' : ''}
@@ -225,16 +239,39 @@ function startRound(): void {
   drawArenaContent();
 }
 
+/** Kicks off the visible countdown bar and the matching auto-confirm timeout — same
+ * forced-reflow CSS transition trick the Quiz Duel timer uses (see renderQuestion in
+ * pages/duel.ts) so the bar animates from full to empty instead of just appearing empty. */
+function startRoundTimer(): void {
+  if (colorState.timeoutId) clearTimeout(colorState.timeoutId);
+  const bar = document.getElementById('colorTimerBar');
+  if (bar) {
+    bar.style.transition = 'none';
+    bar.style.width = '100%';
+    void bar.offsetWidth;
+    bar.style.transition = `width ${ROUND_TIME_MS}ms linear`;
+    bar.style.width = '0%';
+  }
+  colorState.timeoutId = setTimeout(() => {
+    if (colorState.phase !== 'guessing') return;
+    handleConfirm();
+  }, ROUND_TIME_MS);
+}
+
 function handleConfirm(): void {
+  if (colorState.timeoutId) {
+    clearTimeout(colorState.timeoutId);
+    colorState.timeoutId = null;
+  }
   const acc = accuracyFor(colorState.target, colorState.guess);
   colorState.results.push(acc);
   colorState.phase = 'roundresult';
   updateTopbar();
   drawArenaContent();
-  if (acc >= 90) {
+  if (acc >= 82) {
     Sound.pb();
     Haptics.personalBest();
-  } else if (acc >= 50) {
+  } else if (acc >= 29) {
     Sound.hit();
     Haptics.hit();
   } else {

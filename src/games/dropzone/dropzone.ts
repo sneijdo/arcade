@@ -3,7 +3,7 @@ import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
 
-const TOTAL_BALLS = 8;
+const TOTAL_BALLS = 12;
 const ROWS = 7;
 const PEG_R = 5;
 const BALL_R = 8;
@@ -278,7 +278,11 @@ function physicsLoop(now: number): void {
       const vDotN = ball.vx * nx + ball.vy * ny;
       ball.vx -= (1 + RESTITUTION) * vDotN * nx;
       ball.vy -= (1 + RESTITUTION) * vDotN * ny;
-      ball.vx += (Math.random() - 0.5) * 50; // a little chaos so bounces don't feel mechanical
+      // Chaos on every bounce, deliberately large enough that aiming straight at an edge column
+      // no longer reliably lands there over 7 rows of pegs — the 500 bins are meant to be a
+      // high-variance payoff, not a repeatable target (see the 4000-point-cap tie in
+      // supabase/fix_dropzone_4000_tiebreak.sql, which happened precisely because it wasn't).
+      ball.vx += (Math.random() - 0.5) * 130;
       Sound.pegBounce();
       Haptics.tap();
       break; // resolve at most one peg collision per frame — keeps the physics stable

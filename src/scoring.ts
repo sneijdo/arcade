@@ -107,11 +107,14 @@ export const ScoreKinds: Record<string, ScoreKind> = {
     direction: 'desc',
     unit: '%',
     format: (v) => `${Math.round(v)}`,
+    // Thresholds recomputed for ACCURACY_CURVE=1.8 (see color.ts) so each tier still represents
+    // the same underlying guess quality as before the curve — just spread across a wider,
+    // less-clumped range at the top instead of everyone landing within a few points of 95-99%.
     rating: (v) => {
-      if (v >= 95) return { label: 'SINDSSYGT', color: 'var(--lime)' };
-      if (v >= 85) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
-      if (v >= 70) return { label: 'GODT', color: 'var(--cyan)' };
-      if (v >= 50) return { label: 'OKAY', color: 'var(--text-dim)' };
+      if (v >= 91) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 75) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 53) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 29) return { label: 'OKAY', color: 'var(--text-dim)' };
       return { label: 'SKAL ØVES', color: 'var(--coral)' };
     },
   },
@@ -179,11 +182,13 @@ export const ScoreKinds: Record<string, ScoreKind> = {
     direction: 'desc',
     unit: 'point',
     format: (v) => `${Math.round(v)}`,
+    // Thresholds scaled 1.5x alongside the 4000→6000 cap (12 balls instead of 8 — see
+    // TOTAL_BALLS in dropzone.ts) so each tier still represents the same relative payoff mix.
     rating: (v) => {
-      if (v >= 3000) return { label: 'SINDSSYGT', color: 'var(--lime)' };
-      if (v >= 1500) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
-      if (v >= 800) return { label: 'GODT', color: 'var(--cyan)' };
-      if (v >= 400) return { label: 'OKAY', color: 'var(--text-dim)' };
+      if (v >= 4500) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 2250) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 1200) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 600) return { label: 'OKAY', color: 'var(--text-dim)' };
       return { label: 'SKAL ØVES', color: 'var(--coral)' };
     },
   },
