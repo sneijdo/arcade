@@ -1,13 +1,17 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <defs><filter id="glowG" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="3" result="b"/>
+  <defs>
+    <filter id="glow-glitch" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter></defs>
-
-  <rect x="7" y="10" width="180" height="180" fill="none"
-        stroke="#ff3d81" stroke-width="2.5" opacity="0.8" filter="url(#glowG)"/>
-  <rect x="13" y="10" width="180" height="180" fill="none"
-        stroke="#3fe4ff" stroke-width="2.5" opacity="0.8" filter="url(#glowG)"/>
-  <rect x="10" y="10" width="180" height="180" fill="none"
-        stroke="#a855f7" stroke-width="3" filter="url(#glowG)"/>
+    </filter>
+    <g id="corner-glitch" filter="url(#glow-glitch)">
+      <path d="M9,42 L9,17 L23,17 L23,9 L44,9" fill="none" stroke="#ff3d81" stroke-width="3" opacity="0.85"/>
+      <path d="M5,38 L5,13 L19,13 L19,5 L40,5" fill="none" stroke="#3fe4ff" stroke-width="3" opacity="0.85"/>
+      <path d="M7,40 L7,15 L21,15 L21,7 L42,7" fill="none" stroke="#f4f4ff" stroke-width="2.5"/>
+    </g>
+  </defs>
+  <use href="#corner-glitch"/>
+  <use href="#corner-glitch" transform="rotate(90 100 100)"/>
+  <use href="#corner-glitch" transform="rotate(180 100 100)"/>
+  <use href="#corner-glitch" transform="rotate(270 100 100)"/>
 </svg>

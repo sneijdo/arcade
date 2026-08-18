@@ -59,6 +59,12 @@ export const AVATARS: AvatarDef[] = [
   { id: 'avatar-glitch-god', name: 'Glitch God', asset: '/cosmetics/avatars/legendary/glitch-god.png', rarity: 'legendary', cost: 1200 },
   { id: 'avatar-void', name: 'Void', asset: '/cosmetics/avatars/legendary/void.png', rarity: 'legendary', cost: 1400 },
   { id: 'avatar-8-bit-legend', name: '8-Bit Legend', asset: '/cosmetics/avatars/legendary/8-bit-legend.png', rarity: 'legendary', cost: 1600 },
+  // Cast V1 — bold retro sprite-portrait style (crisp flat pixels, not the softer shaded look of
+  // the set above) with a personality/humor angle rather than a straight character archetype.
+  { id: 'avatar-rage-quitter', name: 'Rage Quitter', asset: '/cosmetics/avatars/common/rage-quitter.svg', rarity: 'common', cost: 130 },
+  { id: 'avatar-snack-goblin', name: 'Snack Goblin', asset: '/cosmetics/avatars/rare/snack-goblin.svg', rarity: 'rare', cost: 320 },
+  { id: 'avatar-disco-skeleton', name: 'Disco Skeleton', asset: '/cosmetics/avatars/epic/disco-skeleton.svg', rarity: 'epic', cost: 800, unlockLevel: 14 },
+  { id: 'avatar-sweatlord', name: 'The Sweatlord', asset: '/cosmetics/avatars/legendary/sweatlord.svg', rarity: 'legendary', cost: 1650 },
 ];
 
 /**

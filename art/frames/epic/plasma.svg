@@ -1,15 +1,21 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <defs><radialGradient id="plasma" cx="0.5" cy="0.5" r="0.7">
-      <stop offset="0" stop-color="#e879f9"/>
+  <defs>
+    <radialGradient id="plasma" cx="0.2" cy="0.2" r="0.9">
+      <stop offset="0" stop-color="#f9a8ff"/>
       <stop offset="1" stop-color="#7c3aed"/>
     </radialGradient>
-    <filter id="glowP" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="5" result="b"/>
+    <filter id="glow-plasma" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="4.5" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter></defs>
-
-  <rect x="10" y="10" width="180" height="180" fill="none"
-        stroke="url(#plasma)" stroke-width="6" filter="url(#glowP)">
-    <animate attributeName="stroke-width" values="6;8;6" dur="2.2s" repeatCount="indefinite"/>
-  </rect>
+    </filter>
+    <g id="corner-plasma">
+      <path d="M8,44 Q4,26 14,20 Q10,12 20,8 Q28,4 44,8" fill="none" stroke="url(#plasma)" stroke-width="7" stroke-linecap="round" filter="url(#glow-plasma)">
+        <animate attributeName="stroke-width" values="7;9;7" dur="2.2s" repeatCount="indefinite"/>
+      </path>
+    </g>
+  </defs>
+  <use href="#corner-plasma"/>
+  <use href="#corner-plasma" transform="rotate(90 100 100)"/>
+  <use href="#corner-plasma" transform="rotate(180 100 100)"/>
+  <use href="#corner-plasma" transform="rotate(270 100 100)"/>
 </svg>

@@ -1,7 +1,18 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <defs></defs>
-
-  <rect x="10" y="10" width="180" height="180" fill="none"
-        stroke="#e2564f" stroke-width="6"/>
-  <circle cx="10" cy="10" r="4" fill="#e2564f"/><circle cx="190" cy="10" r="4" fill="#e2564f"/><circle cx="10" cy="190" r="4" fill="#e2564f"/><circle cx="190" cy="190" r="4" fill="#e2564f"/>
+  <defs>
+    <filter id="glow-arcade" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <g id="corner-arcade">
+      <path d="M6,40 L6,16 Q6,6 16,6 L40,6" fill="none" stroke="#ff5d7a" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="6" cy="6" r="4" fill="#ff5d7a"/>
+    </g>
+  </defs>
+  <g filter="url(#glow-arcade)">
+    <use href="#corner-arcade"/>
+    <use href="#corner-arcade" transform="rotate(90 100 100)"/>
+    <use href="#corner-arcade" transform="rotate(180 100 100)"/>
+    <use href="#corner-arcade" transform="rotate(270 100 100)"/>
+  </g>
 </svg>

@@ -1,0 +1,53 @@
+<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <defs>
+    <radialGradient id="heatbg" cx="0.5" cy="0.4" r="0.8">
+      <stop offset="0" stop-color="#3d1010"/>
+      <stop offset="1" stop-color="#170606"/>
+    </radialGradient>
+  </defs>
+  <rect x="0" y="0" width="160" height="160" fill="url(#heatbg)"/>
+  <!-- heat shimmer lines -->
+  <rect x="14" y="6" width="4" height="10" fill="#ff8a3d" opacity="0.7"/>
+  <rect x="26" y="0" width="4" height="10" fill="#ff8a3d" opacity="0.5"/>
+  <rect x="130" y="4" width="4" height="10" fill="#ff8a3d" opacity="0.7"/>
+  <rect x="142" y="0" width="4" height="10" fill="#ff8a3d" opacity="0.5"/>
+  <!-- crown -->
+  <rect x="58" y="6" width="44" height="10" fill="#ffd54f"/>
+  <rect x="58" y="0" width="8" height="8" fill="#ffd54f"/>
+  <rect x="76" y="0" width="8" height="8" fill="#ffd54f"/>
+  <rect x="94" y="0" width="8" height="8" fill="#ffd54f"/>
+  <rect x="76" y="8" width="8" height="6" fill="#ff3d81"/>
+  <!-- head -->
+  <rect x="40" y="18" width="80" height="42" fill="#e8a37a"/>
+  <!-- dark circles + intense eyes -->
+  <rect x="40" y="46" width="80" height="12" fill="#c98259"/>
+  <rect x="50" y="46" width="18" height="12" fill="#fff5ee"/>
+  <rect x="92" y="46" width="18" height="12" fill="#fff5ee"/>
+  <rect x="56" y="48" width="8" height="8" fill="#8a1f1f"/>
+  <rect x="98" y="48" width="8" height="8" fill="#8a1f1f"/>
+  <rect x="52" y="50" width="2" height="4" fill="#ff3b30"/>
+  <rect x="94" y="50" width="2" height="4" fill="#ff3b30"/>
+  <!-- tense brow -->
+  <rect x="46" y="36" width="24" height="6" fill="#5c3a24" transform="rotate(-8 58 39)"/>
+  <rect x="90" y="36" width="24" height="6" fill="#5c3a24" transform="rotate(8 102 39)"/>
+  <!-- sweat drops -->
+  <rect x="30" y="40" width="8" height="12" fill="#5cd0ff"><animate attributeName="y" values="40;60;40" dur="1.4s" repeatCount="indefinite"/></rect>
+  <rect x="122" y="44" width="8" height="12" fill="#5cd0ff"><animate attributeName="y" values="44;64;44" dur="1.7s" repeatCount="indefinite"/></rect>
+  <rect x="112" y="30" width="6" height="9" fill="#5cd0ff" opacity="0.8"/>
+  <!-- clenched mouth -->
+  <rect x="50" y="62" width="60" height="8" fill="#8a4a3a"/>
+  <rect x="55" y="70" width="50" height="10" fill="#e8a37a"/>
+  <!-- jaw/neck -->
+  <rect x="60" y="80" width="40" height="14" fill="#e8a37a"/>
+  <!-- hunched shoulders -->
+  <rect x="20" y="94" width="120" height="16" fill="#2b2b3d"/>
+  <rect x="0" y="110" width="160" height="30" fill="#2b2b3d"/>
+  <!-- white-knuckle hands + controller -->
+  <rect x="44" y="128" width="24" height="16" fill="#e8a37a"/>
+  <rect x="92" y="128" width="24" height="16" fill="#e8a37a"/>
+  <rect x="48" y="130" width="6" height="6" fill="#fff5ee"/>
+  <rect x="106" y="130" width="6" height="6" fill="#fff5ee"/>
+  <rect x="60" y="132" width="40" height="24" fill="#1a1a24"/>
+  <rect x="66" y="138" width="10" height="10" fill="#ff3b30"/>
+  <rect x="84" y="138" width="10" height="10" fill="#8fe36b"/>
+</svg>
