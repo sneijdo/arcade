@@ -21,6 +21,9 @@ export interface BossInstance {
   sweepShotsRemaining: number;
   sweepAngle: number;
   summonsSinceSweep: number;
+  /** Endless-mode room scaling (see roomScaleMults in tactical.ts), baked into every damage
+   * number this boss deals — hp scaling is baked directly into hp/maxHp at spawn instead. */
+  dmgMult: number;
 }
 
 export const BOSS_NAMES: Record<BossId, string> = {
@@ -34,8 +37,9 @@ export function pickBossId(): BossId {
   return ALL_BOSS_IDS[Math.floor(Math.random() * ALL_BOSS_IDS.length)];
 }
 
-export function spawnBoss(pos: Vec2, bossId: BossId): BossInstance {
-  const maxHp = bossId === 'harbinger' ? BALANCE.harbinger.maxHp : BALANCE.boss.maxHp;
+export function spawnBoss(pos: Vec2, bossId: BossId, hpMult = 1, dmgMult = 1): BossInstance {
+  const baseMaxHp = bossId === 'harbinger' ? BALANCE.harbinger.maxHp : BALANCE.boss.maxHp;
+  const maxHp = baseMaxHp * hpMult;
   const radius = bossId === 'harbinger' ? BALANCE.harbinger.radius : BALANCE.boss.radius;
   return {
     bossId,
@@ -53,6 +57,7 @@ export function spawnBoss(pos: Vec2, bossId: BossId): BossInstance {
     sweepShotsRemaining: 0,
     sweepAngle: 0,
     summonsSinceSweep: 0,
+    dmgMult,
   };
 }
 
@@ -113,7 +118,7 @@ function updateCommander(b: BossInstance, playerPos: Vec2): BossUpdateResult {
     }
   } else if (b.phase === 'burst') {
     if (b.phaseTimer <= 0 && b.burstShotsRemaining > 0) {
-      result.fireShot = { angleRad: b.facing, damage: BALANCE.boss.burstDamage };
+      result.fireShot = { angleRad: b.facing, damage: BALANCE.boss.burstDamage * b.dmgMult };
       b.burstShotsRemaining--;
       b.phaseTimer = BALANCE.boss.burstShotIntervalS;
       if (b.burstShotsRemaining <= 0) {
@@ -126,7 +131,7 @@ function updateCommander(b: BossInstance, playerPos: Vec2): BossUpdateResult {
     if (b.phaseTimer <= 0) {
       b.phase = 'slamResolve';
       b.phaseTimer = 0.1;
-      result.slamNowResolving = { center: b.slamTarget, radius: BALANCE.boss.slamRadius, damage: BALANCE.boss.slamDamage };
+      result.slamNowResolving = { center: b.slamTarget, radius: BALANCE.boss.slamRadius, damage: BALANCE.boss.slamDamage * b.dmgMult };
     }
   } else if (b.phase === 'slamResolve') {
     if (b.phaseTimer <= 0) {
@@ -173,7 +178,7 @@ function updateHarbinger(b: BossInstance, playerPos: Vec2): BossUpdateResult {
     if (b.phaseTimer <= 0 && b.sweepShotsRemaining > 0) {
       const progress = 1 - (b.sweepShotsRemaining - 1) / Math.max(1, B.sweepShots - 1);
       const angle = b.sweepAngle + B.sweepArcRad * progress;
-      result.fireShot = { angleRad: angle, damage: B.sweepDamage };
+      result.fireShot = { angleRad: angle, damage: B.sweepDamage * b.dmgMult };
       b.sweepShotsRemaining--;
       b.phaseTimer = B.sweepShotIntervalS;
       if (b.sweepShotsRemaining <= 0) {

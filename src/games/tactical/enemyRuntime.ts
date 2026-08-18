@@ -17,6 +17,8 @@ export interface EnemyInstance {
   isMelee: boolean;
   /** True if this specific spawned instance rolled the elite modifier — makes ANY base type elite at runtime, not just defs with a static isElite flag. Scales hp/damage/moveSpeed and reuses the same harder-to-hit strafing behavior. */
   eliteMod: boolean;
+  /** Endless-mode room scaling (see roomScaleMults in tactical.ts) — baked into hp at spawn time, kept here so updateEnemy can apply it to per-hit damage too. 1 for every room up through the story campaign. */
+  dmgMult: number;
 }
 
 let nextEnemyId = 1;
@@ -25,10 +27,10 @@ const ELITE_HP_MULT = 1.75;
 const ELITE_DAMAGE_MULT = 1.4;
 const ELITE_MOVESPEED_MULT = 1.15;
 
-export function spawnEnemy(defId: EnemyId, pos: Vec2, eliteChance = 0): EnemyInstance {
+export function spawnEnemy(defId: EnemyId, pos: Vec2, eliteChance = 0, hpMult = 1, dmgMult = 1): EnemyInstance {
   const def = ENEMY_DEFS[defId];
   const eliteMod = Math.random() < eliteChance;
-  const hp = eliteMod ? def.hp * ELITE_HP_MULT : def.hp;
+  const hp = (eliteMod ? def.hp * ELITE_HP_MULT : def.hp) * hpMult;
   return {
     id: nextEnemyId++,
     defId,
@@ -42,6 +44,7 @@ export function spawnEnemy(defId: EnemyId, pos: Vec2, eliteChance = 0): EnemyIns
     facing: 0,
     isMelee: def.preferredRange === 0,
     eliteMod,
+    dmgMult,
   };
 }
 
@@ -74,7 +77,7 @@ export function updateEnemy(e: EnemyInstance, playerPos: Vec2, dt: number, arena
   if (e.hitFlash > 0) e.hitFlash -= dt;
 
   const result: EnemyUpdateResult = {};
-  const dmg = e.eliteMod ? def.damage * ELITE_DAMAGE_MULT : def.damage;
+  const dmg = (e.eliteMod ? def.damage * ELITE_DAMAGE_MULT : def.damage) * e.dmgMult;
   const moveSpeed = e.eliteMod ? def.moveSpeed * ELITE_MOVESPEED_MULT : def.moveSpeed;
 
   if (e.telegraphRemaining > 0) {

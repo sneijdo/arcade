@@ -295,7 +295,8 @@ function startRoom(index: number): void {
   if (index >= run.roomSequence.length) {
     hud.updateRoomLabel(index < TOTAL_ROOMS ? `RUM ${TOTAL_ROOMS}/${TOTAL_ROOMS} · BOSS` : `RUM ${index + 1} · BOSS`);
     const bossId = pickBossId();
-    run.boss = spawnBoss({ x: run.arenaW / 2, y: run.arenaH * 0.28 }, bossId);
+    const bossMult = roomScaleMults(index);
+    run.boss = spawnBoss({ x: run.arenaW / 2, y: run.arenaH * 0.28 }, bossId, bossMult.hp, bossMult.dmg);
     hud.showBossBar(true);
     hud.updateBossName(BOSS_NAMES[bossId]);
     hud.updateBossBar(run.boss.hp, run.boss.maxHp);
@@ -322,6 +323,20 @@ function startRoom(index: number): void {
   run.spawnQueue = tickets.map((t, i) => ({ defId: t.defId, delay: i * wave.spawnIntervalMs }));
 }
 
+/**
+ * Endless-mode difficulty scaling: rooms 1-10 (the handcrafted story campaign, see
+ * NON_BOSS_ROOM_COUNT in encounters.ts) are always base stats — every room after that
+ * compounds +5% enemy HP and +4% enemy damage. Without this, upgrades cap out (maxStacks
+ * per card, see upgrades.ts) within the first 5-10 rooms while enemies never got any
+ * tougher, so endless mode just stayed trivial forever past that point — a run's length
+ * measured patience, not skill. Applies to the boss too (see startRoom), so repeat boss
+ * encounters every 10 rooms don't stay a free kill while regular rooms ramp up around them.
+ */
+function roomScaleMults(roomIndex: number): { hp: number; dmg: number } {
+  const roomsPastTen = Math.max(0, roomIndex - (TOTAL_ROOMS - 1));
+  return { hp: Math.pow(1.05, roomsPastTen), dmg: Math.pow(1.04, roomsPastTen) };
+}
+
 function spawnAtEdge(defId: EnemyId): void {
   if (!run) return;
   const edge = Math.floor(Math.random() * 4);
@@ -336,7 +351,8 @@ function spawnAtEdge(defId: EnemyId): void {
   // by the last story room, and keeps climbing (capped at 50%) through endless rooms past
   // room 10 so a run that keeps going actually keeps getting harder, not just longer.
   const eliteChance = Math.min(0.5, run.roomIndex * 0.025);
-  const enemy = spawnEnemy(defId, { x, y }, eliteChance);
+  const mult = roomScaleMults(run.roomIndex);
+  const enemy = spawnEnemy(defId, { x, y }, eliteChance, mult.hp, mult.dmg);
   run.enemies.push(enemy);
   if (ENEMY_DEFS[defId].isElite || enemy.eliteMod) {
     run.vfx.warningBanner('elite', { x: run.arenaW / 2, y: run.arenaH / 2 });
@@ -422,14 +438,21 @@ function update(dt: number): void {
     }
     if (bossResult.summonAdds) {
       const { count, defId } = bossResult.summonAdds;
+      const addMult = roomScaleMults(r.roomIndex);
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
         const spawnDist = r.boss.radius + 60 + Math.random() * 40;
         r.enemies.push(
-          spawnEnemy(defId, {
-            x: Math.max(20, Math.min(r.arenaW - 20, r.boss.pos.x + Math.cos(angle) * spawnDist)),
-            y: Math.max(20, Math.min(r.arenaH - 20, r.boss.pos.y + Math.sin(angle) * spawnDist)),
-          }),
+          spawnEnemy(
+            defId,
+            {
+              x: Math.max(20, Math.min(r.arenaW - 20, r.boss.pos.x + Math.cos(angle) * spawnDist)),
+              y: Math.max(20, Math.min(r.arenaH - 20, r.boss.pos.y + Math.sin(angle) * spawnDist)),
+            },
+            0,
+            addMult.hp,
+            addMult.dmg,
+          ),
         );
       }
       r.vfx.impactSpark(r.boss.pos, '#8b6bff');
