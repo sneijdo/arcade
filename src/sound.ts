@@ -167,6 +167,21 @@ class SoundEngine {
       this.tone(2093, 0.34, 'sine', 0.07, 0.4);
     }
   }
+  /** The biggest fanfare in the app — a new ALL-TIME #1 (see showTotalRecordReveal in
+   * recordReveal.ts). A quick ascending run into a full stacked chord, deliberately bigger and
+   * more melodic than purchase()'s arpeggio: this happens far less often than a shop purchase,
+   * so it should be unmistakable even with your eyes closed. */
+  totalRecord(): void {
+    this.tone(392, 0.09, 'square', 0.1);
+    this.tone(523, 0.09, 'square', 0.1, 0.08);
+    this.tone(659, 0.09, 'square', 0.1, 0.16);
+    this.tone(784, 0.11, 'square', 0.11, 0.24);
+    const chordAt = 0.34;
+    this.tone(784, 0.55, 'triangle', 0.13, chordAt);
+    this.tone(988, 0.55, 'triangle', 0.12, chordAt);
+    this.tone(1174, 0.55, 'triangle', 0.11, chordAt);
+    this.tone(1568, 0.6, 'sine', 0.1, chordAt);
+  }
 }
 
 export const Sound = new SoundEngine();

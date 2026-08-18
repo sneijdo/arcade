@@ -5,6 +5,7 @@ import { Haptics } from '../../haptics';
 import { profile, saveProfile, getCombinedLeaderboard, pushLeaderboardEntry, checkAchievements, updateStreak, checkDailyChallenge, addXp } from '../../state';
 import { refreshHeader } from '../../header';
 import { pushActivity } from '../../activity';
+import { showTotalRecordReveal } from '../../recordReveal';
 
 const REACTION_ROUNDS = 5;
 /** Visible target circle stays this size (identity match with the original design). */
@@ -210,6 +211,16 @@ async function finishReactionSession(): Promise<void> {
   const isNewBest = profile.bestReaction == null || best < profile.bestReaction;
   const isNewAvgBest = profile.bestAvg == null || avg < profile.bestAvg;
 
+  // See the identical isNewAllTimeRecord check in finishGameSession (state.ts) for the reasoning —
+  // reaction keeps its own bespoke finish flow, so the check is mirrored here rather than shared.
+  let isNewAllTimeRecord = false;
+  if (isNewBest) {
+    const priorLeader = (await getCombinedLeaderboard('reaction', 'alltime'))[0];
+    const wasAlreadyLeader = priorLeader?.id === profile.id;
+    const tookTheLead = !priorLeader || best < priorLeader.score;
+    isNewAllTimeRecord = !wasAlreadyLeader && tookTheLead;
+  }
+
   profile.sessionsPlayed++;
   if (isNewBest) profile.bestReaction = best;
   if (isNewAvgBest) profile.bestAvg = avg;
@@ -218,6 +229,7 @@ async function finishReactionSession(): Promise<void> {
   const currentBest = profile.bestReaction; // guaranteed non-null: either just set, or already existed
   await saveProfile();
   await pushLeaderboardEntry('reaction', currentBest!);
+  if (isNewAllTimeRecord) showTotalRecordReveal('reaction', currentBest!);
 
   let xpGain = XP_RULES.complete;
   if (isNewBest) xpGain += XP_RULES.personalBest;

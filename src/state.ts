@@ -11,6 +11,7 @@ import { refreshHeader } from './header';
 import type { AchievementStats, HallOfFameEntry, LeaderboardEntry, PlayerMeta, Profile } from './types';
 import { getTodayChallenge, meetsChallengeTarget } from './dailyChallenge';
 import { findAvatar, findFrame, AVATARS, FRAMES, TITLES } from './shop';
+import { showTotalRecordReveal } from './recordReveal';
 
 export let profile: Profile | null = null;
 
@@ -607,10 +608,23 @@ export async function finishGameSession(gameId: string, score: number, extraAchi
   const dir = directionForGame(gameId);
   const prevBest = profile.bestScores[gameId];
   const isNewBest = prevBest === undefined || (dir === 'asc' ? score < prevBest : score > prevBest);
+  // The biggest celebration in the app fires only on the transition INTO the all-time #1 spot —
+  // beating someone else's record (or being the first ever entry), not extending an already-held
+  // lead. Checked against the pre-push leaderboard: since this score already beat prevBest to get
+  // here, out-scoring the current leader guarantees the push below actually lands us on top, so
+  // one fetch before the write is enough — no need to re-read after to confirm it stuck.
+  let isNewAllTimeRecord = false;
+  if (isNewBest) {
+    const priorLeader = (await getCombinedLeaderboard(gameId, 'alltime'))[0];
+    const wasAlreadyLeader = priorLeader?.id === profile.id;
+    const tookTheLead = !priorLeader || (dir === 'asc' ? score < priorLeader.score : score > priorLeader.score);
+    isNewAllTimeRecord = !wasAlreadyLeader && tookTheLead;
+  }
   if (isNewBest) profile.bestScores[gameId] = score;
   profile.sessionsPlayed++;
   await saveProfile();
   await pushLeaderboardEntry(gameId, profile.bestScores[gameId]);
+  if (isNewAllTimeRecord) showTotalRecordReveal(gameId, profile.bestScores[gameId]);
 
   let xpGain = XP_RULES.complete;
   if (isNewBest) xpGain += XP_RULES.personalBest;
