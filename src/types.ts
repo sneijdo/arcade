@@ -127,6 +127,8 @@ export interface LeaderboardEntry {
   avatar?: string | null;
   title?: string | null;
   frame?: string | null;
+  /** Date.now() the moment this score first became this player's best for this game (see pushLeaderboardEntry) — only bumped on a genuine improvement, never on a repeat push of the same score, so it can break score ties in favor of whoever set the record first. Absent on entries pushed before this field existed. */
+  ts?: number;
 }
 
 /** Public, shared mirror of a profile's display identity — written every saveProfile() so leaderboard/Hall of Fame rows can show a player's *current* avatar/title/frame/name instead of whatever was equipped the last time they posted a score.

@@ -243,9 +243,19 @@ export async function checkDailyChallenge(gameId: string, score: number): Promis
 export async function pushLeaderboardEntry(gameId: string, score: number): Promise<void> {
   if (!profile) return;
   const week = weekKey(new Date());
+  const key = `lb:${gameId}:${week}:` + profile.id;
+  // Only a genuine improvement earns a fresh timestamp — this session re-pushes the same
+  // personal best on every play, and if we stamped "now" every time, whoever merely played
+  // most recently would look like they set the record most recently too. Ties in score are
+  // broken by this timestamp (see readLeaderboard), so preserving it is what makes "first to
+  // reach the record" win instead of "last to replay it".
+  const existing = await storage.get<LeaderboardEntry>(key, true);
+  const dir = directionForGame(gameId);
+  const isImprovement = !existing || (dir === 'asc' ? score < existing.score : score > existing.score);
+  const ts = isImprovement ? Date.now() : existing?.ts;
   await storage.set(
-    `lb:${gameId}:${week}:` + profile.id,
-    { name: profile.name, score, id: profile.id, avatar: profile.equippedAvatar, title: profile.equippedTitle, frame: profile.equippedFrame },
+    key,
+    { name: profile.name, score, id: profile.id, avatar: profile.equippedAvatar, title: profile.equippedTitle, frame: profile.equippedFrame, ts },
     true,
   );
 }
@@ -269,7 +279,13 @@ async function readLeaderboard(gameId: string, week: string | null): Promise<Lea
     if (!existing || (dir === 'asc' ? e.score < existing.score : e.score > existing.score)) byId[e.id] = e;
   }
   const combined = Object.values(byId);
-  combined.sort((a, b) => (dir === 'asc' ? a.score - b.score : b.score - a.score));
+  // Tied scores go to whoever set that score first, not whoever's key happened to sort first —
+  // see the ts comment in pushLeaderboardEntry. Entries from before ts existed have no way to
+  // know when they were set, so they fall to the back of their tie group.
+  combined.sort((a, b) => {
+    if (a.score !== b.score) return dir === 'asc' ? a.score - b.score : b.score - a.score;
+    return (a.ts ?? Infinity) - (b.ts ?? Infinity);
+  });
   return combined;
 }
 
