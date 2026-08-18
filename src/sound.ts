@@ -153,6 +153,20 @@ class SoundEngine {
     this.tone(freq, 0.1, 'triangle', 0.13);
     this.tone(freq * 1.5, 0.14, 'triangle', 0.1, 0.05);
   }
+  /** Shop — the purchase-reveal fanfare (see showPurchaseReveal in pages/shop.ts). A rising
+   * major-chord arpeggio that grows an extra layer per rarity tier, so a legendary pull sounds
+   * unmistakably bigger than a common one instead of every purchase getting the same little blip. */
+  purchase(tier: 0 | 1 | 2 | 3 = 0): void {
+    this.tone(523, 0.11, 'triangle', 0.12);
+    this.tone(659, 0.11, 'triangle', 0.11, 0.07);
+    this.tone(784, 0.16, 'triangle', 0.11, 0.14);
+    if (tier >= 1) this.tone(1046, 0.18, 'triangle', 0.1, 0.21);
+    if (tier >= 2) this.tone(1318, 0.22, 'sine', 0.1, 0.28);
+    if (tier >= 3) {
+      this.tone(1568, 0.3, 'sine', 0.11, 0.35);
+      this.tone(2093, 0.34, 'sine', 0.07, 0.4);
+    }
+  }
 }
 
 export const Sound = new SoundEngine();

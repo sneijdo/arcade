@@ -5,6 +5,7 @@ import { Sound } from '../sound';
 import { Haptics } from '../haptics';
 import { AVATARS, FRAMES, TITLES, SECRET_TITLES, findAvatar, findTitle, type AvatarDef, type FrameDef, type TitleDef } from '../shop';
 import { levelInfo } from '../xp';
+import type { Rarity } from '../types';
 
 type ShopTab = 'avatars' | 'frames' | 'titles';
 type ShopItem = AvatarDef | FrameDef | TitleDef;
@@ -207,6 +208,92 @@ function renderGrid(): void {
   });
 }
 
+/** How hard the reveal celebrates, keyed by rarity — particle count, the Sound.purchase() tier
+ * (see sound.ts), whether the rotating ray burst shows, and whether the screen kicks with a
+ * shake. Common still gets a real moment, just a quieter one; legendary gets everything. */
+const REVEAL_CONFIG: Record<Rarity, { particles: number; soundTier: 0 | 1 | 2 | 3; rays: boolean; shake: boolean; haptic: 'personalBest' | 'legendary' }> = {
+  common: { particles: 16, soundTier: 0, rays: false, shake: false, haptic: 'personalBest' },
+  rare: { particles: 24, soundTier: 1, rays: false, shake: false, haptic: 'personalBest' },
+  epic: { particles: 34, soundTier: 2, rays: true, shake: true, haptic: 'personalBest' },
+  legendary: { particles: 48, soundTier: 3, rays: true, shake: true, haptic: 'legendary' },
+  secret: { particles: 34, soundTier: 2, rays: true, shake: true, haptic: 'personalBest' },
+};
+
+function purchaseMediaHtml(item: ShopItem, tab: ShopTab): string {
+  if (tab === 'titles') return `<img src="${item.asset}" alt="${displayName(item)}" class="shop-title-thumb">`;
+  if (tab === 'frames') return avatarFrameHtml(profile!.name, profile!.equippedAvatar, item.id, 168);
+  return `<img src="${item.asset}" alt="${displayName(item)}" class="shop-item-thumb">`;
+}
+
+/**
+ * The "big flashy" moment on an actual purchase — deliberately absent from the plain
+ * equip/unequip path (see handleTap), so it stays tied to "you just spent XP on something" and
+ * doesn't wear out from overuse. Appended straight to <body> rather than #main so it survives
+ * renderGrid() re-rendering the shop underneath it, and removes itself on tap or after ~2.4s.
+ */
+function showPurchaseReveal(item: ShopItem, tab: ShopTab): void {
+  // Only one at a time — a rapid double-tap on the (now-disabled-looking) card shouldn't stack
+  // two overlays fighting for the same dismiss listener.
+  document.querySelector('.purchase-reveal')?.remove();
+
+  const cfg = REVEAL_CONFIG[item.rarity];
+  const particles = Array.from({ length: cfg.particles }, (_, i) => {
+    const angle = (i / cfg.particles) * 360 + (Math.random() * 14 - 7);
+    const dist = 90 + Math.random() * 150;
+    const rad = (angle * Math.PI) / 180;
+    const tx = Math.cos(rad) * dist;
+    const ty = Math.sin(rad) * dist;
+    const size = 5 + Math.random() * 6;
+    const rot = 180 + Math.random() * 540;
+    const delay = Math.random() * 0.12;
+    const palette = ['var(--rarity-color)', 'var(--text)', 'var(--rarity-color)'];
+    const color = palette[i % palette.length];
+    return `<div class="purchase-particle" style="--tx:${tx.toFixed(1)}px;--ty:${ty.toFixed(1)}px;--size:${size.toFixed(1)}px;--rot:${rot.toFixed(0)}deg;--delay:${delay.toFixed(2)}s;--pcolor:${color}"></div>`;
+  }).join('');
+
+  const el = document.createElement('div');
+  el.className = `purchase-reveal rarity-${item.rarity}`;
+  el.innerHTML = `
+    <div class="purchase-flash"></div>
+    <div class="purchase-stage">
+      ${cfg.rays ? '<div class="purchase-rays"></div>' : ''}
+      <div class="purchase-burst-ring"></div>
+      <div class="purchase-particles">${particles}</div>
+      <div class="purchase-media">${purchaseMediaHtml(item, tab)}</div>
+      <div class="purchase-rarity-label">${RARITY_LABEL[item.rarity]}</div>
+      <div class="purchase-name">${displayName(item)}</div>
+      <div class="purchase-unlocked-tag">✦ LÅST OP & TAGET PÅ</div>
+    </div>
+    <div class="purchase-hint">TRYK FOR AT FORTSÆTTE</div>
+  `;
+  document.body.appendChild(el);
+
+  Sound.purchase(cfg.soundTier);
+  Haptics[cfg.haptic]();
+
+  let dismissed = false;
+  const dismiss = (): void => {
+    if (dismissed) return;
+    dismissed = true;
+    el.classList.remove('in');
+    el.classList.add('closing');
+    setTimeout(() => el.remove(), 260);
+  };
+  el.addEventListener('click', dismiss);
+  const autoTimer = setTimeout(dismiss, 2400);
+  el.addEventListener('click', () => clearTimeout(autoTimer), { once: true });
+
+  // Two rAFs (not one) so the browser commits the pre-transition state — width:0 opacity:0 etc —
+  // as a real paint before .in flips every transition/animation on, or the enter plays instantly
+  // instead of animating from its start state.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.classList.add('in');
+      if (cfg.shake) el.classList.add('shake');
+    });
+  });
+}
+
 async function handleTap(tab: ShopTab, id: string): Promise<void> {
   if (!profile) return;
   const def = itemsFor(tab).find((it) => it.id === id);
@@ -249,9 +336,7 @@ async function handleTap(tab: ShopTab, id: string): Promise<void> {
       profile.unlockedTitles.push(id);
       profile.equippedTitle = id;
     }
-    Sound.pb();
-    Haptics.personalBest();
-    toast(`${displayName(def)} låst op og taget på`);
+    showPurchaseReveal(def, tab);
     justPurchased = true;
   }
   await saveProfile();
