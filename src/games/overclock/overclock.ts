@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const TOTAL_ROUNDS = 6;
 const BASE_VALUE = 100;
@@ -35,6 +36,7 @@ export function renderOverclockGame(): void {
   if (state.tickId) clearInterval(state.tickId);
   state = makeInitialState();
   drawShell();
+  wireGameChrome('overclock', renderOverclockGame);
 }
 
 function drawShell(): void {
@@ -45,6 +47,7 @@ function drawShell(): void {
           <span id="ocRoundLabel">OVERCLOCK</span>
           <span id="ocScore" class="mono">0 POINT</span>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="arena"></div>
       </div>
     </div>

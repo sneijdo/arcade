@@ -1,4 +1,5 @@
 import { finishGameSession } from '../../state';
+import { wireGameChrome } from '../../gameChrome';
 import { ScoreKinds } from '../../scoring';
 import { Haptics } from '../../haptics';
 import { Sound } from '../../sound';
@@ -155,6 +156,7 @@ export function renderTacticalGame(): void {
   void showIntroOverlay(wrap);
   hud.updateXpBar(1, 0, xpForLevel(1));
   hud.updateRoomLabel(`RUM 1/${TOTAL_ROOMS}`);
+  wireGameChrome('tactical', renderTacticalGame);
 }
 
 function resizeCanvas(): void {

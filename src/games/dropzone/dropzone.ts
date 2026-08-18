@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const TOTAL_BALLS = 8;
 const ROWS = 7;
@@ -93,6 +94,7 @@ export function renderDropZoneGame(): void {
   if (state.rafId != null) cancelAnimationFrame(state.rafId);
   state = makeInitialState();
   drawShell();
+  wireGameChrome('dropzone', renderDropZoneGame);
 }
 
 function drawShell(): void {
@@ -103,6 +105,7 @@ function drawShell(): void {
           <span id="dzBalls">DROP ZONE</span>
           <span id="dzScore" class="mono">0 POINT</span>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="arena"></div>
       </div>
     </div>

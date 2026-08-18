@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const GRID = 14;
 const TICK_MS = 150;
@@ -69,6 +70,7 @@ export function renderSnakeGame(): void {
   swipeStart = null;
   swipeArmed = false;
   drawShell();
+  wireGameChrome('snake', renderSnakeGame);
 }
 
 function drawShell(): void {
@@ -79,6 +81,7 @@ function drawShell(): void {
           <span>SNAKE</span>
           <span class="mono" id="snakeScore">POINT: 0</span>
         </div>
+        ${gameUtilBarHtml()}
         <div id="snakeArea"></div>
       </div>
     </div>

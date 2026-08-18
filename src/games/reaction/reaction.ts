@@ -6,6 +6,7 @@ import { profile, saveProfile, getCombinedLeaderboard, pushLeaderboardEntry, che
 import { refreshHeader } from '../../header';
 import { pushActivity } from '../../activity';
 import { showTotalRecordReveal } from '../../recordReveal';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const REACTION_ROUNDS = 5;
 /** Visible target circle stays this size (identity match with the original design). */
@@ -41,6 +42,7 @@ export function renderReactionGame(): void {
   if (reactionState.timeoutId) clearTimeout(reactionState.timeoutId);
   reactionState = makeInitialState();
   drawReactionShell();
+  wireGameChrome('reaction', renderReactionGame);
 }
 
 function roundDotsHtml(): string {
@@ -60,6 +62,7 @@ function drawReactionShell(): void {
           <span>REACTION — RUNDE ${Math.min(reactionState.round + 1, REACTION_ROUNDS)} / ${REACTION_ROUNDS}</span>
           <div class="round-dots">${roundDotsHtml()}</div>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="arena"></div>
       </div>
     </div>

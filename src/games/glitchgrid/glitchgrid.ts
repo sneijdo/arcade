@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const SESSION_MS = 35_000;
 const GRID_SIZE = 4; // 4x4 = 16 cells
@@ -52,6 +53,7 @@ export function renderGlitchGridGame(): void {
   if (state.spawnTimeoutId) clearTimeout(state.spawnTimeoutId);
   state = makeInitialState();
   drawShell();
+  wireGameChrome('glitchgrid', renderGlitchGridGame);
 }
 
 function drawShell(): void {
@@ -62,6 +64,7 @@ function drawShell(): void {
           <span id="ggTimer">GLITCH GRID — 35s</span>
           <span id="ggScore" class="mono">0 POINT</span>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="arena"></div>
       </div>
     </div>

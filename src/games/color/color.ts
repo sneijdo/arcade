@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const COLOR_ROUNDS = 5;
 const MAX_DIST = Math.sqrt(3 * 255 * 255);
@@ -38,6 +39,7 @@ function arenaEl(): HTMLElement {
 export function renderColorGame(): void {
   colorState = makeInitialState();
   drawShell();
+  wireGameChrome('color', renderColorGame);
 }
 
 function roundDotsHtml(): string {
@@ -57,6 +59,7 @@ function drawShell(): void {
           <span>COLOR MATCH — RUNDE ${Math.min(colorState.round + 1, COLOR_ROUNDS)} / ${COLOR_ROUNDS}</span>
           <div class="round-dots">${roundDotsHtml()}</div>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="arena"></div>
       </div>
     </div>

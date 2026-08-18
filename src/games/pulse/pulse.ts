@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const SESSION_MS = 55_000;
 /** Time a note takes to travel from spawn to the hit-line. */
@@ -66,6 +67,7 @@ export function renderPulseGame(): void {
   if (state.rafId != null) cancelAnimationFrame(state.rafId);
   state = makeInitialState();
   drawShell();
+  wireGameChrome('pulse', renderPulseGame);
 }
 
 function drawShell(): void {
@@ -76,6 +78,7 @@ function drawShell(): void {
           <span id="pulseTimer">PULSE — 55s</span>
           <span id="pulseScore" class="mono">0 POINT</span>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="arena"></div>
       </div>
     </div>

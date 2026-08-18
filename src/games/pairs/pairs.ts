@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const SESSION_MS = 60_000;
 const SYMBOLS = ['🍎', '🍋', '🍇', '🍉', '🍒', '🍑', '🍓', '🥝'];
@@ -44,6 +45,7 @@ export function renderPairsGame(): void {
   if (state.tickId) clearInterval(state.tickId);
   state = makeInitialState();
   drawShell();
+  wireGameChrome('pairs', renderPairsGame);
 }
 
 function shuffledDeck(): Card[] {
@@ -63,6 +65,7 @@ function drawShell(): void {
           <span id="prTimer">PAIRS — 60s</span>
           <span id="prScore" class="mono">0 POINT</span>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="arena"></div>
       </div>
     </div>

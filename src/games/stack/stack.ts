@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const BLOCK_HEIGHT = 32;
 const PERFECT_TOLERANCE = 6;
@@ -76,6 +77,7 @@ export function renderStackGame(): void {
   if (state.rafId != null) cancelAnimationFrame(state.rafId);
   state = makeInitialState();
   drawShell();
+  wireGameChrome('stack', renderStackGame);
 }
 
 function drawShell(): void {
@@ -86,6 +88,7 @@ function drawShell(): void {
           <span>STACK TOWER</span>
           <span class="mono" id="stackScore">BLOKKE: 0</span>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena stack-arena" id="stackArena"></div>
       </div>
     </div>
