@@ -101,6 +101,266 @@
   box-shadow: 0 0 16px -8px var(--gold-glow);
 }
 
+/* Per-rarity accent color, shared by the shop-card treatments below and the purchase-reveal
+   overlay (see showPurchaseReveal in pages/shop.ts) — one source of truth instead of repeating
+   var(--gold) etc. at every use site. */
+.rarity-common { --rarity-color: var(--text-dim); --rarity-glow: rgba(141, 138, 163, 0.4); }
+.rarity-rare { --rarity-color: var(--cyan); --rarity-glow: rgba(92, 208, 255, 0.5); }
+.rarity-epic { --rarity-color: var(--violet); --rarity-glow: var(--violet-glow); }
+.rarity-legendary { --rarity-color: var(--gold); --rarity-glow: var(--gold-glow); }
+.rarity-secret { --rarity-color: var(--coral); --rarity-glow: var(--coral-glow); }
+
+/* Shop card overhaul: a diagonal shine sweeps across on hover/press (every rarity), and epic+
+   legendary cards idle-pulse so they read as special before you've even touched them — a flat
+   static border wasn't selling "this one's rare." */
+.shop-avatar-card,
+.shop-title-card {
+  position: relative;
+  overflow: hidden;
+}
+.shop-avatar-card::before,
+.shop-title-card::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.16) 50%, transparent 60%);
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+.shop-avatar-card:hover::before,
+.shop-title-card:hover::before {
+  transform: translateX(100%);
+  transition: transform 0.7s var(--ease);
+}
+@keyframes rarity-idle-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px var(--rarity-color), 0 0 14px -6px var(--rarity-glow); }
+  50% { box-shadow: 0 0 0 1px var(--rarity-color), 0 0 22px -4px var(--rarity-glow); }
+}
+.shop-avatar-card.rarity-epic:not(.equipped),
+.shop-title-card.rarity-epic:not(.equipped),
+.shop-avatar-card.rarity-legendary:not(.equipped),
+.shop-title-card.rarity-legendary:not(.equipped) {
+  animation: rarity-idle-pulse 2.6s ease-in-out infinite;
+}
+.shop-avatar-card.rarity-legendary:not(.equipped),
+.shop-title-card.rarity-legendary:not(.equipped) {
+  animation-duration: 1.9s;
+}
+
+/* ============================= PURCHASE REVEAL ============================= */
+/* Full-screen celebratory moment on a real purchase (see showPurchaseReveal in pages/shop.ts) —
+   deliberately NOT shown for equip/unequip taps, only for spending XP, so it stays a payoff
+   instead of becoming background noise you tune out. Intensity scales with rarity throughout:
+   more particles, a rotating ray burst, and a screen shake kick in at epic+, so a legendary pull
+   is unmistakably a bigger moment than a common one. */
+.purchase-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 5, 10, 0);
+  backdrop-filter: blur(0px);
+  transition: background 0.35s var(--ease), backdrop-filter 0.35s var(--ease);
+  touch-action: manipulation;
+  cursor: pointer;
+}
+.purchase-reveal.in {
+  background: rgba(6, 5, 10, 0.86);
+  backdrop-filter: blur(7px);
+}
+.purchase-reveal.closing {
+  transition: background 0.22s ease-in, backdrop-filter 0.22s ease-in;
+  background: rgba(6, 5, 10, 0);
+  backdrop-filter: blur(0px);
+}
+.purchase-flash {
+  position: fixed;
+  inset: 0;
+  background: var(--rarity-color);
+  opacity: 0;
+  pointer-events: none;
+}
+.purchase-reveal.in .purchase-flash {
+  animation: purchase-flash-pop 0.5s ease-out both;
+}
+@keyframes purchase-flash-pop {
+  0% { opacity: 0.55; }
+  100% { opacity: 0; }
+}
+.purchase-reveal.shake {
+  animation: purchase-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@keyframes purchase-shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+.purchase-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 20px;
+}
+.purchase-rays {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 640px;
+  height: 640px;
+  transform: translate(-50%, -50%) rotate(0deg);
+  background: repeating-conic-gradient(from 0deg, var(--rarity-color) 0deg 4deg, transparent 4deg 18deg);
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.purchase-reveal.in .purchase-rays {
+  opacity: 0.16;
+  animation: purchase-rays-spin 14s linear infinite;
+}
+@keyframes purchase-rays-spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.purchase-burst-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  box-shadow: 0 0 0 1px var(--rarity-color);
+  opacity: 0;
+  pointer-events: none;
+}
+.purchase-reveal.in .purchase-burst-ring {
+  animation: purchase-ring-expand 0.7s var(--ease) 0.05s both;
+}
+@keyframes purchase-ring-expand {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(9); opacity: 0; }
+}
+.purchase-particles {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.purchase-particle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--size);
+  height: var(--size);
+  background: var(--pcolor);
+  transform: translate(-50%, -50%) rotate(0deg);
+  opacity: 0;
+}
+.purchase-reveal.in .purchase-particle {
+  animation: purchase-particle-fly 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  animation-delay: var(--delay, 0s);
+}
+@keyframes purchase-particle-fly {
+  0% { transform: translate(-50%, -50%) translate(0, 0) rotate(0deg); opacity: 1; }
+  15% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) translate(var(--tx), var(--ty)) rotate(var(--rot)); opacity: 0; }
+}
+.purchase-media {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(0.3);
+  opacity: 0;
+  filter: drop-shadow(0 0 26px var(--rarity-glow));
+}
+.purchase-reveal.in .purchase-media {
+  animation: purchase-media-pop 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) 0.08s both;
+}
+@keyframes purchase-media-pop {
+  0% { transform: scale(0.3); opacity: 0; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.purchase-media .avatar-frame-wrap,
+.purchase-media .shop-item-thumb {
+  width: 100%;
+  height: 100%;
+}
+.purchase-media .shop-item-thumb {
+  object-fit: contain;
+}
+.purchase-media .shop-title-thumb {
+  height: 56px;
+  width: auto;
+  max-width: 280px;
+}
+.purchase-rarity-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--rarity-color);
+  opacity: 0;
+  transform: translateY(6px);
+}
+.purchase-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--text);
+  text-align: center;
+  text-shadow: 0 0 24px var(--rarity-glow);
+  opacity: 0;
+  transform: translateY(6px);
+}
+.purchase-unlocked-tag {
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--lime);
+  opacity: 0;
+  transform: translateY(6px);
+}
+.purchase-reveal.in .purchase-rarity-label {
+  animation: purchase-text-in 0.4s var(--ease) 0.32s both;
+}
+.purchase-reveal.in .purchase-name {
+  animation: purchase-text-in 0.4s var(--ease) 0.4s both;
+}
+.purchase-reveal.in .purchase-unlocked-tag {
+  animation: purchase-text-in 0.4s var(--ease) 0.5s both;
+}
+@keyframes purchase-text-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+.purchase-hint {
+  position: absolute;
+  bottom: calc(28px + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+  opacity: 0;
+}
+.purchase-reveal.in .purchase-hint {
+  animation: purchase-text-in 0.4s var(--ease) 0.9s both;
+}
+
 /* Shop item thumbnails (avatars/frames use a square slot, titles use their own wide SVG). */
 .shop-item-thumb {
   width: 100%;
@@ -120,6 +380,154 @@
   width: 30px;
   height: 30px;
   object-fit: contain;
+}
+
+/* Name effects, sound packs, taunts — text/description-based shop items (see mediaHtmlFor in
+   pages/shop.ts), reusing the row-style .shop-title-card layout instead of a square thumbnail. */
+.shop-nameeffect-preview {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+}
+.shop-soundpack-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.shop-soundpack-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.shop-soundpack-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shop-taunt-preview {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Purchase-reveal sizing for the same three (see showPurchaseReveal in pages/shop.ts). */
+.purchase-media .shop-nameeffect-preview {
+  font-size: 34px;
+}
+.purchase-media .shop-soundpack-preview {
+  flex-direction: column;
+  text-align: center;
+  gap: 6px;
+}
+.purchase-media .shop-soundpack-icon {
+  font-size: 48px;
+}
+.purchase-media .shop-soundpack-desc {
+  white-space: normal;
+  font-size: 14px;
+  max-width: 220px;
+}
+.purchase-media .shop-taunt-preview {
+  white-space: normal;
+  font-size: 22px;
+  text-align: center;
+  max-width: 260px;
+}
+
+/* ============================= NAME EFFECTS ============================= */
+/* Applied via nameEffectHtml() in state.ts wherever a player's name renders — leaderboard,
+   activity feed, profile headers. See NAME_EFFECTS in shop.ts for the catalog. */
+.name-fx-bold {
+  font-weight: 800;
+}
+.name-fx-underline {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--coral);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.name-fx-ice {
+  font-weight: 700;
+  background: linear-gradient(90deg, #ffffff, #a5f3fc, #38bdf8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+}
+.name-fx-toxic {
+  font-weight: 700;
+  background: linear-gradient(90deg, #d9f99d, #8fe36b, #4ade80);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 12px rgba(143, 227, 107, 0.5);
+}
+@keyframes name-fx-shift {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+.name-fx-fire {
+  font-weight: 800;
+  background: linear-gradient(90deg, #ff3b30, #ffb74d, #ff3b30);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 14px rgba(255, 138, 61, 0.55);
+  animation: name-fx-shift 2.4s linear infinite;
+}
+.name-fx-electric {
+  font-weight: 800;
+  background: linear-gradient(90deg, #38bdf8, #e9d5ff, #a855f7, #38bdf8);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 14px rgba(139, 107, 255, 0.55);
+  animation: name-fx-shift 1.6s linear infinite;
+}
+@keyframes name-fx-rainbow-shift {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 300% 0;
+  }
+}
+.name-fx-rainbow {
+  font-weight: 800;
+  background: linear-gradient(90deg, #ff3d81, #ffd54f, #8fe36b, #38bdf8, #a855f7, #ff3d81);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: name-fx-rainbow-shift 3.2s linear infinite;
+}
+@keyframes name-fx-flicker {
+  0%, 100% { opacity: 1; }
+  45% { opacity: 1; }
+  47% { opacity: 0.55; }
+  49% { opacity: 1; }
+  72% { opacity: 1; }
+  74% { opacity: 0.4; }
+  76% { opacity: 1; }
+}
+.name-fx-void {
+  font-weight: 700;
+  color: #c4b5fd;
+  text-shadow: 0 0 10px #7c3aed, 0 0 2px #000;
+  animation: name-fx-flicker 3s ease-in-out infinite;
 }
 
 /* Badges — Profile collection grid, same visual language as the achievements grid (.ach-grid). */

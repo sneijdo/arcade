@@ -183,6 +183,29 @@
 .lb-row.me:hover {
   background: rgba(139, 107, 255, 0.18);
 }
+/* Free, non-purchasable flex for whoever's actually #1 right now — a reward for winning, not
+   something bought. Rule order (after .me above) means gold wins if a row is both #1 and "you". */
+.lb-row-first {
+  position: relative;
+  overflow: hidden;
+  border-color: var(--gold);
+  background: linear-gradient(90deg, rgba(255, 201, 60, 0.12), transparent 65%);
+}
+.lb-row-first:hover {
+  background: linear-gradient(90deg, rgba(255, 201, 60, 0.18), transparent 65%);
+}
+.lb-row-first::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 8% 50%, rgba(255, 201, 60, 0.4), transparent 55%);
+  pointer-events: none;
+  animation: lb-first-pulse 2.4s ease-in-out infinite;
+}
+@keyframes lb-first-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
 .lb-rank {
   font-family: var(--font-mono);
   font-weight: 700;
@@ -810,6 +833,21 @@
   font-size: 12px;
   color: var(--text-dim);
   margin-top: 2px;
+}
+/* Only present on the specific row that took over an all-time #1 or won a duel, and only if the
+   player has a taunt equipped (see TAUNTS in shop.ts) — a little speech-bubble callout under the
+   normal sub-line. */
+.activity-taunt {
+  margin-top: 5px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--coral);
+  background: rgba(255, 93, 122, 0.1);
+  border: 1px solid rgba(255, 93, 122, 0.25);
+  border-radius: 8px;
+  padding: 4px 9px;
+  display: inline-block;
 }
 .activity-time {
   font-family: var(--font-mono);

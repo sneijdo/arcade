@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 type Phase = 'idle' | 'playing' | 'gameover';
 
@@ -78,6 +79,7 @@ export function renderSwerveGame(): void {
   state = makeInitialState();
   drawShell();
   wireKeydown();
+  wireGameChrome('swerve', renderSwerveGame);
 }
 
 function drawShell(): void {
@@ -88,6 +90,7 @@ function drawShell(): void {
           <span>SWERVE</span>
           <span class="mono" id="swTime">0.0s</span>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="swArena"></div>
       </div>
     </div>

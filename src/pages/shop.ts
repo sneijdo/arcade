@@ -3,11 +3,32 @@ import { refreshHeader } from '../header';
 import { toast } from '../toast';
 import { Sound } from '../sound';
 import { Haptics } from '../haptics';
-import { AVATARS, FRAMES, TITLES, SECRET_TITLES, findAvatar, findTitle, type AvatarDef, type FrameDef, type TitleDef } from '../shop';
+import {
+  AVATARS,
+  FRAMES,
+  TITLES,
+  SECRET_TITLES,
+  NAME_EFFECTS,
+  SOUND_PACKS,
+  TAUNTS,
+  findAvatar,
+  findTitle,
+  type AvatarDef,
+  type FrameDef,
+  type TitleDef,
+  type NameEffectDef,
+  type SoundPackDef,
+  type TauntDef,
+} from '../shop';
 import { levelInfo } from '../xp';
+import type { Rarity } from '../types';
 
-type ShopTab = 'avatars' | 'frames' | 'titles';
-type ShopItem = AvatarDef | FrameDef | TitleDef;
+type ShopTab = 'avatars' | 'frames' | 'titles' | 'nameEffects' | 'soundPacks' | 'taunts';
+type ShopItem = AvatarDef | FrameDef | TitleDef | NameEffectDef | SoundPackDef | TauntDef;
+
+/** Tabs whose items are text/description-based (row layout, reuses .shop-title-card) rather than
+ * image-thumbnail-based (square grid, .shop-avatar-card). */
+const ROW_STYLE_TABS: ShopTab[] = ['titles', 'nameEffects', 'soundPacks', 'taunts'];
 
 let shopTab: ShopTab = 'avatars';
 /** Fetched once per renderShop() call — the legendary-cosmetics gate needs it synchronously in every card's render, so it's resolved up front rather than per-card. Earned via LEGENDARY_WEEK_THRESHOLD in state.ts (#1 in 4+ games in the same week), NOT spent directly here — "spent" is just derived from how many legendary items the player already owns. */
@@ -17,18 +38,26 @@ function myLevel(): number {
   return profile ? levelInfo(profile.xp).level : 1;
 }
 
-/** How many legendary avatars/frames/titles this player already owns — each one "spends" one earned slot. */
+/** How many legendary items this player already owns, across every category — each one "spends" one earned slot. */
 function ownedLegendaryCount(): number {
   if (!profile) return 0;
-  const a = AVATARS.filter((x) => x.rarity === 'legendary' && profile!.unlockedAvatars.includes(x.id)).length;
-  const f = FRAMES.filter((x) => x.rarity === 'legendary' && profile!.unlockedFrames.includes(x.id)).length;
-  const t = TITLES.filter((x) => x.rarity === 'legendary' && profile!.unlockedTitles.includes(x.id)).length;
-  return a + f + t;
+  const counts = [
+    [AVATARS, profile.unlockedAvatars],
+    [FRAMES, profile.unlockedFrames],
+    [TITLES, profile.unlockedTitles],
+    [NAME_EFFECTS, profile.unlockedNameEffects],
+    [SOUND_PACKS, profile.unlockedSoundPacks],
+    [TAUNTS, profile.unlockedTaunts],
+  ] as const;
+  return counts.reduce((sum, [defs, owned]) => sum + defs.filter((x) => x.rarity === 'legendary' && owned.includes(x.id)).length, 0);
 }
 
 function itemsFor(tab: ShopTab): ShopItem[] {
   if (tab === 'avatars') return AVATARS;
   if (tab === 'frames') return FRAMES;
+  if (tab === 'nameEffects') return NAME_EFFECTS;
+  if (tab === 'soundPacks') return SOUND_PACKS;
+  if (tab === 'taunts') return TAUNTS;
   // Secret titles are invisible until owned (see checkAchievements in state.ts) — once granted
   // they need to appear here like any other title, or they'd be permanently unequippable.
   const ownedSecrets = SECRET_TITLES.filter((t) => profile?.unlockedTitles.includes(t.id));
@@ -37,16 +66,28 @@ function itemsFor(tab: ShopTab): ShopItem[] {
 
 function ownedIds(tab: ShopTab): string[] {
   if (!profile) return [];
-  return tab === 'avatars' ? profile.unlockedAvatars : tab === 'frames' ? profile.unlockedFrames : profile.unlockedTitles;
+  if (tab === 'avatars') return profile.unlockedAvatars;
+  if (tab === 'frames') return profile.unlockedFrames;
+  if (tab === 'nameEffects') return profile.unlockedNameEffects;
+  if (tab === 'soundPacks') return profile.unlockedSoundPacks;
+  if (tab === 'taunts') return profile.unlockedTaunts;
+  return profile.unlockedTitles;
 }
 
 function equippedId(tab: ShopTab): string | null {
   if (!profile) return null;
-  return tab === 'avatars' ? profile.equippedAvatar : tab === 'frames' ? profile.equippedFrame : profile.equippedTitle;
+  if (tab === 'avatars') return profile.equippedAvatar;
+  if (tab === 'frames') return profile.equippedFrame;
+  if (tab === 'nameEffects') return profile.equippedNameEffect;
+  if (tab === 'soundPacks') return profile.equippedSoundPack;
+  if (tab === 'taunts') return profile.equippedTaunt;
+  return profile.equippedTitle;
 }
 
 function displayName(item: ShopItem): string {
-  return 'label' in item ? item.label : item.name;
+  if ('label' in item) return item.label;
+  if ('text' in item) return item.text;
+  return item.name;
 }
 
 /**
@@ -87,10 +128,13 @@ export async function renderShop(): Promise<void> {
 
       <div class="shop-collection-row" id="shopCollectionRow"></div>
 
-      <div class="tabs" style="margin-top:18px">
+      <div class="tabs shop-tabs" style="margin-top:18px">
         <button class="tab-btn ${shopTab === 'avatars' ? 'active' : ''}" data-tab="avatars">AVATARER</button>
         <button class="tab-btn ${shopTab === 'frames' ? 'active' : ''}" data-tab="frames">RAMMER</button>
         <button class="tab-btn ${shopTab === 'titles' ? 'active' : ''}" data-tab="titles">TITLER</button>
+        <button class="tab-btn ${shopTab === 'nameEffects' ? 'active' : ''}" data-tab="nameEffects">NAVNE</button>
+        <button class="tab-btn ${shopTab === 'soundPacks' ? 'active' : ''}" data-tab="soundPacks">LYDE</button>
+        <button class="tab-btn ${shopTab === 'taunts' ? 'active' : ''}" data-tab="taunts">TAUNTS</button>
       </div>
 
       <div id="shopNext"></div>
@@ -120,6 +164,16 @@ function updateLegendaryRow(): void {
   `;
 }
 
+/** Small thumbnail for the "next up" teaser card — image-based items use their own asset;
+ * text/description-based items (name effects, sound packs, taunts) get a representative preview
+ * instead since they have no art asset. */
+function nextThumbHtml(item: ShopItem, tab: ShopTab): string {
+  if ('asset' in item) return `<img src="${item.asset}" alt="" class="shop-next-thumb">`;
+  if (tab === 'nameEffects') return `<span class="${(item as NameEffectDef).cssClass}" style="font-size:15px">Aa</span>`;
+  if (tab === 'soundPacks') return '🔊';
+  return '💬';
+}
+
 /** The cheapest not-yet-owned item that's gate-unlocked but still short on XP — a concrete "you're this close" hook. Items still behind a level/Hall of Fame gate are skipped: earning more XP doesn't get you any closer to those, so the message would be misleading. */
 function nextItemHtml(): string {
   if (!profile) return '';
@@ -131,7 +185,7 @@ function nextItemHtml(): string {
   if (!next) return '';
   return `
     <div class="shop-next-card">
-      <div class="shop-next-emoji"><img src="${next.asset}" alt="" class="shop-next-thumb"></div>
+      <div class="shop-next-emoji">${nextThumbHtml(next, shopTab)}</div>
       <div class="shop-next-body">
         <div class="shop-next-label">NÆSTE — "${displayName(next)}"</div>
         <div class="shop-next-cost mono">${next.cost - balance} XP mangler</div>
@@ -141,6 +195,18 @@ function nextItemHtml(): string {
 }
 
 const RARITY_LABEL: Record<string, string> = { common: 'COMMON', rare: 'RARE', epic: 'EPIC', legendary: 'LEGENDARY', secret: '???' };
+
+/** Card/reveal media for a given item — the visual identity varies by tab since not every
+ * category has an art asset (name effects/sound packs/taunts are pure text). `size` only matters
+ * for the frames tab (composited avatar preview); everything else sizes via CSS. */
+function mediaHtmlFor(item: ShopItem, tab: ShopTab, size: number): string {
+  if (tab === 'titles') return `<img src="${(item as TitleDef).asset}" alt="${displayName(item)}" class="shop-title-thumb">`;
+  if (tab === 'frames') return avatarFrameHtml(profile!.name, profile!.equippedAvatar, item.id, size);
+  if (tab === 'avatars') return `<img src="${(item as AvatarDef).asset}" alt="${displayName(item)}" class="shop-item-thumb">`;
+  if (tab === 'nameEffects') return `<span class="${(item as NameEffectDef).cssClass} shop-nameeffect-preview">${displayName(item)}</span>`;
+  if (tab === 'soundPacks') return `<div class="shop-soundpack-preview"><span class="shop-soundpack-icon">🔊</span><span class="shop-soundpack-desc">${(item as SoundPackDef).desc}</span></div>`;
+  return `<div class="shop-taunt-preview">&ldquo;${(item as TauntDef).text}&rdquo;</div>`;
+}
 
 function itemCardHtml(item: ShopItem, tab: ShopTab): string {
   const owned = ownedIds(tab).includes(item.id);
@@ -154,18 +220,10 @@ function itemCardHtml(item: ShopItem, tab: ShopTab): string {
       : gate
         ? `<div class="shop-locked-tag">${gate}</div>`
         : `<div class="shop-cost-tag">✦ ${item.cost}</div>`;
-  const attr = tab === 'titles' ? 'data-title' : tab === 'frames' ? 'data-frame' : 'data-avatar';
-  const cardClass = tab === 'titles' ? 'shop-title-card' : 'shop-avatar-card';
-  const media =
-    tab === 'titles'
-      ? `<img src="${item.asset}" alt="${displayName(item)}" class="shop-title-thumb">`
-      : tab === 'frames'
-        // A bare frame ring on its own is mostly transparent and unreadable — preview it
-        // composited over the player's own avatar so the card actually shows what they'd get.
-        ? avatarFrameHtml(profile!.name, profile!.equippedAvatar, item.id, 44)
-        : `<div class="shop-avatar-emoji"><img src="${item.asset}" alt="${displayName(item)}" class="shop-item-thumb"></div>`;
+  const cardClass = ROW_STYLE_TABS.includes(tab) ? 'shop-title-card' : 'shop-avatar-card';
+  const media = mediaHtmlFor(item, tab, 44);
   return `
-    <button class="${cardClass} rarity-${item.rarity} ${equipped ? 'equipped' : ''} ${!owned && !affordable ? 'unaffordable' : ''} ${gate ? 'level-locked' : ''}" ${attr}="${item.id}">
+    <button class="${cardClass} rarity-${item.rarity} ${equipped ? 'equipped' : ''} ${!owned && !affordable ? 'unaffordable' : ''} ${gate ? 'level-locked' : ''}" data-item-id="${item.id}">
       <div class="rarity-tag rarity-${item.rarity}">${RARITY_LABEL[item.rarity]}</div>
       ${media}
       ${tag}
@@ -186,6 +244,9 @@ function updateBalanceAndCollection(): void {
       <span>🎭 ${profile.unlockedAvatars.filter((id) => findAvatar(id)).length} / ${AVATARS.length} avatarer</span>
       <span>🖼️ ${profile.unlockedFrames.length} / ${FRAMES.length} rammer</span>
       <span>🏷️ ${profile.unlockedTitles.filter((id) => findTitle(id)).length} / ${TITLES.length + SECRET_TITLES.length} titler</span>
+      <span>✨ ${profile.unlockedNameEffects.length} / ${NAME_EFFECTS.length} navne</span>
+      <span>🔊 ${profile.unlockedSoundPacks.length} / ${SOUND_PACKS.length} lyde</span>
+      <span>💬 ${profile.unlockedTaunts.length} / ${TAUNTS.length} taunts</span>
     `;
   }
 }
@@ -197,13 +258,92 @@ function renderGrid(): void {
   updateLegendaryRow();
   updateBalanceAndCollection();
   next.innerHTML = nextItemHtml();
-  grid.className = shopTab === 'titles' ? 'shop-title-grid' : 'shop-avatar-grid';
+  grid.className = ROW_STYLE_TABS.includes(shopTab) ? 'shop-title-grid' : 'shop-avatar-grid';
   grid.innerHTML = itemsFor(shopTab)
     .map((it) => itemCardHtml(it, shopTab))
     .join('');
-  const attr = shopTab === 'titles' ? 'data-title' : shopTab === 'frames' ? 'data-frame' : 'data-avatar';
-  grid.querySelectorAll<HTMLElement>(`[${attr}]`).forEach((el) => {
-    el.addEventListener('click', () => handleTap(shopTab, el.dataset[attr === 'data-title' ? 'title' : attr === 'data-frame' ? 'frame' : 'avatar']!));
+  grid.querySelectorAll<HTMLElement>('[data-item-id]').forEach((el) => {
+    el.addEventListener('click', () => handleTap(shopTab, el.dataset.itemId!));
+  });
+}
+
+/** How hard the reveal celebrates, keyed by rarity — particle count, the Sound.purchase() tier
+ * (see sound.ts), whether the rotating ray burst shows, and whether the screen kicks with a
+ * shake. Common still gets a real moment, just a quieter one; legendary gets everything. */
+const REVEAL_CONFIG: Record<Rarity, { particles: number; soundTier: 0 | 1 | 2 | 3; rays: boolean; shake: boolean; haptic: 'personalBest' | 'legendary' }> = {
+  common: { particles: 16, soundTier: 0, rays: false, shake: false, haptic: 'personalBest' },
+  rare: { particles: 24, soundTier: 1, rays: false, shake: false, haptic: 'personalBest' },
+  epic: { particles: 34, soundTier: 2, rays: true, shake: true, haptic: 'personalBest' },
+  legendary: { particles: 48, soundTier: 3, rays: true, shake: true, haptic: 'legendary' },
+  secret: { particles: 34, soundTier: 2, rays: true, shake: true, haptic: 'personalBest' },
+};
+
+/**
+ * The "big flashy" moment on an actual purchase — deliberately absent from the plain
+ * equip/unequip path (see handleTap), so it stays tied to "you just spent XP on something" and
+ * doesn't wear out from overuse. Appended straight to <body> rather than #main so it survives
+ * renderGrid() re-rendering the shop underneath it, and removes itself on tap or after ~2.4s.
+ */
+function showPurchaseReveal(item: ShopItem, tab: ShopTab): void {
+  // Only one at a time — a rapid double-tap on the (now-disabled-looking) card shouldn't stack
+  // two overlays fighting for the same dismiss listener.
+  document.querySelector('.purchase-reveal')?.remove();
+
+  const cfg = REVEAL_CONFIG[item.rarity];
+  const particles = Array.from({ length: cfg.particles }, (_, i) => {
+    const angle = (i / cfg.particles) * 360 + (Math.random() * 14 - 7);
+    const dist = 90 + Math.random() * 150;
+    const rad = (angle * Math.PI) / 180;
+    const tx = Math.cos(rad) * dist;
+    const ty = Math.sin(rad) * dist;
+    const size = 5 + Math.random() * 6;
+    const rot = 180 + Math.random() * 540;
+    const delay = Math.random() * 0.12;
+    const palette = ['var(--rarity-color)', 'var(--text)', 'var(--rarity-color)'];
+    const color = palette[i % palette.length];
+    return `<div class="purchase-particle" style="--tx:${tx.toFixed(1)}px;--ty:${ty.toFixed(1)}px;--size:${size.toFixed(1)}px;--rot:${rot.toFixed(0)}deg;--delay:${delay.toFixed(2)}s;--pcolor:${color}"></div>`;
+  }).join('');
+
+  const el = document.createElement('div');
+  el.className = `purchase-reveal rarity-${item.rarity}`;
+  el.innerHTML = `
+    <div class="purchase-flash"></div>
+    <div class="purchase-stage">
+      ${cfg.rays ? '<div class="purchase-rays"></div>' : ''}
+      <div class="purchase-burst-ring"></div>
+      <div class="purchase-particles">${particles}</div>
+      <div class="purchase-media">${mediaHtmlFor(item, tab, 168)}</div>
+      <div class="purchase-rarity-label">${RARITY_LABEL[item.rarity]}</div>
+      <div class="purchase-name">${displayName(item)}</div>
+      <div class="purchase-unlocked-tag">✦ LÅST OP & TAGET PÅ</div>
+    </div>
+    <div class="purchase-hint">TRYK FOR AT FORTSÆTTE</div>
+  `;
+  document.body.appendChild(el);
+
+  Sound.purchase(cfg.soundTier);
+  Haptics[cfg.haptic]();
+
+  let dismissed = false;
+  const dismiss = (): void => {
+    if (dismissed) return;
+    dismissed = true;
+    el.classList.remove('in');
+    el.classList.add('closing');
+    setTimeout(() => el.remove(), 260);
+  };
+  el.addEventListener('click', dismiss);
+  const autoTimer = setTimeout(dismiss, 2400);
+  el.addEventListener('click', () => clearTimeout(autoTimer), { once: true });
+
+  // Two rAFs (not one) so the browser commits the pre-transition state — width:0 opacity:0 etc —
+  // as a real paint before .in flips every transition/animation on, or the enter plays instantly
+  // instead of animating from its start state.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.classList.add('in');
+      if (cfg.shake) el.classList.add('shake');
+    });
   });
 }
 
@@ -217,7 +357,12 @@ async function handleTap(tab: ShopTab, id: string): Promise<void> {
   if (owned) {
     if (tab === 'avatars') profile.equippedAvatar = profile.equippedAvatar === id ? null : id;
     else if (tab === 'frames') profile.equippedFrame = profile.equippedFrame === id ? null : id;
-    else profile.equippedTitle = profile.equippedTitle === id ? null : id;
+    else if (tab === 'titles') profile.equippedTitle = profile.equippedTitle === id ? null : id;
+    else if (tab === 'nameEffects') profile.equippedNameEffect = profile.equippedNameEffect === id ? null : id;
+    else if (tab === 'soundPacks') {
+      profile.equippedSoundPack = profile.equippedSoundPack === id ? null : id;
+      Sound.setPack(profile.equippedSoundPack);
+    } else profile.equippedTaunt = profile.equippedTaunt === id ? null : id;
     Sound.click();
   } else {
     const gate = gateReason(def);
@@ -245,13 +390,21 @@ async function handleTap(tab: ShopTab, id: string): Promise<void> {
     } else if (tab === 'frames') {
       profile.unlockedFrames.push(id);
       profile.equippedFrame = id;
-    } else {
+    } else if (tab === 'titles') {
       profile.unlockedTitles.push(id);
       profile.equippedTitle = id;
+    } else if (tab === 'nameEffects') {
+      profile.unlockedNameEffects.push(id);
+      profile.equippedNameEffect = id;
+    } else if (tab === 'soundPacks') {
+      profile.unlockedSoundPacks.push(id);
+      profile.equippedSoundPack = id;
+      Sound.setPack(id);
+    } else {
+      profile.unlockedTaunts.push(id);
+      profile.equippedTaunt = id;
     }
-    Sound.pb();
-    Haptics.personalBest();
-    toast(`${displayName(def)} låst op og taget på`);
+    showPurchaseReveal(def, tab);
     justPurchased = true;
   }
   await saveProfile();

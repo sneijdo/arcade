@@ -1,11 +1,16 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <defs><filter id="glowC" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="3" result="b"/>
+  <defs>
+    <filter id="glow-cyber" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter></defs>
-
-  <rect x="10" y="10" width="180" height="180" fill="none"
-        stroke="#38bdf8" stroke-width="3" filter="url(#glowC)"/>
-  <rect x="17" y="17" width="166" height="166" fill="none"
-        stroke="#38bdf8" stroke-width="1" opacity="0.6"/>
+    </filter>
+    <g id="corner-cyber">
+      <path d="M8,42 L8,26 L22,26 L22,8 L42,8" fill="none" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="square" filter="url(#glow-cyber)"/>
+      <rect x="4.5" y="4.5" width="7" height="7" fill="#38bdf8"/>
+    </g>
+  </defs>
+  <use href="#corner-cyber"/>
+  <use href="#corner-cyber" transform="rotate(90 100 100)"/>
+  <use href="#corner-cyber" transform="rotate(180 100 100)"/>
+  <use href="#corner-cyber" transform="rotate(270 100 100)"/>
 </svg>

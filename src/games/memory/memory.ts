@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession, bestScoreForGame } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const TILE_COUNT = 4;
 const TILE_COLORS = ['var(--violet)', 'var(--lime)', 'var(--coral)', 'var(--cyan)'];
@@ -45,6 +46,7 @@ export function renderMemoryGame(): void {
   clearPendingTimeouts();
   state = makeInitialState();
   drawShell();
+  wireGameChrome('memory', renderMemoryGame);
 }
 
 function drawShell(): void {
@@ -54,6 +56,7 @@ function drawShell(): void {
         <div class="game-topbar">
           <span>MEMORY${state.sequence.length > 0 ? ' — NIVEAU ' + state.sequence.length : ''}</span>
         </div>
+        ${gameUtilBarHtml()}
         <div class="memory-stage" id="memoryStage"></div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 import { storage } from '../../storage';
 
 const SIZE = 4;
@@ -198,6 +199,7 @@ export function renderMergeGame(): void {
   swipeTriggered = false;
   tileEls = new Map();
   drawShell();
+  wireGameChrome('merge', renderMergeGame);
   void restoreInProgressIfAny();
 }
 
@@ -222,6 +224,7 @@ function drawShell(): void {
           <span>MERGE</span>
           <span class="mono" id="mergeScore">HØJESTE: 0</span>
         </div>
+        ${gameUtilBarHtml()}
         <div id="mergeArea"></div>
       </div>
     </div>

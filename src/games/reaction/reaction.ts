@@ -5,6 +5,8 @@ import { Haptics } from '../../haptics';
 import { profile, saveProfile, getCombinedLeaderboard, pushLeaderboardEntry, checkAchievements, updateStreak, checkDailyChallenge, addXp } from '../../state';
 import { refreshHeader } from '../../header';
 import { pushActivity } from '../../activity';
+import { showTotalRecordReveal } from '../../recordReveal';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const REACTION_ROUNDS = 5;
 /** Visible target circle stays this size (identity match with the original design). */
@@ -40,6 +42,7 @@ export function renderReactionGame(): void {
   if (reactionState.timeoutId) clearTimeout(reactionState.timeoutId);
   reactionState = makeInitialState();
   drawReactionShell();
+  wireGameChrome('reaction', renderReactionGame);
 }
 
 function roundDotsHtml(): string {
@@ -59,6 +62,7 @@ function drawReactionShell(): void {
           <span>REACTION — RUNDE ${Math.min(reactionState.round + 1, REACTION_ROUNDS)} / ${REACTION_ROUNDS}</span>
           <div class="round-dots">${roundDotsHtml()}</div>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="arena"></div>
       </div>
     </div>
@@ -215,6 +219,19 @@ async function finishReactionSession(): Promise<void> {
   const isNewBest = profile.bestReaction == null || best < profile.bestReaction;
   const isNewAvgBest = profile.bestAvg == null || avg < profile.bestAvg;
 
+  // See the identical isNewAllTimeRecord check in finishGameSession (state.ts) for the reasoning —
+  // reaction keeps its own bespoke finish flow, so the check is mirrored here rather than shared.
+  // isNewAllTimeRecord keys off avg, not best — bestAvg is this branch's canonical leaderboard
+  // metric (see the isNewBest/isNewAvgBest split above), so the all-time board's .score values
+  // are avg-based too; comparing raw best against them would compare the wrong units.
+  let isNewAllTimeRecord = false;
+  if (isNewAvgBest) {
+    const priorLeader = (await getCombinedLeaderboard('reaction', 'alltime'))[0];
+    const wasAlreadyLeader = priorLeader?.id === profile.id;
+    const tookTheLead = !priorLeader || avg < priorLeader.score;
+    isNewAllTimeRecord = !wasAlreadyLeader && tookTheLead;
+  }
+
   profile.sessionsPlayed++;
   if (isNewBest) profile.bestReaction = best;
   if (isNewAvgBest) profile.bestAvg = avg;
@@ -223,6 +240,7 @@ async function finishReactionSession(): Promise<void> {
   const currentAvg = profile.bestAvg; // guaranteed non-null: either just set, or already existed
   await saveProfile();
   await pushLeaderboardEntry('reaction', currentAvg!);
+  if (isNewAllTimeRecord) showTotalRecordReveal('reaction', currentAvg!);
 
   let xpGain = XP_RULES.complete;
   if (isNewAvgBest) xpGain += XP_RULES.personalBest;
@@ -233,7 +251,17 @@ async function finishReactionSession(): Promise<void> {
   addXp(xpGain);
   await saveProfile();
   refreshHeader();
-  void pushActivity('reaction', avg, isNewAvgBest ? 'personal_best' : 'session', profile.name, profile.equippedAvatar, profile.equippedFrame);
+  void pushActivity(
+    'reaction',
+    avg,
+    isNewAvgBest ? 'personal_best' : 'session',
+    profile.name,
+    profile.equippedAvatar,
+    profile.equippedFrame,
+    null,
+    profile.equippedNameEffect,
+    isNewAllTimeRecord ? profile.equippedTaunt : null,
+  );
 
   Sound.complete();
   if (isNewAvgBest) {

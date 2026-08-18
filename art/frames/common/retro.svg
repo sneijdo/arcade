@@ -1,8 +1,12 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <defs></defs>
-
-  <rect x="10" y="10" width="180" height="180" fill="none"
-        stroke="#8fe36b" stroke-width="3" stroke-dasharray="10 6"/>
-  <rect x="18" y="18" width="164" height="164" fill="none"
-        stroke="#8fe36b" stroke-width="1" stroke-dasharray="4 4" opacity="0.5"/>
+  <defs>
+    <g id="corner-retro">
+      <path d="M6,40 L6,16 Q6,6 16,6 L40,6" fill="none" stroke="#8fe36b" stroke-width="4" stroke-linecap="round" stroke-dasharray="9 7"/>
+      <circle cx="6" cy="6" r="3" fill="#8fe36b"/>
+    </g>
+  </defs>
+  <use href="#corner-retro"/>
+  <use href="#corner-retro" transform="rotate(90 100 100)"/>
+  <use href="#corner-retro" transform="rotate(180 100 100)"/>
+  <use href="#corner-retro" transform="rotate(270 100 100)"/>
 </svg>

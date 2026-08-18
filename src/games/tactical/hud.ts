@@ -1,5 +1,6 @@
 import type { UpgradeDef } from './types';
 import type { PerkDef, TacticalMeta } from './meta';
+import { gameUtilBarHtml } from '../../gameChrome';
 
 export function renderShell(main: HTMLElement): void {
   main.innerHTML = `
@@ -16,6 +17,7 @@ export function renderShell(main: HTMLElement): void {
             <div class="tactical-bar-label" id="tacXpLabel">LEVEL 1</div>
           </div>
         </div>
+        ${gameUtilBarHtml()}
         <div class="tactical-canvas-wrap" id="tacCanvasWrap">
           <canvas id="tacticalCanvas"></canvas>
           <div class="tactical-boss-bar-wrap" id="tacBossBar" style="display:none">

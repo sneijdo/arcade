@@ -1,15 +1,24 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <defs><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#fde68a"/>
       <stop offset="0.5" stop-color="#f59e0b"/>
       <stop offset="1" stop-color="#fde68a"/>
     </linearGradient>
-    <filter id="glowGo" x="-60%" y="-60%" width="220%" height="220%">
+    <filter id="glow-gold" x="-70%" y="-70%" width="240%" height="240%">
       <feGaussianBlur stdDeviation="4" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter></defs>
-
-  <rect x="10" y="10" width="180" height="180" fill="none"
-        stroke="url(#gold)" stroke-width="5" filter="url(#glowGo)"/>
-  <path d="M-4,10 Q10,10 10,-4" stroke="url(#gold)" stroke-width="3" fill="none" transform="rotate(0 10 10)"/><path d="M176,10 Q190,10 190,-4" stroke="url(#gold)" stroke-width="3" fill="none" transform="rotate(90 190 10)"/><path d="M176,190 Q190,190 190,176" stroke="url(#gold)" stroke-width="3" fill="none" transform="rotate(180 190 190)"/><path d="M-4,190 Q10,190 10,176" stroke="url(#gold)" stroke-width="3" fill="none" transform="rotate(270 10 190)"/>
+    </filter>
+    <g id="corner-gold" filter="url(#glow-gold)">
+      <path d="M8,46 L8,18 Q8,8 18,8 L46,8" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M8,8 Q2,8 8,2 Q14,8 8,8" fill="url(#gold)"/>
+      <path d="M4,4 L14,4 M4,4 L4,14" stroke="url(#gold)" stroke-width="1.5" opacity="0.7"/>
+      <circle cx="46" cy="8" r="3" fill="url(#gold)"/>
+      <circle cx="8" cy="46" r="3" fill="url(#gold)"/>
+    </g>
+  </defs>
+  <use href="#corner-gold"/>
+  <use href="#corner-gold" transform="rotate(90 100 100)"/>
+  <use href="#corner-gold" transform="rotate(180 100 100)"/>
+  <use href="#corner-gold" transform="rotate(270 100 100)"/>
 </svg>

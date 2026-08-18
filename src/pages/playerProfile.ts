@@ -1,4 +1,4 @@
-import { profile, getPlayerMeta, getCombinedLeaderboard, avatarFrameHtml, escapeHtml, duelTierForRating, DUEL_RATING_DEFAULT } from '../state';
+import { profile, getPlayerMeta, getCombinedLeaderboard, avatarFrameHtml, nameEffectHtml, duelTierForRating, DUEL_RATING_DEFAULT } from '../state';
 import { levelInfo } from '../xp';
 import { ACHIEVEMENTS } from '../achievements';
 import { BADGES } from '../badges';
@@ -51,7 +51,7 @@ export async function renderPlayerProfile(id: string): Promise<void> {
         <div class="profile-head">
           ${avatarFrameHtml(meta.name, meta.avatar, meta.frame, 74)}
           <div class="profile-head-info">
-            <h1 class="profile-name">${escapeHtml(meta.name)}${title ? ` <img src="${title.asset}" alt="${title.label}" class="title-badge-img profile-title-badge">` : ''}</h1>
+            <h1 class="profile-name">${nameEffectHtml(meta.name, meta.nameEffect)}${title ? ` <img src="${title.asset}" alt="${title.label}" class="title-badge-img profile-title-badge">` : ''}</h1>
             <div class="xp-bar-track"><div class="xp-bar-fill" style="width:${li.pct}%"></div></div>
             <div class="xp-bar-label">LEVEL ${li.level}${rank ? ` · PLACERING #${rank} GLOBALT (REACTION)` : ''}</div>
           </div>

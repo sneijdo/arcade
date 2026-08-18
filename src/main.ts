@@ -36,6 +36,7 @@ async function initLocalMode(): Promise<void> {
     return;
   }
   Sound.setMuted(!!p.muted);
+  Sound.setPack(p.equippedSoundPack);
   refreshHeader();
   navigate(currentHashRoute());
 }
@@ -63,6 +64,7 @@ async function initSupabaseMode(): Promise<void> {
       return;
     }
     Sound.setMuted(!!p.muted);
+  Sound.setPack(p.equippedSoundPack);
     refreshHeader();
     startPresence(p.id, p.name, p.equippedAvatar);
     startInviteListener(p.id);

@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 type Phase = 'idle' | 'playing' | 'gameover';
 
@@ -81,6 +82,7 @@ export function renderDashGame(): void {
   if (state.rafId != null) cancelAnimationFrame(state.rafId);
   state = makeInitialState();
   drawShell();
+  wireGameChrome('dash', renderDashGame);
 }
 
 function drawShell(): void {
@@ -91,6 +93,7 @@ function drawShell(): void {
           <span>DASH</span>
           <span class="mono" id="dashDistance">0 m</span>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="dashArena"></div>
       </div>
     </div>

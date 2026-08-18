@@ -10,7 +10,8 @@ import { Sound } from './sound';
 import { refreshHeader } from './header';
 import type { AchievementStats, HallOfFameEntry, LeaderboardEntry, PlayerMeta, Profile } from './types';
 import { getTodayChallenge, meetsChallengeTarget } from './dailyChallenge';
-import { findAvatar, findFrame, AVATARS, FRAMES, TITLES } from './shop';
+import { findAvatar, findFrame, findNameEffect, AVATARS, FRAMES, TITLES } from './shop';
+import { showTotalRecordReveal } from './recordReveal';
 
 export let profile: Profile | null = null;
 
@@ -22,6 +23,16 @@ const ESCAPE_MAP: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&g
  * be set through. */
 export function escapeHtml(str: string): string {
   return str.replace(/[&<>"']/g, (c) => ESCAPE_MAP[c]);
+}
+
+/** Wraps an already-escaped name in its equipped name-effect class (gradient text/glow/animation
+ * — see NAME_EFFECTS in shop.ts and .name-fx-* in cosmetics.css), or returns it plain if no effect
+ * is equipped. The one shop item that shows up everywhere a name renders, not just a small
+ * thumbnail — use this instead of a bare escapeHtml(name) at every name-render call site. */
+export function nameEffectHtml(name: string, effectId: string | null | undefined): string {
+  const effect = findNameEffect(effectId);
+  const escaped = escapeHtml(name);
+  return effect ? `<span class="${effect.cssClass}">${escaped}</span>` : escaped;
 }
 
 export function initials(name: string): string {
@@ -89,6 +100,12 @@ export async function loadProfile(): Promise<Profile | null> {
     if (p.hofCheckedThroughWeek === undefined) p.hofCheckedThroughWeek = null;
     if (!p.unlockedFrames) p.unlockedFrames = [];
     if (p.equippedFrame === undefined) p.equippedFrame = null;
+    if (!p.unlockedNameEffects) p.unlockedNameEffects = [];
+    if (p.equippedNameEffect === undefined) p.equippedNameEffect = null;
+    if (!p.unlockedSoundPacks) p.unlockedSoundPacks = [];
+    if (p.equippedSoundPack === undefined) p.equippedSoundPack = null;
+    if (!p.unlockedTaunts) p.unlockedTaunts = [];
+    if (p.equippedTaunt === undefined) p.equippedTaunt = null;
     if (!p.unlockedBadges) p.unlockedBadges = [];
     if (p.duelWins == null) p.duelWins = 0;
     if (p.duelLosses == null) p.duelLosses = 0;
@@ -110,6 +127,7 @@ export async function saveProfile(): Promise<void> {
     avatar: profile.equippedAvatar,
     title: profile.equippedTitle,
     frame: profile.equippedFrame,
+    nameEffect: profile.equippedNameEffect,
     xp: profile.xp,
     bestReaction: profile.bestReaction,
     bestAvg: profile.bestAvg,
@@ -164,6 +182,12 @@ export async function createProfile(name: string, id?: string): Promise<void> {
     hofCheckedThroughWeek: null,
     unlockedFrames: [],
     equippedFrame: null,
+    unlockedNameEffects: [],
+    equippedNameEffect: null,
+    unlockedSoundPacks: [],
+    equippedSoundPack: null,
+    unlockedTaunts: [],
+    equippedTaunt: null,
     unlockedBadges: [],
     duelWins: 0,
     duelLosses: 0,
@@ -305,6 +329,7 @@ export async function getCombinedLeaderboard(gameId: string, scope: 'week' | 'al
         e.avatar = meta.avatar;
         e.title = meta.title;
         e.frame = meta.frame;
+        e.nameEffect = meta.nameEffect;
       }
     }),
   );
@@ -317,6 +342,7 @@ export interface WeeklyLeadStanding {
   avatar: string | null;
   frame: string | null;
   title: string | null;
+  nameEffect: string | null;
   gameIds: string[];
 }
 
@@ -336,7 +362,15 @@ export async function getWeeklyLeadStandings(week: string = weekKey(new Date()))
   const standings = await Promise.all(
     Object.entries(byId).map(async ([id, gameIds]) => {
       const meta = await storage.get<PlayerMeta>('playerMeta:' + id, true);
-      return { id, name: meta?.name ?? 'Ukendt spiller', avatar: meta?.avatar ?? null, frame: meta?.frame ?? null, title: meta?.title ?? null, gameIds };
+      return {
+        id,
+        name: meta?.name ?? 'Ukendt spiller',
+        avatar: meta?.avatar ?? null,
+        frame: meta?.frame ?? null,
+        title: meta?.title ?? null,
+        nameEffect: meta?.nameEffect ?? null,
+        gameIds,
+      };
     }),
   );
   standings.sort((a, b) => b.gameIds.length - a.gameIds.length);
@@ -462,6 +496,7 @@ export interface DuelLeaderboardEntry {
   avatar: string | null;
   frame: string | null;
   title: string | null;
+  nameEffect: string | null;
   wins: number;
   losses: number;
   draws: number;
@@ -489,6 +524,7 @@ export async function getDuelLeaderboard(): Promise<DuelLeaderboardEntry[]> {
       name: meta.name,
       avatar: meta.avatar,
       frame: meta.frame,
+      nameEffect: meta.nameEffect ?? null,
       title: meta.title,
       wins,
       losses,
@@ -611,10 +647,23 @@ export async function finishGameSession(gameId: string, score: number, extraAchi
   const dir = directionForGame(gameId);
   const prevBest = profile.bestScores[gameId];
   const isNewBest = prevBest === undefined || (dir === 'asc' ? score < prevBest : score > prevBest);
+  // The biggest celebration in the app fires only on the transition INTO the all-time #1 spot —
+  // beating someone else's record (or being the first ever entry), not extending an already-held
+  // lead. Checked against the pre-push leaderboard: since this score already beat prevBest to get
+  // here, out-scoring the current leader guarantees the push below actually lands us on top, so
+  // one fetch before the write is enough — no need to re-read after to confirm it stuck.
+  let isNewAllTimeRecord = false;
+  if (isNewBest) {
+    const priorLeader = (await getCombinedLeaderboard(gameId, 'alltime'))[0];
+    const wasAlreadyLeader = priorLeader?.id === profile.id;
+    const tookTheLead = !priorLeader || (dir === 'asc' ? score < priorLeader.score : score > priorLeader.score);
+    isNewAllTimeRecord = !wasAlreadyLeader && tookTheLead;
+  }
   if (isNewBest) profile.bestScores[gameId] = score;
   profile.sessionsPlayed++;
   await saveProfile();
   await pushLeaderboardEntry(gameId, profile.bestScores[gameId]);
+  if (isNewAllTimeRecord) showTotalRecordReveal(gameId, profile.bestScores[gameId]);
 
   let xpGain = XP_RULES.complete;
   if (isNewBest) xpGain += XP_RULES.personalBest;
@@ -626,7 +675,17 @@ export async function finishGameSession(gameId: string, score: number, extraAchi
   addXp(xpGain);
   await saveProfile();
   refreshHeader();
-  void pushActivity(gameId, score, isNewBest ? 'personal_best' : 'session', profile.name, profile.equippedAvatar, profile.equippedFrame);
+  void pushActivity(
+    gameId,
+    score,
+    isNewBest ? 'personal_best' : 'session',
+    profile.name,
+    profile.equippedAvatar,
+    profile.equippedFrame,
+    null,
+    profile.equippedNameEffect,
+    isNewAllTimeRecord ? profile.equippedTaunt : null,
+  );
 
   // Streak milestones, the daily challenge, and achievements are all
   // pure toast-driven bonuses layered on top of this result — none of them
@@ -716,6 +775,16 @@ export async function finishDuelSession(
   await saveProfile();
   refreshHeader();
   const score = outcome === 'win' ? 1 : outcome === 'draw' ? 0.5 : 0;
-  void pushActivity('duel', score, 'duel_result', profile.name, profile.equippedAvatar, profile.equippedFrame, opponentName);
+  void pushActivity(
+    'duel',
+    score,
+    'duel_result',
+    profile.name,
+    profile.equippedAvatar,
+    profile.equippedFrame,
+    opponentName,
+    profile.equippedNameEffect,
+    outcome === 'win' ? profile.equippedTaunt : null,
+  );
   return { xpGain, ratingChange, newRating };
 }

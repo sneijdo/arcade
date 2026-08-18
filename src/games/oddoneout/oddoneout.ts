@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const START_LIVES = 3;
 const GLYPHS = ['⬤', '◆', '■', '▲', '★', '⬣'];
@@ -61,6 +62,7 @@ export function renderOddOneOutGame(): void {
   if (state.roundTimeoutId) clearTimeout(state.roundTimeoutId);
   state = makeInitialState();
   drawShell();
+  wireGameChrome('oddoneout', renderOddOneOutGame);
 }
 
 function gridSizeForAttempt(attempt: number): number {
@@ -81,6 +83,7 @@ function drawShell(): void {
           <span id="ooTitle">ODD ONE OUT — RUNDE 1</span>
           <div class="oo-lives" id="ooLives"></div>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="arena"></div>
       </div>
     </div>

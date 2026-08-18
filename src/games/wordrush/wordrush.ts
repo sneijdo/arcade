@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const SESSION_MS = 40_000;
 
@@ -167,6 +168,7 @@ export function renderWordRushGame(): void {
   if (state.tickId) clearInterval(state.tickId);
   state = makeInitialState();
   drawShell();
+  wireGameChrome('wordrush', renderWordRushGame);
 }
 
 function progressFrac(): number {
@@ -195,6 +197,7 @@ function drawShell(): void {
           <span id="wrTimer">WORD RUSH — 40s</span>
           <span id="wrScore" class="mono">0 ORD</span>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="arena"></div>
       </div>
     </div>

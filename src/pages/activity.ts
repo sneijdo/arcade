@@ -1,4 +1,5 @@
-import { profile, avatarFrameHtml, escapeHtml } from '../state';
+import { profile, avatarFrameHtml, escapeHtml, nameEffectHtml } from '../state';
+import { findTaunt } from '../shop';
 import { GAMES } from '../games/registry';
 import { ScoreKinds, scoreUnitSuffix } from '../scoring';
 import { isGuestMode } from '../storage';
@@ -43,15 +44,17 @@ function activityRowHtml(e: ActivityEntry): string {
   const isDuel = e.kind === 'duel_result';
   const { icon, title } = gameLabel(e.gameId);
   const target = playerLinkTarget(e.ownerId);
+  const taunt = findTaunt(e.taunt);
   return `
     <a class="activity-row ${isMe ? 'me' : ''}" href="#/${target}" data-nav="${target}">
       ${avatarFrameHtml(e.name, e.avatar, e.frame, 30)}
       <div class="activity-row-body">
         <div class="activity-row-line">
-          <span class="activity-name">${escapeHtml(e.name)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
+          <span class="activity-name">${nameEffectHtml(e.name, e.nameEffect)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
           ${e.kind === 'personal_best' ? '<span class="activity-pb-tag">★ NY REKORD</span>' : ''}
         </div>
         <div class="activity-row-sub">${isDuel ? duelResultSub(e) : `${icon} ${title} · <span class="mono">${scoreText(e.gameId, e.score)}</span>`}</div>
+        ${taunt ? `<div class="activity-taunt">💬 ${escapeHtml(taunt.text)}</div>` : ''}
       </div>
       <div class="activity-time" data-ts="${e.createdAt}">${timeAgo(e.createdAt)}</div>
     </a>

@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const SESSION_MS = 60_000;
 
@@ -40,6 +41,7 @@ export function renderNumberRushGame(): void {
   if (rushState.tickId) clearInterval(rushState.tickId);
   rushState = makeInitialState();
   drawShell();
+  wireGameChrome('numberrush', renderNumberRushGame);
 }
 
 function randInt(min: number, max: number): number {
@@ -84,6 +86,7 @@ function drawShell(): void {
           <span id="rushTimer">NUMBER RUSH — 60s</span>
           <span id="rushScore" class="mono">0 POINT</span>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="arena"></div>
       </div>
     </div>

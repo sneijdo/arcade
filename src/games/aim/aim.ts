@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const SESSION_MS = 30_000;
 /** Visible target circle (identity match with Reaction's target). */
@@ -36,6 +37,7 @@ export function renderAimGame(): void {
   if (aimState.tickId) clearInterval(aimState.tickId);
   aimState = makeInitialState();
   drawShell();
+  wireGameChrome('aim', renderAimGame);
 }
 
 function drawShell(): void {
@@ -46,6 +48,7 @@ function drawShell(): void {
           <span id="aimTimer">AIM TRAINER — 30s</span>
           <span id="aimScore" class="mono">0 HITS</span>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="arena"></div>
       </div>
     </div>

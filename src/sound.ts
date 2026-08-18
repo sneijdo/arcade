@@ -2,6 +2,11 @@
 class SoundEngine {
   private ctx: AudioContext | null = null;
   private muted = false;
+  /** Equipped SOUND_PACKS id (see shop.ts), or null for the default tones below — set once at
+   * boot from the loaded profile and again on purchase/equip (see main.ts / pages/shop.ts). Only
+   * the shared reward/feedback sounds (click/complete/pb/achievement) branch on this; per-game
+   * gameplay SFX stay consistent regardless of pack. */
+  private pack: string | null = null;
 
   private ensureCtx(): AudioContext {
     if (!this.ctx) {
@@ -52,7 +57,13 @@ class SoundEngine {
   isMuted(): boolean {
     return this.muted;
   }
+  setPack(id: string | null): void {
+    this.pack = id;
+  }
   click(): void {
+    if (this.pack === 'soundpack-8bit') return void this.tone(500, 0.04, 'square', 0.08);
+    if (this.pack === 'soundpack-cinematic') return void this.tone(220, 0.1, 'sine', 0.08);
+    if (this.pack === 'soundpack-airhorn') return void this.tone(300, 0.05, 'sawtooth', 0.12);
     this.tone(320, 0.06, 'square', 0.06);
   }
   countdown(): void {
@@ -69,17 +80,69 @@ class SoundEngine {
     this.tone(160, 0.28, 'sawtooth', 0.12);
   }
   complete(): void {
+    if (this.pack === 'soundpack-8bit') {
+      this.tone(659, 0.06, 'square', 0.1);
+      this.tone(880, 0.06, 'square', 0.09, 0.07);
+      this.tone(1319, 0.1, 'square', 0.09, 0.14);
+      return;
+    }
+    if (this.pack === 'soundpack-cinematic') {
+      this.tone(220, 0.3, 'sine', 0.12);
+      this.tone(277, 0.3, 'sine', 0.1, 0.12);
+      this.tone(330, 0.5, 'sine', 0.1, 0.24);
+      return;
+    }
+    if (this.pack === 'soundpack-airhorn') {
+      this.tone(150, 0.35, 'sawtooth', 0.18);
+      this.tone(151, 0.35, 'square', 0.13, 0.02);
+      return;
+    }
     this.tone(523, 0.12, 'sine', 0.12);
     this.tone(659, 0.12, 'sine', 0.1, 0.1);
     this.tone(784, 0.18, 'sine', 0.1, 0.2);
   }
   pb(): void {
+    if (this.pack === 'soundpack-8bit') {
+      this.tone(784, 0.06, 'square', 0.1);
+      this.tone(988, 0.06, 'square', 0.1, 0.06);
+      this.tone(1319, 0.06, 'square', 0.1, 0.12);
+      this.tone(1568, 0.1, 'square', 0.1, 0.18);
+      return;
+    }
+    if (this.pack === 'soundpack-cinematic') {
+      this.tone(220, 0.2, 'triangle', 0.13);
+      this.tone(330, 0.2, 'triangle', 0.12, 0.12);
+      this.tone(440, 0.35, 'sine', 0.13, 0.24);
+      this.tone(554, 0.5, 'sine', 0.12, 0.36);
+      return;
+    }
+    if (this.pack === 'soundpack-airhorn') {
+      for (let i = 0; i < 3; i++) this.tone(180 + i * 2, 0.3, 'sawtooth', 0.19, i * 0.28);
+      return;
+    }
     this.tone(660, 0.1, 'sine', 0.13);
     this.tone(880, 0.1, 'sine', 0.12, 0.09);
     this.tone(1108, 0.16, 'sine', 0.12, 0.18);
     this.tone(1318, 0.22, 'sine', 0.12, 0.27);
   }
   achievement(): void {
+    if (this.pack === 'soundpack-8bit') {
+      this.tone(988, 0.06, 'square', 0.1);
+      this.tone(1319, 0.06, 'square', 0.1, 0.06);
+      this.tone(1760, 0.12, 'square', 0.1, 0.12);
+      return;
+    }
+    if (this.pack === 'soundpack-cinematic') {
+      this.tone(392, 0.16, 'triangle', 0.12);
+      this.tone(523, 0.2, 'sine', 0.12, 0.14);
+      this.tone(659, 0.35, 'sine', 0.12, 0.28);
+      return;
+    }
+    if (this.pack === 'soundpack-airhorn') {
+      this.tone(160, 0.4, 'sawtooth', 0.19);
+      this.tone(161, 0.4, 'square', 0.15, 0.03);
+      return;
+    }
     this.tone(784, 0.1, 'triangle', 0.12);
     this.tone(988, 0.1, 'triangle', 0.11, 0.1);
     this.tone(1318, 0.24, 'triangle', 0.12, 0.2);
@@ -152,6 +215,35 @@ class SoundEngine {
     const freq = 300 + Math.min(700, value);
     this.tone(freq, 0.1, 'triangle', 0.13);
     this.tone(freq * 1.5, 0.14, 'triangle', 0.1, 0.05);
+  }
+  /** Shop — the purchase-reveal fanfare (see showPurchaseReveal in pages/shop.ts). A rising
+   * major-chord arpeggio that grows an extra layer per rarity tier, so a legendary pull sounds
+   * unmistakably bigger than a common one instead of every purchase getting the same little blip. */
+  purchase(tier: 0 | 1 | 2 | 3 = 0): void {
+    this.tone(523, 0.11, 'triangle', 0.12);
+    this.tone(659, 0.11, 'triangle', 0.11, 0.07);
+    this.tone(784, 0.16, 'triangle', 0.11, 0.14);
+    if (tier >= 1) this.tone(1046, 0.18, 'triangle', 0.1, 0.21);
+    if (tier >= 2) this.tone(1318, 0.22, 'sine', 0.1, 0.28);
+    if (tier >= 3) {
+      this.tone(1568, 0.3, 'sine', 0.11, 0.35);
+      this.tone(2093, 0.34, 'sine', 0.07, 0.4);
+    }
+  }
+  /** The biggest fanfare in the app — a new ALL-TIME #1 (see showTotalRecordReveal in
+   * recordReveal.ts). A quick ascending run into a full stacked chord, deliberately bigger and
+   * more melodic than purchase()'s arpeggio: this happens far less often than a shop purchase,
+   * so it should be unmistakable even with your eyes closed. */
+  totalRecord(): void {
+    this.tone(392, 0.09, 'square', 0.1);
+    this.tone(523, 0.09, 'square', 0.1, 0.08);
+    this.tone(659, 0.09, 'square', 0.1, 0.16);
+    this.tone(784, 0.11, 'square', 0.11, 0.24);
+    const chordAt = 0.34;
+    this.tone(784, 0.55, 'triangle', 0.13, chordAt);
+    this.tone(988, 0.55, 'triangle', 0.12, chordAt);
+    this.tone(1174, 0.55, 'triangle', 0.11, chordAt);
+    this.tone(1568, 0.6, 'sine', 0.1, chordAt);
   }
 }
 

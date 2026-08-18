@@ -2,6 +2,7 @@ import { ScoreKinds } from '../../scoring';
 import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
+import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
 
 const SESSION_MS = 45_000;
 
@@ -107,6 +108,7 @@ export function renderRuleSwitchGame(): void {
   if (state.tickId) clearInterval(state.tickId);
   state = makeInitialState();
   drawShell();
+  wireGameChrome('ruleswitch', renderRuleSwitchGame);
 }
 
 function drawShell(): void {
@@ -117,6 +119,7 @@ function drawShell(): void {
           <span id="rbTimer">RULE BREAKER — 45s</span>
           <span id="rbScore" class="mono">0 POINT</span>
         </div>
+        ${gameUtilBarHtml()}
         <div class="arena" id="arena"></div>
       </div>
     </div>
