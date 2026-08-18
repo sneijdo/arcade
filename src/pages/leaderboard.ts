@@ -1,4 +1,4 @@
-import { profile, getCombinedLeaderboard, avatarFrameHtml, creditMyHallOfFameWins, getHallOfFame, getDuelLeaderboard, duelTierForRating, getPlayerMeta, getWeeklyLeadStandings, LEGENDARY_WEEK_THRESHOLD, escapeHtml } from '../state';
+import { profile, getCombinedLeaderboard, avatarFrameHtml, creditMyHallOfFameWins, getHallOfFame, getDuelLeaderboard, duelTierForRating, getPlayerMeta, getWeeklyLeadStandings, LEGENDARY_WEEK_THRESHOLD, escapeHtml, nameEffectHtml } from '../state';
 import { findTitle } from '../shop';
 import { playerLinkTarget } from './playerProfile';
 import { GAMES } from '../games/registry';
@@ -82,12 +82,12 @@ async function renderGameBoard(gameId: string, scoreKindId: string | null): Prom
       const title = findTitle(e.title);
       const target = playerLinkTarget(e.id);
       return `
-      <a class="lb-row ${isMe ? 'me' : ''}" href="#/${target}" data-nav="${target}">
+      <a class="lb-row ${isMe ? 'me' : ''} ${i === 0 ? 'lb-row-first' : ''}" href="#/${target}" data-nav="${target}">
         <div class="lb-rank ${i < 3 ? 'medal' : ''}">${i < 3 ? medals[i] : '#' + (i + 1)}</div>
         <div class="lb-player">
           ${avatarFrameHtml(e.name, e.avatar, e.frame, 28)}
           <div class="lb-name-col">
-            <span class="lb-name">${escapeHtml(e.name)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
+            <span class="lb-name">${nameEffectHtml(e.name, e.nameEffect)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
             ${title ? `<img src="${title.asset}" alt="${title.label}" class="title-badge-img">` : ''}
           </div>
         </div>
@@ -177,7 +177,7 @@ async function renderLegendaryProgress(): Promise<void> {
           <div class="lb-player">
             ${avatarFrameHtml(s.name, s.avatar, s.frame, 28)}
             <div class="lb-name-col">
-              <span class="lb-name">${escapeHtml(s.name)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
+              <span class="lb-name">${nameEffectHtml(s.name, s.nameEffect)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
               <span class="hof-badges">${gameBadges}</span>
             </div>
           </div>
@@ -216,7 +216,7 @@ async function renderDuelBoard(): Promise<void> {
         <div class="lb-player">
           ${avatarFrameHtml(e.name, e.avatar, e.frame, 28)}
           <div class="lb-name-col">
-            <span class="lb-name">${escapeHtml(e.name)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
+            <span class="lb-name">${nameEffectHtml(e.name, e.nameEffect)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
             ${title ? `<img src="${title.asset}" alt="${title.label}" class="title-badge-img">` : ''}
             <span class="hof-badges"><span class="hof-badge">${tier.icon} ${tier.label}</span><span class="hof-badge">${e.wins}-${e.losses}-${e.draws} · ${winRate}% sejrsrate</span></span>
           </div>
@@ -260,7 +260,7 @@ async function renderHallOfFame(): Promise<void> {
         <div class="lb-player">
           ${avatarFrameHtml(name, meta?.avatar, meta?.frame, 28)}
           <div class="lb-name-col">
-            <span class="lb-name">${escapeHtml(name)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
+            <span class="lb-name">${nameEffectHtml(name, meta?.nameEffect)}${isMe ? '<span class="lb-you-tag">DIG</span>' : ''}</span>
             ${title ? `<img src="${title.asset}" alt="${title.label}" class="title-badge-img">` : ''}
             <span class="hof-badges">${gameBadges}</span>
           </div>

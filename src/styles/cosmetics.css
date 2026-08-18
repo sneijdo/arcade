@@ -382,6 +382,154 @@
   object-fit: contain;
 }
 
+/* Name effects, sound packs, taunts — text/description-based shop items (see mediaHtmlFor in
+   pages/shop.ts), reusing the row-style .shop-title-card layout instead of a square thumbnail. */
+.shop-nameeffect-preview {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+}
+.shop-soundpack-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.shop-soundpack-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.shop-soundpack-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shop-taunt-preview {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Purchase-reveal sizing for the same three (see showPurchaseReveal in pages/shop.ts). */
+.purchase-media .shop-nameeffect-preview {
+  font-size: 34px;
+}
+.purchase-media .shop-soundpack-preview {
+  flex-direction: column;
+  text-align: center;
+  gap: 6px;
+}
+.purchase-media .shop-soundpack-icon {
+  font-size: 48px;
+}
+.purchase-media .shop-soundpack-desc {
+  white-space: normal;
+  font-size: 14px;
+  max-width: 220px;
+}
+.purchase-media .shop-taunt-preview {
+  white-space: normal;
+  font-size: 22px;
+  text-align: center;
+  max-width: 260px;
+}
+
+/* ============================= NAME EFFECTS ============================= */
+/* Applied via nameEffectHtml() in state.ts wherever a player's name renders — leaderboard,
+   activity feed, profile headers. See NAME_EFFECTS in shop.ts for the catalog. */
+.name-fx-bold {
+  font-weight: 800;
+}
+.name-fx-underline {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--coral);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.name-fx-ice {
+  font-weight: 700;
+  background: linear-gradient(90deg, #ffffff, #a5f3fc, #38bdf8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+}
+.name-fx-toxic {
+  font-weight: 700;
+  background: linear-gradient(90deg, #d9f99d, #8fe36b, #4ade80);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 12px rgba(143, 227, 107, 0.5);
+}
+@keyframes name-fx-shift {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+.name-fx-fire {
+  font-weight: 800;
+  background: linear-gradient(90deg, #ff3b30, #ffb74d, #ff3b30);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 14px rgba(255, 138, 61, 0.55);
+  animation: name-fx-shift 2.4s linear infinite;
+}
+.name-fx-electric {
+  font-weight: 800;
+  background: linear-gradient(90deg, #38bdf8, #e9d5ff, #a855f7, #38bdf8);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 14px rgba(139, 107, 255, 0.55);
+  animation: name-fx-shift 1.6s linear infinite;
+}
+@keyframes name-fx-rainbow-shift {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 300% 0;
+  }
+}
+.name-fx-rainbow {
+  font-weight: 800;
+  background: linear-gradient(90deg, #ff3d81, #ffd54f, #8fe36b, #38bdf8, #a855f7, #ff3d81);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: name-fx-rainbow-shift 3.2s linear infinite;
+}
+@keyframes name-fx-flicker {
+  0%, 100% { opacity: 1; }
+  45% { opacity: 1; }
+  47% { opacity: 0.55; }
+  49% { opacity: 1; }
+  72% { opacity: 1; }
+  74% { opacity: 0.4; }
+  76% { opacity: 1; }
+}
+.name-fx-void {
+  font-weight: 700;
+  color: #c4b5fd;
+  text-shadow: 0 0 10px #7c3aed, 0 0 2px #000;
+  animation: name-fx-flicker 3s ease-in-out infinite;
+}
+
 /* Badges — Profile collection grid, same visual language as the achievements grid (.ach-grid). */
 .badge-grid {
   display: grid;

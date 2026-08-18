@@ -26,6 +26,12 @@ export interface ActivityEntry {
   createdAt: string;
   /** Only set on 'duel_result' rows — the opponent's name, so the feed can render a full sentence without joining anything (see finishDuelSession in state.ts). */
   opponentName: string | null;
+  /** Snapshot of the equipped name-effect id at push time — see NAME_EFFECTS in shop.ts. */
+  nameEffect: string | null;
+  /** A TAUNTS id (see shop.ts) — only set on the specific session that took over a game's
+   * all-time #1 spot or won a duel, and only if the player had one equipped. Resolved to display
+   * text via findTaunt() at render time (see activityRowHtml in pages/activity.ts). */
+  taunt: string | null;
 }
 
 export interface PresenceUser {
@@ -46,6 +52,8 @@ function rowToEntry(row: Record<string, unknown>): ActivityEntry {
     frame: (row.frame as string | null) ?? null,
     createdAt: row.created_at as string,
     opponentName: (row.opponent_name as string | null) ?? null,
+    nameEffect: (row.name_effect as string | null) ?? null,
+    taunt: (row.taunt as string | null) ?? null,
   };
 }
 
@@ -60,9 +68,13 @@ export async function pushActivity(
   avatar: string | null,
   frame: string | null,
   opponentName: string | null = null,
+  nameEffect: string | null = null,
+  taunt: string | null = null,
 ): Promise<void> {
   if (!supabase || isGuestMode()) return;
-  const { error } = await supabase.from('activity').insert({ kind, game_id: gameId, score, name, avatar, frame, opponent_name: opponentName });
+  const { error } = await supabase
+    .from('activity')
+    .insert({ kind, game_id: gameId, score, name, avatar, frame, opponent_name: opponentName, name_effect: nameEffect, taunt });
   if (error) console.error('activity push failed', error);
 }
 

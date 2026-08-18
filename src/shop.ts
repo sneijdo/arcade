@@ -145,6 +145,74 @@ export const SECRET_TITLES: TitleDef[] = [
   { id: 'title-secret-02', label: '???', asset: '/cosmetics/titles/secret-02.svg', rarity: 'secret', cost: 0 },
 ];
 
+export interface NameEffectDef {
+  id: string;
+  name: string;
+  /** Applied to the <span> wrapping the escaped name — see nameEffectHtml() in state.ts. Pure CSS (gradient text, glow, animation), no art asset needed. */
+  cssClass: string;
+  rarity: Rarity;
+  cost: number;
+  unlockLevel?: number;
+  requiresOwnedLegendary?: number;
+}
+
+/** Shows up wherever a player's name renders (leaderboard, activity feed, profile headers) — see
+ * nameEffectHtml() in state.ts and the corresponding .name-fx-* classes in cosmetics.css. The
+ * single most visible flex slot in the shop since it isn't confined to a small avatar thumbnail. */
+export const NAME_EFFECTS: NameEffectDef[] = [
+  { id: 'namefx-bold', name: 'Fed Skrift', cssClass: 'name-fx-bold', rarity: 'common', cost: 80 },
+  { id: 'namefx-underline', name: 'Understreget Ild', cssClass: 'name-fx-underline', rarity: 'common', cost: 110 },
+  { id: 'namefx-ice', name: 'Is', cssClass: 'name-fx-ice', rarity: 'rare', cost: 220 },
+  { id: 'namefx-toxic', name: 'Giftgrøn', cssClass: 'name-fx-toxic', rarity: 'rare', cost: 240 },
+  { id: 'namefx-fire', name: 'Ild', cssClass: 'name-fx-fire', rarity: 'epic', cost: 550, unlockLevel: 11 },
+  { id: 'namefx-electric', name: 'Elektrisk', cssClass: 'name-fx-electric', rarity: 'epic', cost: 600, unlockLevel: 12 },
+  { id: 'namefx-rainbow', name: 'Regnbue', cssClass: 'name-fx-rainbow', rarity: 'legendary', cost: 1300 },
+  { id: 'namefx-void', name: 'Tomrum', cssClass: 'name-fx-void', rarity: 'legendary', cost: 1500 },
+];
+
+export interface SoundPackDef {
+  id: string;
+  name: string;
+  desc: string;
+  rarity: Rarity;
+  cost: number;
+  unlockLevel?: number;
+  requiresOwnedLegendary?: number;
+}
+
+/** Swaps the tone recipe behind the app's core UI sounds (click/personal-best/achievement/complete)
+ * — see Sound.setPack() in sound.ts, which every SoundEngine method that varies by pack branches
+ * on. Doesn't touch per-game gameplay SFX (hits, merges, deaths, etc.) — those stay consistent
+ * regardless of equipped pack, only the shared reward/feedback sounds reskin. */
+export const SOUND_PACKS: SoundPackDef[] = [
+  { id: 'soundpack-8bit', name: '8-Bit Arcade', desc: 'Skarpe, høje NES-agtige bip', rarity: 'common', cost: 150 },
+  { id: 'soundpack-cinematic', name: 'Cinematic', desc: 'Dybere, mere dramatiske toner', rarity: 'epic', cost: 700, unlockLevel: 12 },
+  { id: 'soundpack-airhorn', name: 'Air Horn', desc: 'Absurd høj fest-lyd til hvert eneste win', rarity: 'legendary', cost: 1400 },
+];
+
+export interface TauntDef {
+  id: string;
+  text: string;
+  rarity: Rarity;
+  cost: number;
+  unlockLevel?: number;
+  requiresOwnedLegendary?: number;
+}
+
+/** Auto-posts to the live Activity feed the moment this player takes over a game's all-time #1
+ * spot, or wins a Quiz Duel — see finishGameSession/finishDuelSession in state.ts and the taunt
+ * column added by supabase/schema_taunts.sql. Purely social/bragging, no gameplay effect. */
+export const TAUNTS: TauntDef[] = [
+  { id: 'taunt-gg-ez', text: 'GG EZ', rarity: 'common', cost: 100 },
+  { id: 'taunt-diary', text: 'Skriv det i dagbogen din 📔', rarity: 'common', cost: 130 },
+  { id: 'taunt-notes', text: 'Tag noter, nybegynder', rarity: 'rare', cost: 260 },
+  { id: 'taunt-collection', text: 'Endnu en til samlingen 📈', rarity: 'rare', cost: 280 },
+  { id: 'taunt-sorry', text: 'Beklager, ikke beklager 😏', rarity: 'epic', cost: 620 },
+  { id: 'taunt-cleanup', text: 'Ryd op efter dig selv', rarity: 'epic', cost: 650 },
+  { id: 'taunt-kneel', text: 'Bøj knæ for kongen 👑', rarity: 'legendary', cost: 1400 },
+  { id: 'taunt-besteffort', text: 'Var det virkelig dit bedste forsøg?', rarity: 'legendary', cost: 1600 },
+];
+
 export function findAvatar(id: string | null | undefined): AvatarDef | null {
   return id ? AVATARS.find((a) => a.id === id) ?? null : null;
 }
@@ -156,4 +224,16 @@ export function findFrame(id: string | null | undefined): FrameDef | null {
 export function findTitle(id: string | null | undefined): TitleDef | null {
   if (!id) return null;
   return TITLES.find((t) => t.id === id) ?? SECRET_TITLES.find((t) => t.id === id) ?? null;
+}
+
+export function findNameEffect(id: string | null | undefined): NameEffectDef | null {
+  return id ? NAME_EFFECTS.find((n) => n.id === id) ?? null : null;
+}
+
+export function findSoundPack(id: string | null | undefined): SoundPackDef | null {
+  return id ? SOUND_PACKS.find((s) => s.id === id) ?? null : null;
+}
+
+export function findTaunt(id: string | null | undefined): TauntDef | null {
+  return id ? TAUNTS.find((t) => t.id === id) ?? null : null;
 }

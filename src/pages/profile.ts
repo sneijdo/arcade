@@ -1,4 +1,4 @@
-import { profile, getCombinedLeaderboard, avatarFrameHtml, clearProfile, bestScoreForGame, escapeHtml, duelTierForRating, DUEL_RATING_DEFAULT } from '../state';
+import { profile, getCombinedLeaderboard, avatarFrameHtml, clearProfile, bestScoreForGame, nameEffectHtml, duelTierForRating, DUEL_RATING_DEFAULT } from '../state';
 import { levelInfo } from '../xp';
 import { ACHIEVEMENTS } from '../achievements';
 import { BADGES } from '../badges';
@@ -24,7 +24,7 @@ export async function renderProfile(): Promise<void> {
         <div class="profile-head">
           ${avatarFrameHtml(profile.name, profile.equippedAvatar, profile.equippedFrame, 74)}
           <div class="profile-head-info">
-            <h1 class="profile-name">${escapeHtml(profile.name)}${(() => { const t = findTitle(profile!.equippedTitle); return t ? ` <img src="${t.asset}" alt="${t.label}" class="title-badge-img profile-title-badge">` : ''; })()}</h1>
+            <h1 class="profile-name">${nameEffectHtml(profile.name, profile.equippedNameEffect)}${(() => { const t = findTitle(profile!.equippedTitle); return t ? ` <img src="${t.asset}" alt="${t.label}" class="title-badge-img profile-title-badge">` : ''; })()}</h1>
             <div class="xp-bar-track"><div class="xp-bar-fill" style="width:${li.pct}%"></div></div>
             <div class="xp-bar-label">LEVEL ${li.level} · ${li.into} / ${li.need} XP ${rank ? `· PLACERING #${rank} GLOBALT (REACTION)` : ''}</div>
           </div>

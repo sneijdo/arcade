@@ -240,7 +240,7 @@ async function finishReactionSession(): Promise<void> {
   addXp(xpGain);
   await saveProfile();
   refreshHeader();
-  void pushActivity('reaction', best, isNewBest ? 'personal_best' : 'session', profile.name, profile.equippedAvatar, profile.equippedFrame);
+  void pushActivity('reaction', best, isNewBest ? 'personal_best' : 'session', profile.name, profile.equippedAvatar, profile.equippedFrame, null, profile.equippedNameEffect);
 
   Sound.complete();
   if (isNewBest) {

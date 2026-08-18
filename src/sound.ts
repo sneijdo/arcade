@@ -2,6 +2,11 @@
 class SoundEngine {
   private ctx: AudioContext | null = null;
   private muted = false;
+  /** Equipped SOUND_PACKS id (see shop.ts), or null for the default tones below — set once at
+   * boot from the loaded profile and again on purchase/equip (see main.ts / pages/shop.ts). Only
+   * the shared reward/feedback sounds (click/complete/pb/achievement) branch on this; per-game
+   * gameplay SFX stay consistent regardless of pack. */
+  private pack: string | null = null;
 
   private ensureCtx(): AudioContext {
     if (!this.ctx) {
@@ -52,7 +57,13 @@ class SoundEngine {
   isMuted(): boolean {
     return this.muted;
   }
+  setPack(id: string | null): void {
+    this.pack = id;
+  }
   click(): void {
+    if (this.pack === 'soundpack-8bit') return void this.tone(500, 0.04, 'square', 0.08);
+    if (this.pack === 'soundpack-cinematic') return void this.tone(220, 0.1, 'sine', 0.08);
+    if (this.pack === 'soundpack-airhorn') return void this.tone(300, 0.05, 'sawtooth', 0.12);
     this.tone(320, 0.06, 'square', 0.06);
   }
   countdown(): void {
@@ -69,17 +80,69 @@ class SoundEngine {
     this.tone(160, 0.28, 'sawtooth', 0.12);
   }
   complete(): void {
+    if (this.pack === 'soundpack-8bit') {
+      this.tone(659, 0.06, 'square', 0.1);
+      this.tone(880, 0.06, 'square', 0.09, 0.07);
+      this.tone(1319, 0.1, 'square', 0.09, 0.14);
+      return;
+    }
+    if (this.pack === 'soundpack-cinematic') {
+      this.tone(220, 0.3, 'sine', 0.12);
+      this.tone(277, 0.3, 'sine', 0.1, 0.12);
+      this.tone(330, 0.5, 'sine', 0.1, 0.24);
+      return;
+    }
+    if (this.pack === 'soundpack-airhorn') {
+      this.tone(150, 0.35, 'sawtooth', 0.18);
+      this.tone(151, 0.35, 'square', 0.13, 0.02);
+      return;
+    }
     this.tone(523, 0.12, 'sine', 0.12);
     this.tone(659, 0.12, 'sine', 0.1, 0.1);
     this.tone(784, 0.18, 'sine', 0.1, 0.2);
   }
   pb(): void {
+    if (this.pack === 'soundpack-8bit') {
+      this.tone(784, 0.06, 'square', 0.1);
+      this.tone(988, 0.06, 'square', 0.1, 0.06);
+      this.tone(1319, 0.06, 'square', 0.1, 0.12);
+      this.tone(1568, 0.1, 'square', 0.1, 0.18);
+      return;
+    }
+    if (this.pack === 'soundpack-cinematic') {
+      this.tone(220, 0.2, 'triangle', 0.13);
+      this.tone(330, 0.2, 'triangle', 0.12, 0.12);
+      this.tone(440, 0.35, 'sine', 0.13, 0.24);
+      this.tone(554, 0.5, 'sine', 0.12, 0.36);
+      return;
+    }
+    if (this.pack === 'soundpack-airhorn') {
+      for (let i = 0; i < 3; i++) this.tone(180 + i * 2, 0.3, 'sawtooth', 0.19, i * 0.28);
+      return;
+    }
     this.tone(660, 0.1, 'sine', 0.13);
     this.tone(880, 0.1, 'sine', 0.12, 0.09);
     this.tone(1108, 0.16, 'sine', 0.12, 0.18);
     this.tone(1318, 0.22, 'sine', 0.12, 0.27);
   }
   achievement(): void {
+    if (this.pack === 'soundpack-8bit') {
+      this.tone(988, 0.06, 'square', 0.1);
+      this.tone(1319, 0.06, 'square', 0.1, 0.06);
+      this.tone(1760, 0.12, 'square', 0.1, 0.12);
+      return;
+    }
+    if (this.pack === 'soundpack-cinematic') {
+      this.tone(392, 0.16, 'triangle', 0.12);
+      this.tone(523, 0.2, 'sine', 0.12, 0.14);
+      this.tone(659, 0.35, 'sine', 0.12, 0.28);
+      return;
+    }
+    if (this.pack === 'soundpack-airhorn') {
+      this.tone(160, 0.4, 'sawtooth', 0.19);
+      this.tone(161, 0.4, 'square', 0.15, 0.03);
+      return;
+    }
     this.tone(784, 0.1, 'triangle', 0.12);
     this.tone(988, 0.1, 'triangle', 0.11, 0.1);
     this.tone(1318, 0.24, 'triangle', 0.12, 0.2);
