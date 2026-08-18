@@ -79,7 +79,7 @@ export const ENEMY_DEFS: Record<EnemyId, EnemyStats> = {
   troll: {
     id: 'troll',
     name: 'Trold',
-    hp: 900,
+    hp: 1350,
     speed: 34,
     radius: 26,
     color: '#5a3d7a',
