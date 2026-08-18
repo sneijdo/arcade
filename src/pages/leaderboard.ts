@@ -4,6 +4,7 @@ import { playerLinkTarget } from './playerProfile';
 import { GAMES } from '../games/registry';
 import { ScoreKinds, formatScore, scoreUnitSuffix } from '../scoring';
 import { isGuestMode } from '../storage';
+import { canAccessEmberWard } from '../games/towerdefense/beta';
 import type { LeaderboardEntry, ScoreKind } from '../types';
 
 let lbGameId = 'reaction';
@@ -13,7 +14,7 @@ let lbView: LbView = 'week';
 export async function renderLeaderboard(gameId?: string): Promise<void> {
   const main = document.getElementById('main')!;
   if (!profile) return;
-  const implementedGames = GAMES.filter((g) => g.implemented);
+  const implementedGames = GAMES.filter((g) => g.implemented && (g.id !== 'towerdefense' || canAccessEmberWard(profile!.name)));
   if (gameId && implementedGames.some((g) => g.id === gameId)) {
     lbGameId = gameId;
     lbView = 'week';

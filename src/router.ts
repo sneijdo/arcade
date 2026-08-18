@@ -1,4 +1,7 @@
 import { Sound } from './sound';
+import { profile } from './state';
+import { toast } from './toast';
+import { canAccessEmberWard } from './games/towerdefense/beta';
 import { renderHome } from './pages/home';
 import { renderGames } from './pages/games';
 import { renderLeaderboard } from './pages/leaderboard';
@@ -39,7 +42,17 @@ export async function navigate(r: string): Promise<void> {
   else if (r === 'shop') await renderShop();
   else if (r === 'guide') renderGuide();
   else if (r === 'kasino') await renderCasino();
-  else if (r.startsWith('play-')) GAME_RENDERERS[r.slice(5)]?.();
+  else if (r.startsWith('play-')) {
+    const gameId = r.slice(5);
+    // Ember Ward is closed-testing (see games/towerdefense/beta.ts) — block direct URL
+    // navigation too, not just hide it from the games grid.
+    if (gameId === 'towerdefense' && !canAccessEmberWard(profile?.name)) {
+      toast('Dette spil er endnu ikke tilgængeligt.');
+      await navigate('home');
+      return;
+    }
+    GAME_RENDERERS[gameId]?.();
+  }
   else if (r.startsWith('player-')) await renderPlayerProfile(r.slice('player-'.length));
   else if (r.startsWith('duel-')) await renderDuelMatch(r.slice('duel-'.length));
 }

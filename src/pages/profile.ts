@@ -9,6 +9,7 @@ import { GAMES } from '../games/registry';
 import { ScoreKinds, formatScore } from '../scoring';
 import { toast } from '../toast';
 import { findTitle, findAvatar, AVATARS, FRAMES, TITLES, SECRET_TITLES } from '../shop';
+import { canAccessEmberWard } from '../games/towerdefense/beta';
 
 export async function renderProfile(): Promise<void> {
   const main = document.getElementById('main')!;
@@ -17,7 +18,7 @@ export async function renderProfile(): Promise<void> {
   const board = await getCombinedLeaderboard('reaction');
   const myEntry = board.find((e) => e.id === profile!.id);
   const rank = myEntry ? board.indexOf(myEntry) + 1 : null;
-  const implementedGames = GAMES.filter((g) => g.implemented);
+  const implementedGames = GAMES.filter((g) => g.implemented && (g.id !== 'towerdefense' || canAccessEmberWard(profile!.name)));
   main.innerHTML = `
     <div class="page">
       <div class="panel">

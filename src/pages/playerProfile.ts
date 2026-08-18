@@ -5,6 +5,7 @@ import { BADGES } from '../badges';
 import { GAMES } from '../games/registry';
 import { ScoreKinds, formatScore } from '../scoring';
 import { findTitle } from '../shop';
+import { canAccessEmberWard } from '../games/towerdefense/beta';
 
 /** Read-only view of another player's public progress — reached by clicking a name on the
  * Leaderboard or Activity page. Pulls entirely from PlayerMeta (see saveProfile in state.ts),
@@ -34,7 +35,7 @@ export async function renderPlayerProfile(id: string): Promise<void> {
   }
 
   const li = levelInfo(meta.xp ?? 0);
-  const implementedGames = GAMES.filter((g) => g.implemented);
+  const implementedGames = GAMES.filter((g) => g.implemented && (g.id !== 'towerdefense' || canAccessEmberWard(profile?.name)));
   const rankIdx = board.findIndex((e) => e.id === id);
   const rank = rankIdx >= 0 ? rankIdx + 1 : null;
   const title = findTitle(meta.title);

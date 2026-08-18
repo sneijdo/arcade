@@ -5,6 +5,7 @@ import { Haptics } from '../../haptics';
 import { Sound } from '../../sound';
 import { toast } from '../../toast';
 import { EmberWardSound } from './audio';
+import { EMBER_WARD_BETA } from './beta';
 import * as hud from './hud';
 import { pathLengthPx, pointAtPathDistance, distanceToPathPx } from './path';
 import { renderTerrain } from './terrain';
@@ -252,6 +253,16 @@ function endRun(): void {
 async function finishSession(): Promise<void> {
   if (!run) return;
   const score = run.wavesCleared;
+
+  if (EMBER_WARD_BETA) {
+    // Closed-test build (see beta.ts): no leaderboard entry, no XP, no activity feed row, no
+    // best-score save — a test run shouldn't touch real stats. Still a full result screen so
+    // testers get real feedback on how their run went.
+    Sound.complete();
+    drawFinalScreen(score, false, 0, null);
+    return;
+  }
+
   const { isNewBest, xpGain, rank } = await finishGameSession('towerdefense', score);
   Sound.complete();
   if (isNewBest) {
@@ -264,6 +275,9 @@ async function finishSession(): Promise<void> {
 function drawFinalScreen(score: number, isNewBest: boolean, xpGain: number, rank: number | null): void {
   const main = document.getElementById('main')!;
   const rating = ScoreKinds.towerdefense_waves.rating(score);
+  const progressHtml = EMBER_WARD_BETA
+    ? '<div class="xp-toast" style="opacity:.75">🧪 Testversion — intet gemmes på leaderboard eller XP</div>'
+    : `${isNewBest ? '<div class="pb-flag">★ NY PERSONLIG REKORD</div>' : ''}<div class="xp-toast">✦ +${xpGain} XP optjent${rank && rank <= 3 ? ' · TOP 3-BONUS' : ''}</div>`;
   main.innerHTML = `
     <div class="page">
       <div class="game-shell">
@@ -271,19 +285,18 @@ function drawFinalScreen(score: number, isNewBest: boolean, xpGain: number, rank
           <div class="final-label">Bølger overlevet</div>
           <div class="final-score">${score}<span style="font-size:26px">bølger</span></div>
           <div class="final-rating" style="color:${rating.color}">${rating.label}</div>
-          ${isNewBest ? '<div class="pb-flag">★ NY PERSONLIG REKORD</div>' : ''}
-          <div class="xp-toast">✦ +${xpGain} XP optjent${rank && rank <= 3 ? ' · TOP 3-BONUS' : ''}</div>
+          ${progressHtml}
 
           <div class="final-stats">
             <div class="fstat"><div class="n">${score}</div><div class="l">Bølger</div></div>
             <div class="fstat"><div class="n">${run?.totalKills ?? 0}</div><div class="l">Nedkæmpet</div></div>
             <div class="fstat"><div class="n">${run?.towers.length ?? 0}</div><div class="l">Tårne</div></div>
-            <div class="fstat"><div class="n">+${xpGain}</div><div class="l">XP optjent</div></div>
+            ${EMBER_WARD_BETA ? '<div class="fstat"><div class="n">🧪</div><div class="l">Test</div></div>' : `<div class="fstat"><div class="n">+${xpGain}</div><div class="l">XP optjent</div></div>`}
           </div>
 
           <div class="final-ctas">
             <button class="btn btn-primary btn-lg" id="playAgainBtn">SPIL IGEN</button>
-            <button class="btn btn-ghost btn-lg" data-nav="leaderboard-towerdefense">LEADERBOARD</button>
+            ${EMBER_WARD_BETA ? '' : '<button class="btn btn-ghost btn-lg" data-nav="leaderboard-towerdefense">LEADERBOARD</button>'}
           </div>
         </div>
       </div>

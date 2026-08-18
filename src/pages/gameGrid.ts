@@ -1,10 +1,12 @@
 import { GAMES } from '../games/registry';
 import { profile, bestScoreForGame } from '../state';
 import { ScoreKinds, formatScore } from '../scoring';
+import { canAccessEmberWard } from '../games/towerdefense/beta';
 
 export function renderGameGrid(container: HTMLElement): void {
   if (!profile) return;
-  container.innerHTML = GAMES.map((g) => {
+  const visibleGames = GAMES.filter((g) => g.id !== 'towerdefense' || canAccessEmberWard(profile!.name));
+  container.innerHTML = visibleGames.map((g) => {
     let bestHtml = 'Kommer snart';
     if (g.implemented) {
       const best = bestScoreForGame(g.id);
