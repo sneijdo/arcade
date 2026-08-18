@@ -1,4 +1,4 @@
-import type { Vec2 } from './types';
+import type { Vec2 } from './vec';
 
 interface Particle {
   x: number;

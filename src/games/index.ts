@@ -17,6 +17,7 @@ import { renderWordRushGame } from './wordrush/wordrush';
 import { renderSwerveGame } from './swerve/swerve';
 import { renderPairsGame } from './pairs/pairs';
 import { renderOddOneOutGame } from './oddoneout/oddoneout';
+import { renderTowerDefenseGame } from './towerdefense/towerdefense';
 
 /** Maps a GAMES registry id to its render function. router.ts dispatches `play-<id>` routes through this. */
 export const GAME_RENDERERS: Record<string, () => void> = {
@@ -39,4 +40,5 @@ export const GAME_RENDERERS: Record<string, () => void> = {
   swerve: renderSwerveGame,
   pairs: renderPairsGame,
   oddoneout: renderOddOneOutGame,
+  towerdefense: renderTowerDefenseGame,
 };

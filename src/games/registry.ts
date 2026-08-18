@@ -197,4 +197,14 @@ export const GAMES: GameDef[] = [
     scoreKind: 'oddoneout_score',
     implemented: true,
   },
+  {
+    id: 'towerdefense',
+    title: 'Ember Ward',
+    category: 'TÅRNFORSVAR',
+    icon: '🔥',
+    iconAsset: '/gameicons/ember-ward.svg',
+    description: 'Byg tårne, sænk horder af goblins, orcer og trolde. Hvor mange bølger holder du?',
+    scoreKind: 'towerdefense_waves',
+    implemented: true,
+  },
 ];

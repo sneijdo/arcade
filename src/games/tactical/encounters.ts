@@ -1,5 +1,5 @@
 import type { EnemyId } from './types';
-import type { ObstacleDef } from './obstacles';
+import type { ObstacleDef } from '../shared/obstacles';
 
 export type RoomTier = 'early' | 'mid' | 'late';
 

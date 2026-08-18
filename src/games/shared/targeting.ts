@@ -1,5 +1,5 @@
-import type { Vec2 } from './types';
-import { vDist } from './types';
+import type { Vec2 } from './vec';
+import { vDist } from './vec';
 
 export interface TargetCandidate {
   id: number;

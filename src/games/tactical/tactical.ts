@@ -20,9 +20,9 @@ import {
 } from './meta';
 import { Player } from './player';
 import { InputController } from './input';
-import { ProjectilePool } from './projectiles';
-import { VfxSystem } from './vfx';
-import { selectTarget, type TargetCandidate } from './targeting';
+import { ProjectilePool } from '../shared/projectiles';
+import { VfxSystem } from '../shared/vfx';
+import { selectTarget, type TargetCandidate } from '../shared/targeting';
 import { WEAPONS, STARTING_WEAPON_ID, listWeapons } from './weapons';
 import { ENEMY_DEFS } from './enemies';
 import { spawnEnemy, updateEnemy, type EnemyInstance } from './enemyRuntime';
@@ -30,7 +30,7 @@ import { spawnBoss, updateBoss, pickBossId, BOSS_NAMES, type BossInstance } from
 import { buildRoomSequence, TOTAL_ROOMS, type EncounterWave } from './encounters';
 import { pickUpgradeChoices } from './upgrades';
 import { makeDefaultBuild, vAngle, vSub, vDist, vNorm, type BuildStats, type EnemyId, type WeaponId } from './types';
-import { toPixelRects, resolveCircleVsObstacles, hasLineOfSight, type ObstacleRect } from './obstacles';
+import { toPixelRects, resolveCircleVsObstacles, hasLineOfSight, type ObstacleRect } from '../shared/obstacles';
 import { BALANCE } from './balance';
 import * as hud from './hud';
 

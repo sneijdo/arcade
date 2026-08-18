@@ -1,0 +1,200 @@
+/* ============================= EMBER WARD (TOWER DEFENSE) ============================= */
+/* Deliberately fire-orange + ice-cyan, no shared classes with tactical.css — the strongest
+   visual/tonal contrast to Breach Protocol's dark sci-fi violet/lime available in the palette. */
+
+.td-shell {
+  --td-fire: #ff8a3d;
+  --td-fire-glow: rgba(255, 138, 61, 0.5);
+  --td-ice: #5cc9ff;
+  --td-ice-glow: rgba(92, 201, 255, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.td-hud-top {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+.td-stat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.td-stat-icon {
+  font-size: 13px;
+}
+#tdGold {
+  color: var(--td-fire);
+  font-weight: 700;
+}
+#tdLives {
+  color: var(--coral);
+  font-weight: 700;
+}
+.td-wave-label {
+  flex: 1;
+  justify-content: flex-end;
+  text-align: right;
+  color: var(--text-faint);
+  letter-spacing: 0.06em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.td-canvas-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  aspect-ratio: 4 / 3;
+  max-height: 62vh;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #0a0710;
+  touch-action: none;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 8px 28px -12px var(--td-fire-glow), inset 0 0 40px rgba(0, 0, 0, 0.5);
+}
+@media (max-width: 560px) {
+  .td-canvas-wrap {
+    aspect-ratio: 3 / 4;
+    max-height: 68vh;
+  }
+}
+#tdCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.td-boss-bar-wrap {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  max-width: 420px;
+  padding: 8px 10px 7px;
+  background: rgba(8, 7, 12, 0.6);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(92, 61, 122, 0.4);
+  border-radius: var(--radius);
+  box-shadow: 0 0 24px -6px rgba(90, 61, 122, 0.6);
+}
+.td-boss-name {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #c9a6ff;
+  margin-bottom: 5px;
+  animation: td-boss-pulse 1.8s ease-in-out infinite;
+}
+@keyframes td-boss-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+.td-boss-bar-track {
+  height: 11px;
+  border-radius: 6px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-2);
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.td-boss-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7a4fa8, #c9a6ff);
+  transition: width 0.15s var(--ease);
+}
+
+.td-bottombar {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.td-bottombar .btn {
+  flex-shrink: 0;
+}
+.td-autostart {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+/* ---- Tower picker modal ---- */
+.td-tower-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 9px;
+}
+.td-tower-card {
+  --td-color: var(--td-fire);
+  background: var(--void-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  touch-action: manipulation;
+  transition: border-color 0.12s var(--ease), transform 0.1s var(--ease);
+}
+.td-tower-card:not(:disabled):active {
+  transform: scale(0.96);
+}
+.td-tower-card:not(:disabled):hover {
+  border-color: var(--td-color);
+  box-shadow: 0 0 16px -6px var(--td-color);
+}
+.td-tower-card:disabled {
+  opacity: 0.4;
+}
+.td-tower-card .icon {
+  font-size: 22px;
+}
+.td-tower-card .name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12.5px;
+}
+.td-tower-card .tagline {
+  font-size: 10px;
+  color: var(--text-faint);
+  line-height: 1.35;
+}
+.td-tower-card .cost {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--td-color);
+  font-weight: 700;
+}
+
+.td-tower-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin-top: 6px;
+}

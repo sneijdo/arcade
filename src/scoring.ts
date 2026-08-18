@@ -255,4 +255,19 @@ export const ScoreKinds: Record<string, ScoreKind> = {
       return { label: 'SKAL ØVES', color: 'var(--coral)' };
     },
   },
+  towerdefense_waves: {
+    direction: 'desc',
+    unit: 'bølger',
+    format: (v) => `${Math.round(v)}`,
+    // Story campaign is 30 waves (see BALANCE.waves.storyWaveCount) — tiers set so clearing the
+    // full campaign lands solidly in FREMRAGENDE and pushing into endless mode is what it takes
+    // to reach SINDSSYGT.
+    rating: (v) => {
+      if (v >= 35) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 25) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 15) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 5) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
 };

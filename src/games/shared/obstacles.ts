@@ -1,4 +1,4 @@
-import type { Vec2 } from './types';
+import type { Vec2 } from './vec';
 
 /** Room data expresses obstacles as fractions (0-1) of arena size so the same room definition works at any canvas size. */
 export interface ObstacleDef {

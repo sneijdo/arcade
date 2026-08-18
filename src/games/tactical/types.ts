@@ -1,30 +1,7 @@
-export interface Vec2 {
-  x: number;
-  y: number;
-}
-
-export function vAdd(a: Vec2, b: Vec2): Vec2 {
-  return { x: a.x + b.x, y: a.y + b.y };
-}
-export function vSub(a: Vec2, b: Vec2): Vec2 {
-  return { x: a.x - b.x, y: a.y - b.y };
-}
-export function vScale(a: Vec2, s: number): Vec2 {
-  return { x: a.x * s, y: a.y * s };
-}
-export function vLen(a: Vec2): number {
-  return Math.hypot(a.x, a.y);
-}
-export function vDist(a: Vec2, b: Vec2): number {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
-export function vNorm(a: Vec2): Vec2 {
-  const len = vLen(a);
-  return len < 1e-6 ? { x: 0, y: 0 } : { x: a.x / len, y: a.y / len };
-}
-export function vAngle(a: Vec2): number {
-  return Math.atan2(a.y, a.x);
-}
+// Vec2 + vector math moved to ../shared/vec.ts (used by every canvas game, not just this one) —
+// re-exported here so tactical.ts's existing `from './types'` imports keep working unchanged.
+export type { Vec2 } from '../shared/vec';
+export { vAdd, vSub, vScale, vLen, vDist, vNorm, vAngle } from '../shared/vec';
 
 export type WeaponId =
   | 'viper_ar'
