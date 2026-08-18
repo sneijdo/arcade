@@ -13,32 +13,37 @@ export const BALANCE = {
     waveClearBaseBonus: 10,
   },
   waves: {
-    /** Hand-authored "story" campaign length before endless scaling takes over — see waves.ts
-     * buildWaveSequence(). Long enough on its own to sustain a 60+ minute session per player ask. */
+    /** Hand-authored campaign length before endless scaling takes over — see waves.ts's
+     * buildStorySequence(). Score (waves survived) is the leaderboard's competitive axis, so this
+     * stays open-ended rather than capped: a solid player clears a good chunk of it in the
+     * 5-10 minute range a quick-round arcade game should hit, and a genuinely great player keeps
+     * pushing into endless mode for a higher score than anyone who stopped at the campaign. */
     storyWaveCount: 30,
-    /** Every Nth wave (1-indexed) is a boss (troll) wave, both in the story campaign and endless. */
+    /** Every Nth wave (1-indexed) is a boss (troll) wave, both in the campaign and endless. */
     bossWaveInterval: 5,
     /** Delay after clearing a wave before the next one auto-starts, if the player doesn't hit
-     * "start wave" early — shortened from 14s so idling between waves isn't free breathing room,
-     * without cutting it so tight that placing a tower becomes a race against the clock. */
-    autoStartDelayS: 11,
+     * "start wave" early — kept short for turbo pacing: enough time to place one tower via the
+     * picker modal, not enough to sit around between waves. */
+    autoStartDelayS: 8,
   },
   scaling: {
-    /** Ramp across the hand-authored story campaign (waves 1..storyWaveCount) — steep enough that
-     * a setup which cleared wave 5 comfortably genuinely struggles by wave 15 if it hasn't kept
-     * investing, not just a token difficulty gesture reserved for endless mode. */
-    storyHpPerWave: 0.075,
-    storySpeedPerWave: 0.01,
-    /** Past the story campaign, growth compounds instead of adding linearly — same lesson as
-     * tactical's roomScaleMults (an uncapped linear ramp plateaus in relative difficulty over a
-     * long endless run; compounding keeps the challenge climbing the whole way). Capped speed
-     * growth so endless enemies get tankier/more numerous rather than literally un-reactable. */
+    /** Ramp across the hand-authored campaign (waves 1..storyWaveCount) — steeper than a long-form
+     * session would strictly need, because the goal isn't "survive 30 waves at a leisurely pace,"
+     * it's "a strong player's run ends from rising difficulty within a turbo-length session," with
+     * endless mode past that as the real skill ceiling for leaderboard competition. */
+    storyHpPerWave: 0.09,
+    storySpeedPerWave: 0.012,
+    /** Past the campaign, growth compounds instead of adding linearly — same lesson as tactical's
+     * roomScaleMults (an uncapped linear ramp plateaus in relative difficulty over a long endless
+     * run; compounding keeps the challenge climbing the whole way, which is what actually makes
+     * "waves survived" a meaningful leaderboard score at the top end). Capped speed growth so
+     * endless enemies get tankier/more numerous rather than literally un-reactable. */
     endlessHpCompound: 1.06,
     endlessSpeedCompound: 1.018,
     endlessSpeedCap: 1.85,
-    /** Gold reward scales well sub-linearly with hp (^0.4, softer than the old sqrt) so a harder
-     * economy increasingly lags harder enemies — surviving late waves takes efficient tower
-     * choices and upgrade timing, not just "the gold adds up eventually." */
+    /** Gold reward scales well sub-linearly with hp (^0.4, softer than a straight sqrt) so a harder
+     * economy increasingly lags enemy toughness — pushing deep into endless mode takes efficient
+     * tower choices and upgrade timing, not just "the gold adds up eventually." */
     goldMultFromHpMult: (hpMult: number) => Math.pow(hpMult, 0.4),
   },
   juice: {

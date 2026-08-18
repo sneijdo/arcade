@@ -259,9 +259,9 @@ export const ScoreKinds: Record<string, ScoreKind> = {
     direction: 'desc',
     unit: 'bølger',
     format: (v) => `${Math.round(v)}`,
-    // Story campaign is 30 waves (see BALANCE.waves.storyWaveCount) — tiers set so clearing the
-    // full campaign lands solidly in FREMRAGENDE and pushing into endless mode is what it takes
-    // to reach SINDSSYGT.
+    // Campaign is 30 waves (see BALANCE.waves.storyWaveCount) — tiers set so clearing the full
+    // campaign lands solidly in FREMRAGENDE and pushing into endless mode is what it takes to
+    // reach SINDSSYGT, keeping the score meaningful as a competitive leaderboard axis at the top.
     rating: (v) => {
       if (v >= 35) return { label: 'SINDSSYGT', color: 'var(--lime)' };
       if (v >= 25) return { label: 'FREMRAGENDE', color: 'var(--violet)' };

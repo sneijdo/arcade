@@ -5,10 +5,9 @@ import { BALANCE } from './balance';
  * Pool of hand-authored wave templates, tagged by tier — mirrors tactical/encounters.ts's
  * ENCOUNTER_POOL + buildRoomSequence pattern exactly: NOT a fixed linear list, drawn into a run's
  * actual sequence by buildStorySequence() below. New waves are pure data, so the pool can keep
- * growing without needing every run to get longer or be manually reordered. This pool (22
- * templates) plus scaleForWave()'s continuous difficulty ramp is what makes a 60+ minute session
- * hold up: the 30-wave story campaign alone already has enough distinct compositions that repeats
- * are rare, and endless mode keeps recombining them under rising scaling instead of running dry.
+ * growing without touching the sequencer — the campaign alone already has enough distinct
+ * compositions that repeats are rare, and endless mode keeps recombining them under rising scaling
+ * once a run gets that far.
  */
 const EARLY_WAVES: WaveTemplate[] = [
   { label: 'Første Bølge', tier: 'early', groups: [{ defId: 'goblin', count: 6 }], spawnIntervalMs: 650, bonusGold: 20 },
@@ -80,10 +79,10 @@ function pickFrom(pool: WaveTemplate[], n: number): WaveTemplate[] {
   return result;
 }
 
-/** Builds one run's full story-campaign wave order (30 waves by default): boss waves land on every
- * Nth slot, and the remaining slots draw from an early/mid/late-weighted pool (35/35/30 split,
- * same ratios as tactical's buildRoomSequence) so difficulty composition — not just raw
- * scaling — ramps across the campaign. Called once per run. */
+/** Builds one run's full campaign wave order (30 waves by default): boss waves land on every Nth
+ * slot, and the remaining slots draw from an early/mid/late-weighted pool (35/35/30 split, same
+ * ratios as tactical's buildRoomSequence) so difficulty composition — not just raw scaling — ramps
+ * across the campaign. Called once per run. */
 export function buildStorySequence(count: number = BALANCE.waves.storyWaveCount): WaveTemplate[] {
   const bossInterval = BALANCE.waves.bossWaveInterval;
   const bossSlots = Math.floor(count / bossInterval);
@@ -107,9 +106,9 @@ export function buildStorySequence(count: number = BALANCE.waves.storyWaveCount)
   return sequence;
 }
 
-/** Endless-mode wave, generated on demand once a run passes the story campaign — boss waves keep
- * landing on the same interval, everything else draws live from the late/mid pool (weighted toward
- * late) so endless mode stays visibly harder in *composition*, not just in scaleForWave()'s numbers. */
+/** Endless-mode wave, generated on demand once a run passes the campaign — boss waves keep landing
+ * on the same interval, everything else draws live from the late/mid pool (weighted toward late)
+ * so endless mode stays visibly harder in *composition*, not just in scaleForWave()'s numbers. */
 function getEndlessWave(waveNumber: number): WaveTemplate {
   const bossInterval = BALANCE.waves.bossWaveInterval;
   if (waveNumber % bossInterval === 0) return bossWaveTemplate(Math.floor(waveNumber / bossInterval));
