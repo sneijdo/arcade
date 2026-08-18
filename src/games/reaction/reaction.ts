@@ -207,6 +207,11 @@ async function finishReactionSession(): Promise<void> {
   while (results.length < REACTION_ROUNDS) results.push(600); // safety fallback, shouldn't normally trigger
   const avg = results.reduce((a, b) => a + b, 0) / results.length;
   const best = Math.min(...results);
+  // bestReaction (luckiest single tap) still drives the "lightning"/"reaction_superhuman"
+  // achievements — those are deliberately about raw reflexes. But the leaderboard/rank/XP
+  // bonus below now key off bestAvg instead: a single lucky round used to be enough to claim
+  // the record, which rewarded mashing for a fluke rather than being consistently fast across
+  // all 5 rounds.
   const isNewBest = profile.bestReaction == null || best < profile.bestReaction;
   const isNewAvgBest = profile.bestAvg == null || avg < profile.bestAvg;
 
@@ -215,12 +220,12 @@ async function finishReactionSession(): Promise<void> {
   if (isNewAvgBest) profile.bestAvg = avg;
   profile.history.unshift({ date: Date.now(), results, avg, best });
   profile.history = profile.history.slice(0, 20);
-  const currentBest = profile.bestReaction; // guaranteed non-null: either just set, or already existed
+  const currentAvg = profile.bestAvg; // guaranteed non-null: either just set, or already existed
   await saveProfile();
-  await pushLeaderboardEntry('reaction', currentBest!);
+  await pushLeaderboardEntry('reaction', currentAvg!);
 
   let xpGain = XP_RULES.complete;
-  if (isNewBest) xpGain += XP_RULES.personalBest;
+  if (isNewAvgBest) xpGain += XP_RULES.personalBest;
   const board = await getCombinedLeaderboard('reaction');
   const myRank = board.findIndex((e) => e.id === profile!.id) + 1;
   if (myRank > 0 && myRank <= 3) xpGain += XP_RULES.top3;
@@ -228,15 +233,15 @@ async function finishReactionSession(): Promise<void> {
   addXp(xpGain);
   await saveProfile();
   refreshHeader();
-  void pushActivity('reaction', best, isNewBest ? 'personal_best' : 'session', profile.name, profile.equippedAvatar, profile.equippedFrame);
+  void pushActivity('reaction', avg, isNewAvgBest ? 'personal_best' : 'session', profile.name, profile.equippedAvatar, profile.equippedFrame);
 
   Sound.complete();
-  if (isNewBest) {
+  if (isNewAvgBest) {
     setTimeout(() => Sound.pb(), 250);
     Haptics.personalBest();
   }
 
-  drawFinalScreen(results, avg, best, isNewBest, xpGain, myRank);
+  drawFinalScreen(results, avg, best, isNewAvgBest, xpGain, myRank);
 
   // Streak/daily-challenge/achievements are toast-driven bonuses, not needed
   // to paint the result screen above — settle them in the background so the

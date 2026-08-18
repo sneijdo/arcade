@@ -42,7 +42,7 @@ export async function renderPlayerProfile(id: string): Promise<void> {
   const unlockedBadges = meta.unlockedBadges ?? [];
   const bestScores = meta.bestScores ?? {};
 
-  const bestForGame = (gameId: string): number | null => (gameId === 'reaction' ? (meta.bestReaction ?? null) : (bestScores[gameId] ?? null));
+  const bestForGame = (gameId: string): number | null => (gameId === 'reaction' ? (meta.bestAvg ?? null) : (bestScores[gameId] ?? null));
 
   container.innerHTML = `
     <div class="page">

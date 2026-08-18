@@ -143,6 +143,7 @@ export interface PlayerMeta {
   frame: string | null;
   xp?: number;
   bestReaction?: number | null;
+  bestAvg?: number | null;
   bestScores?: Record<string, number>;
   sessionsPlayed?: number;
   currentStreak?: number;

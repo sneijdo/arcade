@@ -112,6 +112,7 @@ export async function saveProfile(): Promise<void> {
     frame: profile.equippedFrame,
     xp: profile.xp,
     bestReaction: profile.bestReaction,
+    bestAvg: profile.bestAvg,
     bestScores: profile.bestScores,
     sessionsPlayed: profile.sessionsPlayed,
     currentStreak: profile.currentStreak,
@@ -132,7 +133,10 @@ export function clearProfile(): void {
 
 export function bestScoreForGame(gameId: string): number | null {
   if (!profile) return null;
-  if (gameId === 'reaction') return profile.bestReaction;
+  // The reaction leaderboard ranks by average-of-5, not luckiest single tap (see
+  // finishReactionSession in reaction.ts) — this mirrors that so "your best" shown
+  // on the profile/game-grid matches what actually determines your rank.
+  if (gameId === 'reaction') return profile.bestAvg;
   return profile.bestScores[gameId] ?? null;
 }
 
