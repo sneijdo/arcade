@@ -42,7 +42,6 @@ export interface TowerDef {
 export interface TowerInstance {
   id: number;
   defId: TowerId;
-  slotId: string;
   pos: Vec2;
   tier: 1 | 2 | 3;
   cooldownRemaining: number;

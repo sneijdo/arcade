@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="ftCore" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#e6f9ff"/>
+      <stop offset="55%" stop-color="#5cc9ff"/>
+      <stop offset="100%" stop-color="#1f6f9c"/>
+    </radialGradient>
+    <linearGradient id="ftIce" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#bfe9ff"/>
+      <stop offset="100%" stop-color="#3a7ba0"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="50" cy="94" rx="24" ry="5" fill="#000" opacity="0.35"/>
+  <polygon points="32,95 68,95 60,60 40,60" fill="url(#ftIce)" stroke="#1a1024" stroke-width="3" stroke-linejoin="round"/>
+  <polygon points="24,64 76,60 66,40 34,42" fill="#8fd4f2" stroke="#1a1024" stroke-width="2.5" stroke-linejoin="round" opacity="0.9"/>
+  <polygon points="34,42 66,40 60,60 40,60" fill="#3a7ba0" opacity="0.5"/>
+  <polygon points="50,2 62,42 38,42" fill="#bfe9ff" stroke="#1a1024" stroke-width="3" stroke-linejoin="round"/>
+  <polygon points="50,2 62,42 52,42 50,14" fill="#e6f9ff" opacity="0.7"/>
+  <polygon points="26,30 38,44 22,42" fill="#a8dff2" stroke="#1a1024" stroke-width="2" stroke-linejoin="round"/>
+  <polygon points="74,30 62,44 78,42" fill="#a8dff2" stroke="#1a1024" stroke-width="2" stroke-linejoin="round"/>
+  <polygon points="18,50 28,58 16,60" fill="#8fd4f2" stroke="#1a1024" stroke-width="1.8" stroke-linejoin="round"/>
+  <polygon points="82,50 72,58 84,60" fill="#8fd4f2" stroke="#1a1024" stroke-width="1.8" stroke-linejoin="round"/>
+  <circle cx="50" cy="46" r="10" fill="url(#ftCore)" stroke="#1f6f9c" stroke-width="1.5"/>
+  <circle cx="50" cy="46" r="15" fill="#5cc9ff" opacity="0.18"/>
+  <circle cx="38" cy="20" r="2.4" fill="#e6f9ff" opacity="0.85"/>
+  <circle cx="64" cy="26" r="1.8" fill="#e6f9ff" opacity="0.75"/>
+  <circle cx="30" cy="36" r="1.6" fill="#e6f9ff" opacity="0.7"/>
+</svg>

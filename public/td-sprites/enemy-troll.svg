@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="trollEye" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#f0d8ff"/>
+      <stop offset="100%" stop-color="#a374e0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="50" cy="95" rx="26" ry="4" fill="#000" opacity="0.4"/>
+  <polygon points="32,76 44,76 42,94 28,94" fill="#4a3568" stroke="#150d1f" stroke-width="3" stroke-linejoin="round"/>
+  <polygon points="56,76 68,76 72,94 58,94" fill="#4a3568" stroke="#150d1f" stroke-width="3" stroke-linejoin="round"/>
+  <polygon points="10,10 22,4 26,44 14,66 4,58" fill="#6b4a2f" stroke="#150d1f" stroke-width="3" stroke-linejoin="round"/>
+  <ellipse cx="14" cy="12" rx="9" ry="7" fill="#7a5636" stroke="#150d1f" stroke-width="2.5"/>
+  <polygon points="18,40 88,36 84,80 24,84" fill="#5a3d7a" stroke="#150d1f" stroke-width="3.5" stroke-linejoin="round"/>
+  <polygon points="52,38 88,36 84,80 56,82" fill="#3d2a54" opacity="0.55"/>
+  <circle cx="30" cy="52" r="3" fill="#3d2a54"/>
+  <circle cx="66" cy="48" r="2.6" fill="#3d2a54"/>
+  <circle cx="46" cy="66" r="2.8" fill="#3d2a54"/>
+  <circle cx="70" cy="66" r="2.4" fill="#3d2a54"/>
+  <polygon points="20,44 4,54 8,74 22,72" fill="#6b4a8a" stroke="#150d1f" stroke-width="3" stroke-linejoin="round"/>
+  <polygon points="86,40 100,48 96,66 82,64" fill="#6b4a8a" stroke="#150d1f" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="52" cy="20" r="20" fill="#6b4a8a" stroke="#150d1f" stroke-width="3.5"/>
+  <ellipse cx="61" cy="26" rx="11" ry="13" fill="#5a3d7a" opacity="0.5"/>
+  <polygon points="30,10 22,-4 38,6" fill="#5a3d7a" stroke="#150d1f" stroke-width="2" stroke-linejoin="round"/>
+  <polygon points="72,10 80,-4 66,6" fill="#5a3d7a" stroke="#150d1f" stroke-width="2" stroke-linejoin="round"/>
+  <ellipse cx="44" cy="20" rx="5.5" ry="4.6" fill="url(#trollEye)" stroke="#150d1f" stroke-width="1.5"/>
+  <ellipse cx="60" cy="20" rx="5.5" ry="4.6" fill="url(#trollEye)" stroke="#150d1f" stroke-width="1.5"/>
+  <circle cx="44" cy="20" r="1.8" fill="#2a1740"/>
+  <circle cx="60" cy="20" r="1.8" fill="#2a1740"/>
+  <ellipse cx="52" cy="27" rx="4" ry="3" fill="#4a3568"/>
+  <polygon points="40,32 64,32 58,40 46,40" fill="#2a1740" stroke="#150d1f" stroke-width="2" stroke-linejoin="round"/>
+  <polygon points="42,30 47,30 44,39" fill="#f2ecd8" stroke="#150d1f" stroke-width="1"/>
+  <polygon points="62,30 57,30 60,39" fill="#f2ecd8" stroke="#150d1f" stroke-width="1"/>
+</svg>

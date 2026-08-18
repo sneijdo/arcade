@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="shamanOrb" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#e8ffb0"/>
+      <stop offset="55%" stop-color="#9ae04a"/>
+      <stop offset="100%" stop-color="#5a9a28"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="50" cy="92" rx="17" ry="4" fill="#000" opacity="0.3"/>
+  <ellipse cx="42" cy="90" rx="20" ry="6" fill="none" stroke="#9ae04a" stroke-width="1.6" opacity="0.55"/>
+  <polygon points="38,70 44,70 42,88 34,88" fill="#8fc23a" stroke="#1a1024" stroke-width="2" stroke-linejoin="round"/>
+  <polygon points="54,70 60,70 64,88 56,88" fill="#8fc23a" stroke="#1a1024" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="76" y="10" width="4" height="80" fill="#5a4028" stroke="#1a1024" stroke-width="1.5"/>
+  <circle cx="78" cy="10" r="9" fill="url(#shamanOrb)" stroke="#3a6a1a" stroke-width="1.5"/>
+  <polygon points="31,70 27,46 38,36 60,36 69,46 66,70" fill="#b8f04d" stroke="#1a1024" stroke-width="2.5" stroke-linejoin="round"/>
+  <polygon points="49,38 60,36 69,46 66,70 54,70 54,44" fill="#8fc23a" opacity="0.55"/>
+  <polygon points="34,64 66,64 62,74 38,74" fill="#5a4028" stroke="#1a1024" stroke-width="1.5" stroke-linejoin="round"/>
+  <circle cx="42" cy="69" r="2" fill="#f2ecd8"/>
+  <circle cx="50" cy="71" r="2" fill="#f2ecd8"/>
+  <circle cx="58" cy="69" r="2" fill="#f2ecd8"/>
+  <polygon points="66,55 78,50 76,60 65,62" fill="#a3d456" stroke="#1a1024" stroke-width="2" stroke-linejoin="round"/>
+  <polygon points="31,56 20,52 21,62 32,63" fill="#a3d456" stroke="#1a1024" stroke-width="2" stroke-linejoin="round"/>
+  <polygon points="33,24 16,16 28,32" fill="#8fc23a" stroke="#1a1024" stroke-width="2" stroke-linejoin="round"/>
+  <polygon points="67,24 84,16 72,32" fill="#8fc23a" stroke="#1a1024" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="50" cy="26" r="14.5" fill="#a3d456" stroke="#1a1024" stroke-width="2.5"/>
+  <ellipse cx="57" cy="30" rx="8" ry="10" fill="#8fc23a" opacity="0.5"/>
+  <path d="M32,16 Q50,-4 68,16 Q64,8 50,6 Q36,8 32,16 Z" fill="#f2ecd8" stroke="#1a1024" stroke-width="2" stroke-linejoin="round"/>
+  <polygon points="40,7 43,-2 46,7" fill="#f2ecd8" stroke="#1a1024" stroke-width="1.5" stroke-linejoin="round"/>
+  <polygon points="54,7 57,-2 60,7" fill="#f2ecd8" stroke="#1a1024" stroke-width="1.5" stroke-linejoin="round"/>
+  <circle cx="34" cy="14" r="2.6" fill="#f2ecd8" stroke="#1a1024" stroke-width="1"/>
+  <circle cx="66" cy="14" r="2.6" fill="#f2ecd8" stroke="#1a1024" stroke-width="1"/>
+  <ellipse cx="44" cy="26" rx="4" ry="5" fill="#0d1a08"/>
+  <ellipse cx="56" cy="26" rx="4" ry="5" fill="#0d1a08"/>
+  <circle cx="44" cy="26" r="1.8" fill="#c7ff6b"/>
+  <circle cx="56" cy="26" r="1.8" fill="#c7ff6b"/>
+  <ellipse cx="50" cy="32" rx="2" ry="1.6" fill="#5a9a28"/>
+  <polygon points="45,36 55,36 51,40 49,40" fill="#1a1024"/>
+</svg>

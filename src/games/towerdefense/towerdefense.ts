@@ -3,9 +3,12 @@ import { wireGameChrome } from '../../gameChrome';
 import { ScoreKinds } from '../../scoring';
 import { Haptics } from '../../haptics';
 import { Sound } from '../../sound';
+import { toast } from '../../toast';
 import { EmberWardSound } from './audio';
 import * as hud from './hud';
-import { PATH_WAYPOINTS, BUILD_SLOTS, pathLengthPx, pointAtPathDistance, type BuildSlot } from './path';
+import { pathLengthPx, pointAtPathDistance, distanceToPathPx } from './path';
+import { renderTerrain } from './terrain';
+import { getTowerSprite, getEnemySprite, isSpriteReady, preloadSprites } from './sprites';
 import { TOWER_DEFS, listTowers } from './towers';
 import { ENEMY_DEFS } from './enemies';
 import { spawnEnemy, updateEnemyMovement, applyEnemyDamage, applySlow } from './enemyRuntime';
@@ -13,7 +16,22 @@ import { buildStorySequence, getWaveTemplate, scaleForWave, type WaveScale } fro
 import { BALANCE } from './balance';
 import { spawnProjectile, updateProjectiles, resolveChainTargets, type TdProjectile, type ZapEffect } from './combat';
 import { VfxSystem } from '../shared/vfx';
+import type { Vec2 } from '../shared/vec';
 import type { EnemyInstance, TowerInstance, TowerId, WaveTemplate, SpawnTicket } from './types';
+
+/** Minimum gap (px) a new tower must keep from the road centerline — derived from the road's own
+ * rendered width (see terrain.ts's drawRoad) plus a fixed clearance, so towers never blot out the
+ * path itself no matter the arena size. */
+function pathClearancePx(arenaW: number): number {
+  const roadHalfWidth = Math.max(20, arenaW * 0.04) / 2;
+  return roadHalfWidth + 22;
+}
+
+/** Minimum gap (px) between two tower centers — just enough that placed towers don't visually
+ * overlap; free placement is otherwise unrestricted (see the user ask: fixed build slots "take
+ * some of the game away"). */
+const MIN_TOWER_SPACING_PX = 34;
+const PLACEMENT_EDGE_MARGIN_PX = 20;
 
 type RunPhase = 'intro' | 'playing' | 'gameover';
 
@@ -42,6 +60,8 @@ interface RunState {
   bossMaxHpSeen: number;
   canvas: HTMLCanvasElement | null;
   ctx: CanvasRenderingContext2D | null;
+  bgCanvas: HTMLCanvasElement | null;
+  bgCtx: CanvasRenderingContext2D | null;
   rafId: number | null;
   lastTime: number;
 }
@@ -74,6 +94,8 @@ function makeRunState(): RunState {
     bossMaxHpSeen: 0,
     canvas: null,
     ctx: null,
+    bgCanvas: null,
+    bgCtx: null,
     rafId: null,
     lastTime: 0,
   };
@@ -82,6 +104,7 @@ function makeRunState(): RunState {
 export function renderTowerDefenseGame(): void {
   if (run?.rafId != null) cancelAnimationFrame(run.rafId);
   window.removeEventListener('resize', resizeCanvas);
+  preloadSprites();
   run = makeRunState();
   const main = document.getElementById('main')!;
   hud.renderShell(main);
@@ -89,6 +112,8 @@ export function renderTowerDefenseGame(): void {
   const canvas = document.getElementById('tdCanvas') as HTMLCanvasElement;
   run.canvas = canvas;
   run.ctx = canvas.getContext('2d');
+  run.bgCanvas = document.createElement('canvas');
+  run.bgCtx = run.bgCanvas.getContext('2d');
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
   canvas.addEventListener('pointerdown', handleCanvasPointerDown);
@@ -119,6 +144,15 @@ function resizeCanvas(): void {
   run.arenaH = rect.height;
   run.pathLenPx = pathLengthPx(run.arenaW, run.arenaH);
   run.ctx?.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // Static map layer (ground texture, road, scenery, spawn cave, gate keep) is expensive to
+  // redraw at 60fps and never changes between resizes — render it once here into an offscreen
+  // canvas at 1:1 CSS-pixel resolution, then render() just blits it every frame.
+  if (run.bgCanvas && run.bgCtx) {
+    run.bgCanvas.width = Math.round(run.arenaW);
+    run.bgCanvas.height = Math.round(run.arenaH);
+    renderTerrain(run.bgCtx, run.arenaW, run.arenaH);
+  }
 }
 
 // ---- Wave lifecycle ----------------------------------------------------
@@ -459,23 +493,43 @@ function handleCanvasPointerDown(e: PointerEvent): void {
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
 
-  const hitTower = run.towers.find((t) => Math.hypot(t.pos.x - x, t.pos.y - y) <= 20);
+  const hitTower = run.towers.find((t) => Math.hypot(t.pos.x - x, t.pos.y - y) <= 22);
   if (hitTower) {
     openTowerInfo(hitTower);
     return;
   }
 
-  const hitSlot = BUILD_SLOTS.find((s) => {
-    const px = s.pos.x * run!.arenaW;
-    const py = s.pos.y * run!.arenaH;
-    return Math.hypot(px - x, py - y) <= 22;
-  });
-  if (hitSlot && !run.towers.some((t) => t.slotId === hitSlot.id)) {
-    openTowerPicker(hitSlot);
-  }
+  tryPlaceAt({ x, y });
 }
 
-function openTowerPicker(slot: BuildSlot): void {
+/**
+ * Free placement (no pre-baked build slots — a fixed grid of spots was flagged as taking choice
+ * out of the game): any point clears three checks — inside the arena with a margin, far enough
+ * from the road (see pathClearancePx), and far enough from every other tower — opens the picker
+ * right there. An invalid tap gets a toast + a miss cue instead of silently doing nothing, so it
+ * reads as "no, not there" rather than "nothing happened."
+ */
+function tryPlaceAt(pos: Vec2): void {
+  if (!run) return;
+  if (pos.x < PLACEMENT_EDGE_MARGIN_PX || pos.x > run.arenaW - PLACEMENT_EDGE_MARGIN_PX || pos.y < PLACEMENT_EDGE_MARGIN_PX || pos.y > run.arenaH - PLACEMENT_EDGE_MARGIN_PX) {
+    Sound.mistake();
+    toast('For tæt på kanten af banen');
+    return;
+  }
+  if (distanceToPathPx(pos, run.arenaW, run.arenaH) < pathClearancePx(run.arenaW)) {
+    Sound.mistake();
+    toast('For tæt på stien — fjendene skal kunne gå frit');
+    return;
+  }
+  if (run.towers.some((t) => Math.hypot(t.pos.x - pos.x, t.pos.y - pos.y) < MIN_TOWER_SPACING_PX)) {
+    Sound.mistake();
+    toast('For tæt på et andet tårn');
+    return;
+  }
+  openTowerPicker(pos);
+}
+
+function openTowerPicker(pos: Vec2): void {
   if (!run) return;
   Sound.click();
   hud.showTowerPickerModal(listTowers(), run.gold, (towerId: TowerId) => {
@@ -488,8 +542,7 @@ function openTowerPicker(slot: BuildSlot): void {
     run.towers.push({
       id: run.nextTowerId++,
       defId: towerId,
-      slotId: slot.id,
-      pos: { x: slot.pos.x * run.arenaW, y: slot.pos.y * run.arenaH },
+      pos: { ...pos },
       tier: 1,
       cooldownRemaining: 0,
       totalDamageDealt: 0,
@@ -535,48 +588,38 @@ function openTowerInfo(tower: TowerInstance): void {
 
 // ---- Render ---------------------------------------------------------------
 
-function drawEnemyShape(ctx: CanvasRenderingContext2D, e: EnemyInstance): void {
+function drawEnemySprite(ctx: CanvasRenderingContext2D, e: EnemyInstance): void {
   const def = ENEMY_DEFS[e.defId];
-  const r = def.radius;
-  ctx.fillStyle = e.hitFlash > 0 ? '#ffffff' : e.slowFactor < 1 ? '#8fd9ff' : def.color;
-  ctx.beginPath();
-  switch (def.shape) {
-    case 'triangle':
-      ctx.moveTo(e.pos.x, e.pos.y - r);
-      ctx.lineTo(e.pos.x + r, e.pos.y + r * 0.8);
-      ctx.lineTo(e.pos.x - r, e.pos.y + r * 0.8);
-      ctx.closePath();
-      break;
-    case 'diamond':
-      ctx.moveTo(e.pos.x, e.pos.y - r);
-      ctx.lineTo(e.pos.x + r, e.pos.y);
-      ctx.lineTo(e.pos.x, e.pos.y + r);
-      ctx.lineTo(e.pos.x - r, e.pos.y);
-      ctx.closePath();
-      break;
-    case 'hex':
-      for (let i = 0; i < 6; i++) {
-        const a = (Math.PI / 3) * i - Math.PI / 6;
-        const px = e.pos.x + Math.cos(a) * r;
-        const py = e.pos.y + Math.sin(a) * r;
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      break;
-    default:
-      ctx.arc(e.pos.x, e.pos.y, r, 0, Math.PI * 2);
-  }
-  ctx.fill();
+  const img = getEnemySprite(e.defId);
+  const size = def.radius * 2.7;
+
   if (def.isBoss) {
-    ctx.strokeStyle = '#ffd23f';
+    ctx.strokeStyle = 'rgba(255,210,63,.6)';
     ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(e.pos.x, e.pos.y, size / 2 + 3, 0, Math.PI * 2);
     ctx.stroke();
   }
 
+  if (isSpriteReady(img)) {
+    ctx.save();
+    ctx.drawImage(img, e.pos.x - size / 2, e.pos.y - size / 2, size, size);
+    if (e.hitFlash > 0 || e.slowFactor < 1) {
+      ctx.globalCompositeOperation = 'source-atop';
+      ctx.fillStyle = e.hitFlash > 0 ? 'rgba(255,255,255,.55)' : 'rgba(140,220,255,.35)';
+      ctx.fillRect(e.pos.x - size / 2, e.pos.y - size / 2, size, size);
+    }
+    ctx.restore();
+  } else {
+    ctx.fillStyle = def.color;
+    ctx.beginPath();
+    ctx.arc(e.pos.x, e.pos.y, def.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   // hp bar
-  const barW = r * 2.2;
-  const barY = e.pos.y - r - 9;
+  const barW = def.radius * 2.2;
+  const barY = e.pos.y - size / 2 - 8;
   ctx.fillStyle = 'rgba(0,0,0,.5)';
   ctx.fillRect(e.pos.x - barW / 2, barY, barW, 4);
   ctx.fillStyle = '#c9f73e';
@@ -589,96 +632,64 @@ function drawEnemyShape(ctx: CanvasRenderingContext2D, e: EnemyInstance): void {
   }
 }
 
+function drawTowerSprite(ctx: CanvasRenderingContext2D, t: TowerInstance): void {
+  const def = TOWER_DEFS[t.defId];
+  const img = getTowerSprite(t.defId);
+  const pulse = t.placeFlash > 0 ? 1 + (t.placeFlash / BALANCE.juice.placeFlashS) * 0.25 : 1;
+  const size = 48 * pulse;
+
+  if (def.id === 'obelisk') {
+    const stats = def.tiers[t.tier - 1];
+    ctx.strokeStyle = 'rgba(255,210,63,.22)';
+    ctx.setLineDash([4, 5]);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(t.pos.x, t.pos.y, stats.auraRadius ?? 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Bottom-anchored: the sprite's own ground shadow sits near the bottom of its 100x100 frame, so
+  // drawing with its bottom edge at t.pos (not centered) makes the tower look planted on the spot
+  // the player tapped, not floating around it.
+  if (isSpriteReady(img)) {
+    ctx.drawImage(img, t.pos.x - size / 2, t.pos.y - size, size, size);
+  } else {
+    ctx.fillStyle = def.color;
+    ctx.beginPath();
+    ctx.arc(t.pos.x, t.pos.y - size * 0.3, 16, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (t.tier > 1) {
+    const bx = t.pos.x + size * 0.28;
+    const by = t.pos.y - size * 0.92;
+    ctx.fillStyle = '#ffd23f';
+    ctx.beginPath();
+    ctx.arc(bx, by, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#1a1024';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.font = 'bold 10px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#1a1024';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${t.tier}`, bx, by + 1);
+    ctx.textBaseline = 'alphabetic';
+  }
+}
+
 function render(): void {
   if (!run?.ctx || !run.canvas) return;
   const ctx = run.ctx;
   const r = run;
   ctx.clearRect(0, 0, r.arenaW, r.arenaH);
 
-  // background
-  const grad = ctx.createLinearGradient(0, 0, 0, r.arenaH);
-  grad.addColorStop(0, '#1a1024');
-  grad.addColorStop(1, '#100a18');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, r.arenaW, r.arenaH);
+  if (r.bgCanvas) ctx.drawImage(r.bgCanvas, 0, 0);
 
-  // path
-  ctx.strokeStyle = 'rgba(255,138,61,.18)';
-  ctx.lineWidth = Math.max(18, r.arenaW * 0.035);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.beginPath();
-  PATH_WAYPOINTS.forEach((wp, i) => {
-    const x = wp.x * r.arenaW;
-    const y = wp.y * r.arenaH;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-  ctx.stroke();
-  ctx.strokeStyle = 'rgba(255,210,63,.35)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // gate + spawn markers
-  const spawn = PATH_WAYPOINTS[0];
-  const gate = PATH_WAYPOINTS[PATH_WAYPOINTS.length - 1];
-  ctx.fillStyle = '#8b6bff';
-  ctx.beginPath();
-  ctx.arc(spawn.x * r.arenaW, spawn.y * r.arenaH, 10, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#ff5d7a';
-  ctx.beginPath();
-  ctx.arc(gate.x * r.arenaW, gate.y * r.arenaH, 12, 0, Math.PI * 2);
-  ctx.fill();
-
-  // build slots
-  for (const slot of BUILD_SLOTS) {
-    const occupied = r.towers.some((t) => t.slotId === slot.id);
-    if (occupied) continue;
-    const x = slot.pos.x * r.arenaW;
-    const y = slot.pos.y * r.arenaH;
-    ctx.strokeStyle = 'rgba(255,255,255,.25)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(x, y, 14, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  // towers
-  for (const t of r.towers) {
-    const def = TOWER_DEFS[t.defId];
-    const pulse = t.placeFlash > 0 ? 1 + (t.placeFlash / BALANCE.juice.placeFlashS) * 0.4 : 1;
-    if (def.id === 'obelisk') {
-      const stats = def.tiers[t.tier - 1];
-      ctx.strokeStyle = 'rgba(255,210,63,.25)';
-      ctx.setLineDash([4, 5]);
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(t.pos.x, t.pos.y, stats.auraRadius ?? 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-    ctx.fillStyle = def.color;
-    ctx.beginPath();
-    ctx.arc(t.pos.x, t.pos.y, 16 * pulse, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,.4)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    ctx.font = '16px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(def.icon, t.pos.x, t.pos.y + 1);
-    if (t.tier > 1) {
-      ctx.font = 'bold 9px "JetBrains Mono", monospace';
-      ctx.fillStyle = '#0d0a14';
-      ctx.fillText(`${t.tier}`, t.pos.x + 11, t.pos.y - 11);
-    }
-  }
-  ctx.textBaseline = 'alphabetic';
-
-  // enemies
-  for (const e of r.enemies) drawEnemyShape(ctx, e);
+  for (const t of r.towers) drawTowerSprite(ctx, t);
+  for (const e of r.enemies) drawEnemySprite(ctx, e);
 
   // projectiles
   for (const p of r.projectiles) {

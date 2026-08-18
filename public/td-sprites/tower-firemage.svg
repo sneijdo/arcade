@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="fmOrb" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#fff3c4"/>
+      <stop offset="45%" stop-color="#ffd23f"/>
+      <stop offset="100%" stop-color="#ff8a3d"/>
+    </radialGradient>
+    <linearGradient id="fmStone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7a6a5a"/>
+      <stop offset="100%" stop-color="#4a3d33"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="50" cy="94" rx="24" ry="5" fill="#000" opacity="0.35"/>
+  <polygon points="30,95 70,95 63,54 37,54" fill="url(#fmStone)" stroke="#1a1024" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="33" y="80" width="34" height="5" fill="#352b23" opacity="0.6"/>
+  <rect x="35" y="67" width="30" height="5" fill="#352b23" opacity="0.6"/>
+  <polygon points="44,88 56,88 54,74 46,74" fill="#2a2019" stroke="#1a1024" stroke-width="1.5"/>
+  <polygon points="37,54 63,54 66,44 34,44" fill="#8a7a68" stroke="#1a1024" stroke-width="2.5" stroke-linejoin="round"/>
+  <polygon points="50,20 33,58 67,58" fill="#c94f1f" stroke="#1a1024" stroke-width="3" stroke-linejoin="round"/>
+  <polygon points="50,20 67,58 58,58 50,30" fill="#e0682f" opacity="0.6"/>
+  <rect x="40" y="46" width="20" height="7" fill="#8a3018" stroke="#1a1024" stroke-width="1.5"/>
+  <polygon points="33,40 24,50 32,54 40,44" fill="#ff8a3d" stroke="#1a1024" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="66" y="8" width="4" height="42" fill="#5a4028" stroke="#1a1024" stroke-width="1.5" transform="rotate(6 68 29)"/>
+  <circle cx="71" cy="10" r="9" fill="url(#fmOrb)" stroke="#c94f1f" stroke-width="1.5"/>
+  <polygon points="71,-2 75,8 71,4 67,8" fill="#ffd23f" opacity="0.85"/>
+  <circle cx="50" cy="15" r="9" fill="#2a1f38" stroke="#1a1024" stroke-width="2.5"/>
+  <circle cx="47" cy="15" r="1.6" fill="#ff8a3d"/>
+  <circle cx="53" cy="15" r="1.6" fill="#ff8a3d"/>
+  <polygon points="50,-4 39,15 61,15" fill="#3d2a4a" stroke="#1a1024" stroke-width="2.5" stroke-linejoin="round"/>
+  <polygon points="50,-4 61,15 55,15 50,4" fill="#503a60" opacity="0.7"/>
+  <ellipse cx="50" cy="16" rx="14" ry="3" fill="#c94f1f" stroke="#1a1024" stroke-width="1.5"/>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="lgGlow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#f6ecff"/>
+      <stop offset="60%" stop-color="#c9a6ff"/>
+      <stop offset="100%" stop-color="#7a4fd8"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="50" cy="94" rx="22" ry="5" fill="#000" opacity="0.35"/>
+  <polygon points="30,95 38,50 34,95" fill="#5a4028" stroke="#1a1024" stroke-width="2" stroke-linejoin="round"/>
+  <polygon points="70,95 62,50 66,95" fill="#5a4028" stroke="#1a1024" stroke-width="2" stroke-linejoin="round"/>
+  <line x1="32" y1="72" x2="68" y2="72" stroke="#6b4a2f" stroke-width="4"/>
+  <line x1="30" y1="88" x2="70" y2="88" stroke="#6b4a2f" stroke-width="4"/>
+  <polygon points="24,50 76,50 70,58 30,58" fill="#8a6a45" stroke="#1a1024" stroke-width="2.5" stroke-linejoin="round"/>
+  <polygon points="30,58 70,58 70,64 30,64" fill="#6b4a2f" stroke="#1a1024" stroke-width="1.5"/>
+  <polygon points="40,58 32,20 30,58" fill="#4a3320" stroke="#1a1024" stroke-width="1.5"/>
+  <polygon points="60,58 68,20 70,58" fill="#4a3320" stroke="#1a1024" stroke-width="1.5"/>
+  <polygon points="30,20 70,20 66,26 34,26" fill="#6b4a2f" stroke="#1a1024" stroke-width="2" stroke-linejoin="round"/>
+  <polygon points="44,58 40,40 48,36 52,58" fill="#7a5a3d" stroke="#1a1024" stroke-width="2.5" stroke-linejoin="round"/>
+  <circle cx="46" cy="30" r="7" fill="#8a6a4a" stroke="#1a1024" stroke-width="2.5"/>
+  <path d="M32,42 Q46,26 60,42" fill="none" stroke="#5a4028" stroke-width="3" stroke-linecap="round"/>
+  <line x1="32" y1="42" x2="60" y2="42" stroke="#c9a6ff" stroke-width="1.4"/>
+  <polygon points="44,42 50,32 46,42 52,42 44,54 48,44" fill="#ffd23f" stroke="#7a4fd8" stroke-width="1" stroke-linejoin="round"/>
+  <circle cx="46" cy="42" r="12" fill="url(#lgGlow)" opacity="0.28"/>
+  <circle cx="34" cy="18" r="3" fill="#e6d4ff" opacity="0.8"/>
+  <circle cx="60" cy="14" r="2.2" fill="#e6d4ff" opacity="0.7"/>
+</svg>

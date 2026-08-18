@@ -169,8 +169,11 @@
 .td-tower-card:disabled {
   opacity: 0.4;
 }
-.td-tower-card .icon {
-  font-size: 22px;
+.td-tower-card-art {
+  width: 100%;
+  height: 64px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
 }
 .td-tower-card .name {
   font-family: var(--font-display);

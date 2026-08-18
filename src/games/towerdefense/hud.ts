@@ -1,5 +1,6 @@
 import type { TowerDef, TowerId, TowerInstance } from './types';
 import { gameUtilBarHtml } from '../../gameChrome';
+import { towerSpritePath } from './sprites';
 
 export function renderShell(main: HTMLElement): void {
   main.innerHTML = `
@@ -88,8 +89,8 @@ export function showTowerPickerModal(towers: TowerDef[], gold: number, onPick: (
             const afford = gold >= cost;
             return `
           <button class="td-tower-card" data-tower="${t.id}" style="--td-color:${t.color}" ${afford ? '' : 'disabled'}>
-            <div class="icon">${t.icon}</div>
-            <div class="name">${t.name}</div>
+            <img class="td-tower-card-art" src="${towerSpritePath(t.id)}" alt="" />
+            <div class="name">${t.icon} ${t.name}</div>
             <div class="tagline">${t.tagline}</div>
             <div class="cost">💰 ${cost}</div>
           </button>
@@ -130,8 +131,13 @@ export function showTowerInfoModal(
   const afford = nextTier ? gold >= nextTier.cost : false;
   backdrop.innerHTML = `
     <div class="modal" style="max-width:420px" role="dialog" aria-modal="true" aria-labelledby="towerInfoTitle">
-      <div class="hero-tag" style="margin-bottom:6px">${def.icon} ${def.name.toUpperCase()} — TIER ${instance.tier}</div>
-      <h2 id="towerInfoTitle">${maxed ? 'Fuldt opgraderet' : 'Opgradér eller sælg'}</h2>
+      <div style="display:flex;align-items:center;gap:12px">
+        <img src="${towerSpritePath(def.id)}" alt="" style="width:52px;height:52px;flex-shrink:0" />
+        <div>
+          <div class="hero-tag" style="margin-bottom:4px">${def.name.toUpperCase()} — TIER ${instance.tier}</div>
+          <h2 id="towerInfoTitle" style="margin:0">${maxed ? 'Fuldt opgraderet' : 'Opgradér eller sælg'}</h2>
+        </div>
+      </div>
       <div class="td-tower-stats">
         <div>Skade forvoldt: <b>${Math.round(instance.totalDamageDealt)}</b></div>
         <div>Kills: <b>${instance.kills}</b></div>
