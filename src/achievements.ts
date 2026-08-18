@@ -52,9 +52,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'dash_marathon', icon: '🏁', title: 'MARATONLØBER', desc: '800+ meter i Dash.', check: (s) => (s.bestScores.dash ?? 0) >= 800 },
 
   // Merge
-  { id: 'merge_512', icon: '🔢', title: 'TALKNUSER', desc: 'Nå 512 i Merge.', check: (s) => (s.bestScores.merge ?? 0) >= 512 },
-  { id: 'merge_1024', icon: '🌟', title: 'TALGENI', desc: 'Nå 1024 i Merge.', check: (s) => (s.bestScores.merge ?? 0) >= 1024 },
-  { id: 'merge_2048', icon: '💎', title: '2048', desc: 'Nå 2048 i Merge.', check: (s) => (s.bestScores.merge ?? 0) >= 2048 },
+  { id: 'merge_512', icon: '🔢', title: 'TALKNUSER', desc: 'Nå 512 i Merge.', check: (s) => (s.mergeBestTile ?? 0) >= 512 },
+  { id: 'merge_1024', icon: '🌟', title: 'TALGENI', desc: 'Nå 1024 i Merge.', check: (s) => (s.mergeBestTile ?? 0) >= 1024 },
+  { id: 'merge_2048', icon: '💎', title: '2048', desc: 'Nå 2048 i Merge.', check: (s) => (s.mergeBestTile ?? 0) >= 2048 },
 
   // Overclock
   { id: 'overclock_charged', icon: '⚛️', title: 'OPLADT', desc: '1200+ point i Overclock.', check: (s) => (s.bestScores.overclock ?? 0) >= 1200 },

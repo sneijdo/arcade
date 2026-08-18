@@ -134,11 +134,14 @@ export const ScoreKinds: Record<string, ScoreKind> = {
     direction: 'desc',
     unit: '',
     format: (v) => `${Math.round(v)}`,
+    // Score is now the sum of every tile left on the board at game over (see boardSum in
+    // merge.ts), not the single highest tile reached — a continuous total instead of a fixed
+    // power-of-two, so these tiers are an estimate to revisit once real sum-based scores come in.
     rating: (v) => {
-      if (v >= 1024) return { label: 'SINDSSYGT', color: 'var(--lime)' };
-      if (v >= 512) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
-      if (v >= 256) return { label: 'GODT', color: 'var(--cyan)' };
-      if (v >= 128) return { label: 'OKAY', color: 'var(--text-dim)' };
+      if (v >= 5000) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 2500) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 1200) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 500) return { label: 'OKAY', color: 'var(--text-dim)' };
       return { label: 'SKAL ØVES', color: 'var(--coral)' };
     },
   },

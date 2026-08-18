@@ -17,7 +17,7 @@ const DAILY_TARGETS: Record<string, number> = {
   stack: 12,
   color: 53,
   dash: 100,
-  merge: 256,
+  merge: 1200,
   overclock: 1200,
   glitchgrid: 35,
   pulse: 5000,

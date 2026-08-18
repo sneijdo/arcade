@@ -122,6 +122,10 @@ export interface AchievementStats {
   tacticalEliteKills?: number;
   tacticalVaultsUsed?: number;
   tacticalBossesDefeated?: string[];
+  /** Highest single tile reached in this Merge session — bestScores.merge is now a board-sum
+   * score (see boardSum in merge.ts), not a tile value, so the tile-milestone achievements
+   * (merge_512/1024/2048) key off this per-session extra instead. */
+  mergeBestTile?: number;
   /** Hall of Fame stats — only supplied when checkBadges() is called from creditMyHallOfFameWins(), since they're not part of the normal per-session stat set. */
   hofIsRankOne?: boolean;
   /** Weeks this player finished #1 in 4+ different games at once — the legendary-cosmetics gate, see LEGENDARY_WEEK_THRESHOLD in state.ts. */

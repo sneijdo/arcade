@@ -70,6 +70,16 @@ function highestValue(g: Grid): number {
   return best;
 }
 
+/** Sum of every tile still on the board — the actual submitted score (see endGame), so a board
+ * full of mid-value tiles counts for something instead of only the single biggest tile mattering.
+ * highestValue() above is kept separately as a "best tile ever reached" stat, shown on the
+ * result screen but no longer what gets ranked. */
+function boardSum(g: Grid): number {
+  let sum = 0;
+  for (const row of g) for (const c of row) if (c) sum += c.value;
+  return sum;
+}
+
 function randomEmptyCell(g: Grid): { row: number; col: number } | null {
   const empties: { row: number; col: number }[] = [];
   for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (!g[r][c]) empties.push({ row: r, col: c });
@@ -417,30 +427,31 @@ async function endGame(): Promise<void> {
   // Bails if the player left this game entirely (nav to another page) during the flourish delay —
   // checking DOM presence, not just state.phase, since phase alone doesn't reset on navigation.
   if (state.phase !== 'gameover' || !document.getElementById('mergeBoard')) return;
-  const { isNewBest, xpGain, rank } = await finishGameSession('merge', state.best);
+  const score = boardSum(state.grid);
+  const { isNewBest, xpGain, rank } = await finishGameSession('merge', score, { mergeBestTile: state.best });
   Sound.complete();
   if (isNewBest) {
     setTimeout(() => Sound.pb(), 250);
     Haptics.personalBest();
   }
-  drawFinalScreen(state.best, state.moves, isNewBest, xpGain, rank);
+  drawFinalScreen(score, state.best, isNewBest, xpGain, rank);
 }
 
-function drawFinalScreen(score: number, moves: number, isNewBest: boolean, xpGain: number, rank: number | null): void {
+function drawFinalScreen(score: number, bestTile: number, isNewBest: boolean, xpGain: number, rank: number | null): void {
   const rating = ScoreKinds.merge_tile.rating(score);
   main().innerHTML = `
     <div class="page">
       <div class="game-shell">
         <div class="final-wrap">
-          <div class="final-label">Højeste tal</div>
+          <div class="final-label">Point på pladen</div>
           <div class="final-score">${score}</div>
           <div class="final-rating" style="color:${rating.color}">${rating.label}</div>
           ${isNewBest ? '<div class="pb-flag">★ NY PERSONLIG REKORD</div>' : ''}
           <div class="xp-toast">✦ +${xpGain} XP optjent${rank && rank <= 3 ? ' · TOP 3-BONUS' : ''}</div>
 
           <div class="final-stats">
-            <div class="fstat"><div class="n">${score}</div><div class="l">Højeste tal</div></div>
-            <div class="fstat"><div class="n">${moves}</div><div class="l">Træk</div></div>
+            <div class="fstat"><div class="n">${score}</div><div class="l">Point på pladen</div></div>
+            <div class="fstat"><div class="n">${bestTile}</div><div class="l">Højeste tal</div></div>
             <div class="fstat"><div class="n">${rank ? '#' + rank : '—'}</div><div class="l">Placering</div></div>
             <div class="fstat"><div class="n">+${xpGain}</div><div class="l">XP optjent</div></div>
           </div>

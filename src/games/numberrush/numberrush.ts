@@ -104,7 +104,7 @@ function drawArenaContent(): void {
         <ul class="instructions-list">
           <li>Løs så mange stykker som muligt på 60 sekunder</li>
           <li>Tap det rigtige svar blandt de fire muligheder</li>
-          <li>Forkert svar koster intet — du går bare videre</li>
+          <li>Forkert svar koster et point — gæt ikke i blinde</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="numberrushStartBtn">START</button>
       </div>
@@ -155,6 +155,11 @@ function handleChoicePointerDown(e: PointerEvent): void {
     Sound.hit();
     Haptics.hit();
   } else {
+    // Without a penalty here, blind-spamming any choice cost nothing and netted free score on
+    // the ~25% that landed correct by chance — a wrong answer now costs a point (floored at 0),
+    // same fix as Rule Switch's identical spam problem, so accuracy is what grows the score.
+    rushState.score = Math.max(0, rushState.score - 1);
+    updateScoreLabel();
     btn.style.borderColor = 'var(--coral)';
     btn.style.background = 'rgba(255,93,122,.15)';
     Sound.mistake();
