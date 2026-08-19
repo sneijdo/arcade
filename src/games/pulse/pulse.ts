@@ -121,27 +121,41 @@ function drawArenaContent(): void {
 }
 
 /** Builds the whole session's note timeline up front — a steady beat per segment (tempo climbing
- * 120→150 BPM across 4 segments) with an increasing chance of an extra syncopated off-beat note,
- * so difficulty ramps mainly via rhythmic density/surprise rather than raw speed. */
+ * 120→150 BPM across 4 segments) with an extra syncopated off-beat note on a fixed cadence, so
+ * difficulty ramps mainly via rhythmic density/surprise rather than raw speed. Deliberately no
+ * RNG here: a coin-flip-per-beat used to decide the off-beats, so the total note count (and
+ * therefore the max score a PERFECT run could reach) varied session to session — a flawless run
+ * could still lose to a luckier, denser schedule. A fixed cadence gives every session the exact
+ * same chart, so score differences are purely about timing, not the luck of the draw — and the
+ * cadence below is a bit denser on average than the old random rates (1/5, 1/3, 1/2 vs. .15/.3/.45),
+ * so it's also a notch harder throughout. */
 function buildSchedule(): Note[] {
   const segments = [
-    { bpm: 120, syncopation: 0 },
-    { bpm: 130, syncopation: 0.15 },
-    { bpm: 140, syncopation: 0.3 },
-    { bpm: 150, syncopation: 0.45 },
+    { bpm: 120, syncEvery: 0 }, // steady beat only — no off-beats yet
+    { bpm: 130, syncEvery: 5 }, // extra off-beat every 5th beat
+    { bpm: 140, syncEvery: 3 }, // every 3rd beat
+    { bpm: 150, syncEvery: 2 }, // every other beat
   ];
   const segMs = SESSION_MS / segments.length;
   const maxHitTime = SESSION_MS - TRAVEL_MS - 300;
   const list: { hitTimeMs: number; strong: boolean }[] = [];
   let t = 900; // small lead-in before the first note
+  let segIdx = -1;
+  let beatInSeg = 0;
   while (t <= maxHitTime) {
-    const seg = segments[Math.min(segments.length - 1, Math.floor(t / segMs))];
+    const idx = Math.min(segments.length - 1, Math.floor(t / segMs));
+    if (idx !== segIdx) {
+      segIdx = idx;
+      beatInSeg = 0;
+    }
+    const seg = segments[segIdx];
     const beatMs = 60000 / seg.bpm;
     list.push({ hitTimeMs: t, strong: true });
-    if (Math.random() < seg.syncopation && t + beatMs / 2 <= maxHitTime) {
+    if (seg.syncEvery > 0 && beatInSeg % seg.syncEvery === 0 && t + beatMs / 2 <= maxHitTime) {
       list.push({ hitTimeMs: t + beatMs / 2, strong: false });
     }
     t += beatMs;
+    beatInSeg++;
   }
   list.sort((a, b) => a.hitTimeMs - b.hitTimeMs);
   return list.map((entry) => ({ id: nextNoteId++, hitTimeMs: entry.hitTimeMs, strong: entry.strong, spawned: false, judged: false, audioPlayed: false, el: null }));
