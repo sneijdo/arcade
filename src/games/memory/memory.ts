@@ -37,6 +37,17 @@ function inputTimeoutMs(level: number): number {
   return Math.max(420, 2200 - level * 90);
 }
 
+/** Playback speeds up as the sequence grows — both a difficulty ramp and a second squeeze on
+ * the write-it-down trick: transcribing a tile as it flashes gets tighter right alongside the
+ * per-tap input deadline above, instead of staying at a flat, comfortably-writable pace forever
+ * no matter how long the sequence gets. */
+function flashOnMs(level: number): number {
+  return Math.max(150, FLASH_ON_MS - level * 12);
+}
+function flashGapMs(level: number): number {
+  return Math.max(70, FLASH_GAP_MS - level * 6);
+}
+
 function clearInputTimeout(): void {
   if (state.inputTimeoutId != null) {
     clearTimeout(state.inputTimeoutId);
@@ -172,14 +183,17 @@ function playback(): void {
   drawStage();
   Sound.countdown();
 
+  const level = state.sequence.length;
+  const onMs = flashOnMs(level);
+  const gapMs = flashGapMs(level);
   let t = 400;
   state.sequence.forEach((tileIndex) => {
     schedule(() => {
       lightTile(tileIndex, true);
       Sound.note(tileIndex);
     }, t);
-    schedule(() => lightTile(tileIndex, false), t + FLASH_ON_MS);
-    t += FLASH_ON_MS + FLASH_GAP_MS;
+    schedule(() => lightTile(tileIndex, false), t + onMs);
+    t += onMs + gapMs;
   });
   schedule(() => {
     state.phase = 'input';
