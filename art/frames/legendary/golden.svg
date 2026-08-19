@@ -1,24 +1,38 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Legendary — thick gold ring, a rotating shimmer pass, and four corner gems that pulse
+       out of sync. The showcase piece: strongest glow and the most going on of any tier. -->
   <defs>
-    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#fde68a"/>
       <stop offset="0.5" stop-color="#f59e0b"/>
       <stop offset="1" stop-color="#fde68a"/>
     </linearGradient>
-    <filter id="glow-gold" x="-70%" y="-70%" width="240%" height="240%">
-      <feGaussianBlur stdDeviation="4" result="b"/>
+    <radialGradient id="sweep" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fffbeb" stop-opacity="1"/>
+      <stop offset="1" stop-color="#fffbeb" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <g id="corner-gold" filter="url(#glow-gold)">
-      <path d="M8,46 L8,18 Q8,8 18,8 L46,8" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
-      <path d="M8,8 Q2,8 8,2 Q14,8 8,8" fill="url(#gold)"/>
-      <path d="M4,4 L14,4 M4,4 L4,14" stroke="url(#gold)" stroke-width="1.5" opacity="0.7"/>
-      <circle cx="46" cy="8" r="3" fill="url(#gold)"/>
-      <circle cx="8" cy="46" r="3" fill="url(#gold)"/>
-    </g>
+    <style>
+      @keyframes orbit { to { transform: rotate(360deg); } }
+      @keyframes gleam { 0%,100% { opacity: 0.4; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.15); } }
+      .orbiter { animation: orbit 4.2s linear infinite; transform-origin: 100px 100px; }
+      .gem { animation: gleam 1.8s ease-in-out infinite; transform-origin: center; }
+      .g1 { animation-delay: 0s; } .g2 { animation-delay: 0.45s; } .g3 { animation-delay: 0.9s; } .g4 { animation-delay: 1.35s; }
+      @media (prefers-reduced-motion: reduce) { .orbiter, .gem { animation: none; opacity: 0.9; } }
+    </style>
   </defs>
-  <use href="#corner-gold"/>
-  <use href="#corner-gold" transform="rotate(90 100 100)"/>
-  <use href="#corner-gold" transform="rotate(180 100 100)"/>
-  <use href="#corner-gold" transform="rotate(270 100 100)"/>
+  <rect x="9" y="9" width="182" height="182" rx="24" fill="none" stroke="url(#g)" stroke-width="13" filter="url(#glow)"/>
+  <rect x="9" y="9" width="182" height="182" rx="24" fill="none" stroke="#fffbeb" stroke-width="2" opacity="0.8"/>
+  <g class="orbiter">
+    <circle cx="100" cy="9" r="15" fill="url(#sweep)"/>
+  </g>
+  <g fill="#fef3c7" stroke="#b45309" stroke-width="1.5">
+    <path class="gem g1" d="M18,18 l7,7 l-7,7 l-7,-7 Z"/>
+    <path class="gem g2" d="M182,18 l7,7 l-7,7 l-7,-7 Z"/>
+    <path class="gem g3" d="M18,182 l7,7 l-7,7 l-7,-7 Z"/>
+    <path class="gem g4" d="M182,182 l7,7 l-7,7 l-7,-7 Z"/>
+  </g>
 </svg>

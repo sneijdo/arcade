@@ -1,22 +1,41 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Legendary — icy faceted ring with a rotating prismatic sheen and glinting facet
+       highlights that flash in sequence around the frame. -->
   <defs>
-    <linearGradient id="dia" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ffffff"/>
-      <stop offset="0.5" stop-color="#a5f3fc"/>
-      <stop offset="1" stop-color="#38bdf8"/>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e0f2fe"/>
+      <stop offset="0.5" stop-color="#7dd3fc"/>
+      <stop offset="1" stop-color="#e0f2fe"/>
     </linearGradient>
-    <filter id="glow-dia" x="-70%" y="-70%" width="240%" height="240%">
-      <feGaussianBlur stdDeviation="4" result="b"/>
+    <radialGradient id="sweep" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff" stop-opacity="1"/>
+      <stop offset="0.4" stop-color="#f0abfc" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="5.5" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <g id="corner-dia">
-      <path d="M8,42 L8,18 Q8,8 18,8 L42,8" fill="none" stroke="url(#dia)" stroke-width="4" stroke-linecap="round" filter="url(#glow-dia)"/>
-      <path d="M6,6 L22,6 L28,14 L14,28 L6,22 Z" fill="url(#dia)" filter="url(#glow-dia)"/>
-      <circle cx="14" cy="14" r="2" fill="#ffffff"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.6s" repeatCount="indefinite"/></circle>
-    </g>
+    <style>
+      @keyframes orbit { to { transform: rotate(360deg); } }
+      @keyframes flash { 0%,100% { opacity: 0.15; } 50% { opacity: 1; } }
+      .orbiter { animation: orbit 5s linear infinite reverse; transform-origin: 100px 100px; }
+      .facet { animation: flash 2.4s ease-in-out infinite; }
+      .f1 { animation-delay: 0s; } .f2 { animation-delay: 0.6s; } .f3 { animation-delay: 1.2s; } .f4 { animation-delay: 1.8s; }
+      @media (prefers-reduced-motion: reduce) { .orbiter, .facet { animation: none; opacity: 0.85; } }
+    </style>
   </defs>
-  <use href="#corner-dia"/>
-  <use href="#corner-dia" transform="rotate(90 100 100)"/>
-  <use href="#corner-dia" transform="rotate(180 100 100)"/>
-  <use href="#corner-dia" transform="rotate(270 100 100)"/>
+  <rect x="9" y="9" width="182" height="182" rx="8" fill="none" stroke="url(#g)" stroke-width="12" filter="url(#glow)"/>
+  <g fill="none" stroke="#0c4a6e" stroke-width="1.5" opacity="0.5">
+    <path d="M9,55 L30,9 M9,145 L30,191 M191,55 L170,9 M191,145 L170,191"/>
+  </g>
+  <g class="orbiter">
+    <circle cx="100" cy="9" r="16" fill="url(#sweep)"/>
+  </g>
+  <g fill="#fff">
+    <circle class="facet f1" cx="100" cy="10" r="3"/>
+    <circle class="facet f2" cx="190" cy="100" r="3"/>
+    <circle class="facet f3" cx="100" cy="190" r="3"/>
+    <circle class="facet f4" cx="10" cy="100" r="3"/>
+  </g>
 </svg>

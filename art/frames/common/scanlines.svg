@@ -1,13 +1,20 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Common — green CRT ring: a solid phosphor-green border filled with fine horizontal
+       scanline hatching. Flat, no glow, no motion. -->
   <defs>
-    <g id="corner-scan">
-      <path d="M6,36 L6,16 Q6,6 16,6 L36,6" fill="none" stroke="#7fa8c9" stroke-width="6" stroke-linecap="round"/>
-      <line x1="16" y1="16" x2="30" y2="30" stroke="#7fa8c9" stroke-width="2" opacity="0.55"/>
-      <line x1="24" y1="10" x2="40" y2="26" stroke="#7fa8c9" stroke-width="2" opacity="0.35"/>
-    </g>
+    <clipPath id="ring-clip">
+      <path d="M10,32 Q10,10 32,10 L168,10 Q190,10 190,32 L190,168 Q190,190 168,190 L32,190 Q10,190 10,168 Z M28,32 Q28,28 32,28 L168,28 Q172,28 172,32 L172,168 Q172,172 168,172 L32,172 Q28,172 28,168 Z" fill-rule="evenodd"/>
+    </clipPath>
   </defs>
-  <use href="#corner-scan"/>
-  <use href="#corner-scan" transform="rotate(90 100 100)"/>
-  <use href="#corner-scan" transform="rotate(180 100 100)"/>
-  <use href="#corner-scan" transform="rotate(270 100 100)"/>
+  <g clip-path="url(#ring-clip)">
+    <rect x="0" y="0" width="200" height="200" fill="#166534"/>
+    <g stroke="#4ade80" stroke-width="2">
+      <line x1="0" y1="14" x2="200" y2="14"/><line x1="0" y1="24" x2="200" y2="24"/><line x1="0" y1="34" x2="200" y2="34"/>
+      <line x1="0" y1="44" x2="200" y2="44"/><line x1="0" y1="54" x2="200" y2="54"/><line x1="0" y1="64" x2="200" y2="64"/>
+      <line x1="0" y1="74" x2="200" y2="74"/><line x1="0" y1="84" x2="200" y2="84"/><line x1="0" y1="94" x2="200" y2="94"/>
+      <line x1="0" y1="104" x2="200" y2="104"/><line x1="0" y1="114" x2="200" y2="114"/><line x1="0" y1="124" x2="200" y2="124"/>
+      <line x1="0" y1="134" x2="200" y2="134"/><line x1="0" y1="144" x2="200" y2="144"/><line x1="0" y1="154" x2="200" y2="154"/>
+      <line x1="0" y1="164" x2="200" y2="164"/><line x1="0" y1="174" x2="200" y2="174"/><line x1="0" y1="184" x2="200" y2="184"/>
+    </g>
+  </g>
 </svg>

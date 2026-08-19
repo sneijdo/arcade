@@ -1,18 +1,20 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rare — teal PCB-trace ring: right-angle notches and via-dots, subtle glow. -->
   <defs>
-    <filter id="glow-circ" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="2" result="b"/>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <g id="corner-circ">
-      <path d="M8,40 L8,16 Q8,8 16,8 L40,8" fill="none" stroke="#4ade80" stroke-width="4" stroke-linecap="round" filter="url(#glow-circ)"/>
-      <path d="M8,40 L8,54 M40,8 L54,8" stroke="#4ade80" stroke-width="2.5" fill="none"/>
-      <circle cx="8" cy="54" r="3" fill="#4ade80"/>
-      <circle cx="54" cy="8" r="3" fill="#4ade80"/>
-    </g>
   </defs>
-  <use href="#corner-circ"/>
-  <use href="#corner-circ" transform="rotate(90 100 100)"/>
-  <use href="#corner-circ" transform="rotate(180 100 100)"/>
-  <use href="#corner-circ" transform="rotate(270 100 100)"/>
+  <rect x="10" y="10" width="180" height="180" rx="10" fill="none" stroke="#2dd4bf" stroke-width="5" filter="url(#glow)"/>
+  <g fill="none" stroke="#2dd4bf" stroke-width="5" filter="url(#glow)">
+    <path d="M10,60 h-4 M10,140 h-4 M190,60 h4 M190,140 h4"/>
+    <path d="M60,10 v-4 M140,10 v-4 M60,190 v4 M140,190 v4"/>
+  </g>
+  <g fill="#99f6e4">
+    <circle cx="10" cy="60" r="4"/><circle cx="10" cy="140" r="4"/>
+    <circle cx="190" cy="60" r="4"/><circle cx="190" cy="140" r="4"/>
+    <circle cx="60" cy="10" r="4"/><circle cx="140" cy="10" r="4"/>
+    <circle cx="60" cy="190" r="4"/><circle cx="140" cy="190" r="4"/>
+  </g>
 </svg>
