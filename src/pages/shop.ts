@@ -52,16 +52,28 @@ function ownedLegendaryCount(): number {
   return counts.reduce((sum, [defs, owned]) => sum + defs.filter((x) => x.rarity === 'legendary' && owned.includes(x.id)).length, 0);
 }
 
+/** Display order for every shop grid — common → rare → epic → legendary → secret, cost
+ * ascending within a tier. Catalogs in shop.ts are grouped this way too, but a later batch
+ * tacked onto the end of an array (as happened with the 4 new "Cast V1" avatars) would
+ * otherwise render as its own out-of-order tail instead of slotting into its rarity's
+ * section — sorting at display time makes that structurally impossible instead of relying
+ * on every future catalog edit to hand-splice new entries into the right spot. */
+const RARITY_ORDER: Record<Rarity, number> = { common: 0, rare: 1, epic: 2, legendary: 3, secret: 4 };
+
+function byRarityThenCost(a: ShopItem, b: ShopItem): number {
+  return RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity] || a.cost - b.cost;
+}
+
 function itemsFor(tab: ShopTab): ShopItem[] {
-  if (tab === 'avatars') return AVATARS;
-  if (tab === 'frames') return FRAMES;
-  if (tab === 'nameEffects') return NAME_EFFECTS;
-  if (tab === 'soundPacks') return SOUND_PACKS;
-  if (tab === 'taunts') return TAUNTS;
+  if (tab === 'avatars') return [...AVATARS].sort(byRarityThenCost);
+  if (tab === 'frames') return [...FRAMES].sort(byRarityThenCost);
+  if (tab === 'nameEffects') return [...NAME_EFFECTS].sort(byRarityThenCost);
+  if (tab === 'soundPacks') return [...SOUND_PACKS].sort(byRarityThenCost);
+  if (tab === 'taunts') return [...TAUNTS].sort(byRarityThenCost);
   // Secret titles are invisible until owned (see checkAchievements in state.ts) — once granted
   // they need to appear here like any other title, or they'd be permanently unequippable.
   const ownedSecrets = SECRET_TITLES.filter((t) => profile?.unlockedTitles.includes(t.id));
-  return [...TITLES, ...ownedSecrets];
+  return [...TITLES, ...ownedSecrets].sort(byRarityThenCost);
 }
 
 function ownedIds(tab: ShopTab): string[] {
