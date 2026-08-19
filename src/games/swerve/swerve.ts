@@ -27,7 +27,6 @@ interface SwerveState {
    * of acting on whatever fresh session is now on screen; checking fieldEl() alone isn't
    * enough since a new run re-creates its own #swField. */
   sessionId: number;
-  startedAt: number;
   elapsedMs: number;
   obstaclesPassed: number;
   playerX: number;
@@ -49,7 +48,6 @@ function makeInitialState(): SwerveState {
   return {
     phase: 'idle',
     sessionId: ++sessionCounter,
-    startedAt: 0,
     elapsedMs: 0,
     obstaclesPassed: 0,
     playerX: 0,
@@ -169,7 +167,6 @@ function startRun(): void {
   state.arenaW = arena.clientWidth || 320;
   state.arenaH = arena.clientHeight || 400;
   state.phase = 'playing';
-  state.startedAt = performance.now();
   state.elapsedMs = 0;
   state.obstaclesPassed = 0;
   state.playerX = state.arenaW / 2;
@@ -219,9 +216,15 @@ function loop(t: number): void {
   }
 
   if (state.lastT == null) state.lastT = t;
+  // Clamped, then accumulated — not `t - startedAt`. rAF stops firing while the tab/app
+  // is backgrounded (locked screen, app switch, minimized window); resuming afterwards
+  // hands the callback a fresh, current `t`, so a raw wall-clock diff against the start
+  // time would count the entire backgrounded gap as survived time and hand out a huge,
+  // untouched score. Summing the same per-frame clamp already used for physics below
+  // keeps the clock (and the difficulty ramp it drives) tied to frames actually run.
   const dt = Math.min((t - state.lastT) / 1000, 0.05);
   state.lastT = t;
-  state.elapsedMs = t - state.startedAt;
+  state.elapsedMs += dt * 1000;
   const elapsedSec = state.elapsedMs / 1000;
 
   // Direct 1:1 follow (no lerp) — a dodge game needs the player's input to
