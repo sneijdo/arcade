@@ -79,9 +79,19 @@ a:focus-visible,
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Cuts every animation/transition down to near-nothing (was 0.001ms) rather than
+   * literally nothing — several games (Pulse's PERFECT/GOD/MISS judgement, Dash's
+   * near-miss callout, Stack's milestone text, RuleSwitch's rule-change banner, ...)
+   * use an animation as the ONLY way a flash of feedback text ever becomes visible:
+   * it's opacity:0 at rest, and only reaches opacity:1 partway through the keyframe.
+   * At 0.001ms the whole 0%→visible→0% timeline collapses into a single unpainted
+   * instant, so that text silently never rendered at all under reduced motion — a
+   * strictly worse outcome than "less motion" for anyone with the setting on. 180ms
+   * still guts every continuous/looping decorative animation (capped to one iteration
+   * below) while leaving a one-shot flash cue long enough to actually read. */
   * {
-    animation-duration: 0.001ms !important;
+    animation-duration: 180ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+    transition-duration: 180ms !important;
   }
 }
