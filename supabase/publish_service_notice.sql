@@ -22,7 +22,7 @@ values (
   'service_notice',
   jsonb_build_object(
     'id', '2026-08-19',
-    'text', 'Vi er opmærksomme på en række bugs og balance-issues på tværs af spillene (bl.a. Aim Trainer, Swerve, Pulse og Memory) — rettelser lander i næste uges opdatering. Tak for tålmodigheden! 🔧',
+    'text', 'Vi er opmærksomme på en række bugs og balance-issues på tværs af spillene. Rettelser lander til næste nulstilling. Tak for tålmodigheden, og for at melde ind med fejl! 🔧',
     'publishedAt', extract(epoch from now()) * 1000
   )
 )
