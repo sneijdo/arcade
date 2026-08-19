@@ -5,6 +5,7 @@ import { signUpWithUsername, signInWithUsername, validateUsername, generateRecov
 import { toast } from './toast';
 import { useLocalGuestStorage, useSupabaseStorage, clearLocalGuestProfile, isGuestMode } from './storage';
 import { Sound } from './sound';
+import { consumePendingReferralId } from './referral';
 
 let modalIdCounter = 0;
 
@@ -183,7 +184,7 @@ export function showAuthModal(mode: AuthMode = 'signup'): void {
       // keep detecting it and resuming guest mode instead of this new account.
       useSupabaseStorage();
       clearLocalGuestProfile();
-      await createProfile(username, userId);
+      await createProfile(username, userId, consumePendingReferralId());
       backdrop.remove();
       refreshHeader();
       await showRecoveryCodeReveal();

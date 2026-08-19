@@ -10,6 +10,7 @@ import { startPresence } from './activity';
 import { startInviteListener } from './duel/challenges';
 import { mountInviteBanner } from './duel/inviteBanner';
 import { mountServiceNotice } from './serviceNotice';
+import { captureReferralFromUrl, syncReferrals } from './referral';
 import type { Session } from '@supabase/supabase-js';
 
 function wireMuteButton(): void {
@@ -71,6 +72,7 @@ async function initSupabaseMode(): Promise<void> {
     startInviteListener(p.id);
     mountInviteBanner();
     void mountServiceNotice();
+    void syncReferrals();
     // Refreshes this player's public PlayerMeta snapshot (see saveProfile in state.ts)
     // just from opening the app — not only from playing/equipping something. Otherwise
     // a player who's genuinely progressed but hasn't triggered a save since a new
@@ -93,6 +95,7 @@ function wireAudioUnlock(): void {
 }
 
 async function init(): Promise<void> {
+  captureReferralFromUrl();
   initRouter();
   wireMuteButton();
   wireAudioUnlock();

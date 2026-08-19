@@ -111,6 +111,8 @@ export async function loadProfile(): Promise<Profile | null> {
     if (p.duelLosses == null) p.duelLosses = 0;
     if (p.duelDraws == null) p.duelDraws = 0;
     if (p.duelRating == null) p.duelRating = DUEL_RATING_DEFAULT;
+    if (p.referredBy === undefined) p.referredBy = null;
+    if (!p.referralRewardsClaimed) p.referralRewardsClaimed = [];
     profile = p;
   }
   return profile;
@@ -140,6 +142,7 @@ export async function saveProfile(): Promise<void> {
     duelLosses: profile.duelLosses,
     duelDraws: profile.duelDraws,
     duelRating: profile.duelRating,
+    referredBy: profile.referredBy,
   };
   await storage.set('playerMeta:' + profile.id, meta, true);
 }
@@ -154,7 +157,12 @@ export function bestScoreForGame(gameId: string): number | null {
   return profile.bestScores[gameId] ?? null;
 }
 
-export async function createProfile(name: string, id?: string): Promise<void> {
+/**
+ * `referredBy` is only ever passed by the real-signup path in onboarding.ts (consuming
+ * consumePendingReferralId() from referral.ts) — the local-mode and guest flows never pass it,
+ * so a referral can only ever attribute to a genuine Supabase account, never a device-local one.
+ */
+export async function createProfile(name: string, id?: string, referredBy?: string | null): Promise<void> {
   profile = {
     id: id ?? (crypto.randomUUID ? crypto.randomUUID() : 'p-' + Date.now() + '-' + Math.random().toString(36).slice(2)),
     name: name.slice(0, 18),
@@ -189,6 +197,8 @@ export async function createProfile(name: string, id?: string): Promise<void> {
     duelLosses: 0,
     duelDraws: 0,
     duelRating: DUEL_RATING_DEFAULT,
+    referredBy: referredBy ?? null,
+    referralRewardsClaimed: [],
   };
   await saveProfile();
 }

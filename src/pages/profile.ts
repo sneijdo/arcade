@@ -9,6 +9,7 @@ import { GAMES } from '../games/registry';
 import { ScoreKinds, formatScore } from '../scoring';
 import { toast } from '../toast';
 import { findTitle, findAvatar, AVATARS, FRAMES, TITLES, SECRET_TITLES } from '../shop';
+import { referralLink, syncReferrals, REFERRAL_REWARD_XP, type ReferralStats } from '../referral';
 
 export async function renderProfile(): Promise<void> {
   const main = document.getElementById('main')!;
@@ -18,6 +19,11 @@ export async function renderProfile(): Promise<void> {
   const myEntry = board.find((e) => e.id === profile!.id);
   const rank = myEntry ? board.indexOf(myEntry) + 1 : null;
   const implementedGames = GAMES.filter((g) => g.implemented);
+  // Only a real, logged-in account has a meaningful referral link (a device-local guest
+  // profile's id isn't attached to anything another browser could ever look up) — also
+  // opportunistically grants any reward that came due since this player was last online.
+  const referralStats: ReferralStats | null = authAvailable() && !isGuestMode() ? await syncReferrals() : null;
+  if (!document.getElementById('main') || !profile) return; // navigated away during that await
   main.innerHTML = `
     <div class="page">
       <div class="panel">
@@ -97,6 +103,25 @@ export async function renderProfile(): Promise<void> {
       </div>
 
       ${
+        referralStats
+          ? `
+      <h2 class="section-title" style="margin-top:32px">Promover en ven</h2>
+      <div class="panel referral-panel">
+        <p>Inviter en ven — når de opretter en rigtig konto via dit link og spiller 4 spil, får du ${REFERRAL_REWARD_XP} XP. Ingen grænse for hvor mange venner du kan invitere.</p>
+        <div class="referral-link-row">
+          <input type="text" id="referralLinkInput" class="settings-input" readonly value="${referralLink()}">
+          <button class="btn btn-primary" id="copyReferralBtn">KOPIÉR LINK</button>
+        </div>
+        <div class="referral-stats-row">
+          <span>🤝 ${referralStats.rewardedCount} ${referralStats.rewardedCount === 1 ? 'ven belønnet' : 'venner belønnet'}</span>
+          <span>⏳ ${referralStats.pendingCount} afventer stadig 4 spil</span>
+        </div>
+      </div>
+      `
+          : ''
+      }
+
+      ${
         authAvailable() && isGuestMode()
           ? `
       <h2 class="section-title" style="margin-top:32px">Gem din fremgang</h2>
@@ -127,6 +152,12 @@ export async function renderProfile(): Promise<void> {
       }
     </div>
   `;
+  document.getElementById('copyReferralBtn')?.addEventListener('click', () => {
+    const input = document.getElementById('referralLinkInput') as HTMLInputElement | null;
+    if (!input) return;
+    input.select();
+    navigator.clipboard?.writeText(input.value).then(() => toast('Link kopieret'));
+  });
   document.getElementById('createAccountBtn')?.addEventListener('click', () => showAuthModal('signup'));
   document.getElementById('signOutBtn')?.addEventListener('click', async () => {
     clearProfile();

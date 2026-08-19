@@ -47,6 +47,16 @@ export interface Profile {
   duelDraws: number;
   /** Elo-style rating driving the Duel rank tier (see duelTierForRating() in state.ts) — starts at DUEL_RATING_DEFAULT (1000), updated in finishDuelSession(). */
   duelRating: number;
+  /** Set once, at signup, from the ?ref=<id> link this account was created through — see
+   * captureReferralFromUrl()/consumePendingReferralId() in referral.ts. null if this account
+   * didn't come from a referral link, or signed up before this feature existed. Never changes
+   * after creation. */
+  referredBy: string | null;
+  /** Ids of referred friends this player has already been paid the 500 XP reward for (see
+   * syncReferrals() in referral.ts) — prevents re-granting on every check. Distinct from
+   * `referredBy` above: this list lives on the REFERRER's profile, that field on the
+   * REFERRED friend's. */
+  referralRewardsClaimed: string[];
 }
 
 export interface ReactionSession {
@@ -165,6 +175,10 @@ export interface PlayerMeta {
   duelLosses?: number;
   duelDraws?: number;
   duelRating?: number;
+  /** Public mirror of Profile.referredBy — needed so a referrer's own client can look up "which
+   * accounts list me as referredBy" (RLS lets anyone read shared rows, but never another
+   * player's private `profile` row, which is where the field actually lives). See referral.ts. */
+  referredBy?: string | null;
 }
 
 /** Cross-week aggregate of #1 finishes, keyed by profile id. See creditMyHallOfFameWins() in state.ts. */
