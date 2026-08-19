@@ -270,4 +270,32 @@ export const ScoreKinds: Record<string, ScoreKind> = {
       return { label: 'SKAL ØVES', color: 'var(--coral)' };
     },
   },
+  trajectory_score: {
+    direction: 'desc',
+    unit: 'point',
+    format: (v) => `${Math.round(v)}`,
+    // 8 shots (see BALANCE.totalShots in trajectory.ts), max 30pts each on a small balloon — a
+    // realistic great run lands mid-200s, not the theoretical 240 ceiling every shot hits perfect.
+    rating: (v) => {
+      if (v >= 200) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 150) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 100) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 50) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
+  colossus_damage: {
+    direction: 'desc',
+    unit: 'skade',
+    format: (v) => `${Math.round(v)}`,
+    // Boss max HP is 320 (see BALANCE.boss.maxHp in colossus.ts) — a full kill lands exactly on
+    // SINDSSYGT, so that tier is a real "did you beat it" line, not an arbitrary number.
+    rating: (v) => {
+      if (v >= 320) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 240) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 160) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 80) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
 };

@@ -1,0 +1,55 @@
+/* ============================= TRAJECTORY ============================= */
+/* Bright daylight carnival palette — deliberate contrast to every dark-void game elsewhere here. */
+
+.tj-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.tj-hud-top {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.tj-stat {
+  color: var(--text-dim);
+}
+.tj-shots {
+  flex: 1;
+  text-align: right;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+
+.tj-canvas-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  aspect-ratio: 4 / 3;
+  max-height: 62vh;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #a9d8f0;
+  touch-action: none;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 8px 28px -12px rgba(255, 210, 63, 0.35);
+}
+@media (max-width: 560px) {
+  .tj-canvas-wrap {
+    aspect-ratio: 3 / 4;
+    max-height: 68vh;
+  }
+}
+#tjCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}

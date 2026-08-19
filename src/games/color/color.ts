@@ -121,7 +121,6 @@ function sliderHtml(ch: 'r' | 'g' | 'b', label: string, value: number): string {
     <div class="slider-row">
       <span class="slider-label slider-label-${ch}">${label}</span>
       <input type="range" min="0" max="255" value="${value}" id="slider-${ch}" class="color-slider slider-${ch}">
-      <span class="slider-val mono" id="val-${ch}">${value}</span>
     </div>
   `;
 }
@@ -174,7 +173,6 @@ function drawArenaContent(): void {
       const input = document.getElementById(`slider-${ch}`) as HTMLInputElement;
       input.addEventListener('input', () => {
         colorState.guess[ch] = Number(input.value);
-        document.getElementById(`val-${ch}`)!.textContent = input.value;
         updateGuessSwatch();
       });
       // A visible "weight" while actively dragging — see .color-slider.is-dragging in color.css.

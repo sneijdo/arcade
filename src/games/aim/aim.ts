@@ -3,6 +3,7 @@ import { Sound } from '../../sound';
 import { Haptics } from '../../haptics';
 import { finishGameSession } from '../../state';
 import { gameUtilBarHtml, wireGameChrome } from '../../gameChrome';
+import { toast } from '../../toast';
 
 const SESSION_MS = 30_000;
 /** Visible target circle (identity match with Reaction's target). */
@@ -10,6 +11,17 @@ const TARGET_VISUAL_SIZE = 88;
 /** Actual tappable wrapper is larger than the visible circle for forgiving mobile taps. */
 const TARGET_HIT_SIZE = 108;
 const ARENA_PAD = 14;
+/** Below this the arena can't fit meaningful target movement — spawns collapse toward one
+ * corner, which turns "aiming" into "spam a fixed point" (autoclicker-exploitable via a
+ * shrunk browser window). Set low enough to clear real small phones (~320-375px viewport,
+ * minus .page's mobile padding) untouched — the exploit needs a much more aggressive shrink
+ * than any real device viewport to collapse spawn variance this far. */
+const MIN_ARENA_W = 280;
+const MIN_ARENA_H = 240;
+/** Floor on time-since-spawn before a hit counts, independent of arena size — the hard cap
+ * on achievable score against click-spam (autoclickers, held-down macros). Comfortably above
+ * genuine target-acquisition time but far below what raw click-spam needs to rack up hits. */
+const MIN_HIT_INTERVAL_MS = 110;
 
 type AimPhase = 'idle' | 'playing' | 'result';
 
@@ -18,12 +30,18 @@ interface AimState {
   score: number;
   endAt: number;
   tickId: ReturnType<typeof setInterval> | null;
+  lastSpawnAt: number;
 }
 
 let aimState: AimState = makeInitialState();
 
 function makeInitialState(): AimState {
-  return { phase: 'idle', score: 0, endAt: 0, tickId: null };
+  return { phase: 'idle', score: 0, endAt: 0, tickId: null, lastSpawnAt: 0 };
+}
+
+function arenaTooSmall(): boolean {
+  const a = arenaEl();
+  return a.clientWidth < MIN_ARENA_W || a.clientHeight < MIN_ARENA_H;
 }
 
 function main(): HTMLElement {
@@ -76,6 +94,10 @@ function drawArenaContent(): void {
     `;
     document.getElementById('aimStartBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (arenaTooSmall()) {
+        toast('Gør browservinduet større for at spille — banen er for lille til at sigte i.');
+        return;
+      }
       startSession();
     });
   } else if (aimState.phase === 'playing') {
@@ -98,6 +120,7 @@ function spawnTarget(): void {
       <button class="target-btn" style="width:${TARGET_VISUAL_SIZE}px;height:${TARGET_VISUAL_SIZE}px;" tabindex="-1"></button>
     </div>
   `;
+  aimState.lastSpawnAt = performance.now();
   Sound.target();
 }
 
@@ -146,6 +169,18 @@ function handleArenaPointerDown(e: PointerEvent): void {
 
   const hitTarget = (e.target as HTMLElement).closest('.target-hit');
   if (!hitTarget) {
+    Sound.mistake();
+    return;
+  }
+
+  // Both guards below reject the hit without moving the target — a shrunk-window or
+  // click-spam exploit just stalls out on a target it can no longer legally claim,
+  // rather than getting a fresh (and equally free) respawn to try again on.
+  if (arenaTooSmall()) {
+    Sound.mistake();
+    return;
+  }
+  if (performance.now() - aimState.lastSpawnAt < MIN_HIT_INTERVAL_MS) {
     Sound.mistake();
     return;
   }

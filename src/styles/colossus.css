@@ -1,0 +1,92 @@
+/* ============================= COLOSSUS ============================= */
+/* Deep void purple/magenta against a starfield — distinct from Ember Ward's warm fantasy and
+   Breach Protocol's neon violet/lime; this one leans cosmic-horror dark. */
+
+.cl-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.cl-hud-top {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.cl-bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cl-bar-track {
+  height: 10px;
+  border-radius: 6px;
+  background: var(--surface-3);
+  overflow: hidden;
+  border: 1px solid var(--border-2);
+}
+.cl-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.15s var(--ease);
+}
+.cl-bar-fill.boss {
+  background: linear-gradient(90deg, #6b4a8a, #c9a6ff);
+  box-shadow: 0 0 10px 0 rgba(201, 166, 255, 0.5);
+}
+.cl-bar-fill.hp {
+  background: linear-gradient(90deg, #1f6f9c, #5cc9ff);
+}
+.cl-bar-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.cl-canvas-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  aspect-ratio: 4 / 3;
+  max-height: 62vh;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #07050c;
+  touch-action: none;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 8px 28px -12px rgba(139, 107, 255, 0.4), inset 0 0 40px rgba(0, 0, 0, 0.5);
+}
+@media (max-width: 560px) {
+  .cl-canvas-wrap {
+    aspect-ratio: 3 / 4;
+    max-height: 68vh;
+  }
+}
+#clCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.cl-dmg-counter {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: rgba(8, 7, 12, 0.6);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(201, 166, 255, 0.3);
+  border-radius: 10px;
+  padding: 6px 11px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #e6d4ff;
+}
