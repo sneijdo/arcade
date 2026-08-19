@@ -1,17 +1,21 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Epic — RGB-split channels stutter-jitter against each other, classic digital-glitch
+       look. steps() timing keeps it snappy/stuttery rather than smooth. -->
   <defs>
-    <filter id="glow-glitch" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="2.5" result="b"/>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <g id="corner-glitch" filter="url(#glow-glitch)">
-      <path d="M9,42 L9,17 L23,17 L23,9 L44,9" fill="none" stroke="#ff3d81" stroke-width="3" opacity="0.85"/>
-      <path d="M5,38 L5,13 L19,13 L19,5 L40,5" fill="none" stroke="#3fe4ff" stroke-width="3" opacity="0.85"/>
-      <path d="M7,40 L7,15 L21,15 L21,7 L42,7" fill="none" stroke="#f4f4ff" stroke-width="2.5"/>
-    </g>
+    <style>
+      @keyframes jitter-r { 0%,100% { transform: translate(0,0); } 20% { transform: translate(-3px,1px); } 45% { transform: translate(2px,0); } 70% { transform: translate(-1px,2px); } }
+      @keyframes jitter-c { 0%,100% { transform: translate(0,0); } 25% { transform: translate(3px,-1px); } 55% { transform: translate(-2px,1px); } 80% { transform: translate(1px,-2px); } }
+      .r { animation: jitter-r 2.6s steps(6) infinite; }
+      .c { animation: jitter-c 2.6s steps(6) infinite; }
+      @media (prefers-reduced-motion: reduce) { .r, .c { animation: none; } }
+    </style>
   </defs>
-  <use href="#corner-glitch"/>
-  <use href="#corner-glitch" transform="rotate(90 100 100)"/>
-  <use href="#corner-glitch" transform="rotate(180 100 100)"/>
-  <use href="#corner-glitch" transform="rotate(270 100 100)"/>
+  <rect x="10" y="10" width="180" height="180" rx="14" fill="none" stroke="#0b0714" stroke-width="10"/>
+  <rect class="r" x="10" y="10" width="180" height="180" rx="14" fill="none" stroke="#ff3b6b" stroke-width="6" opacity="0.85"/>
+  <rect class="c" x="10" y="10" width="180" height="180" rx="14" fill="none" stroke="#22d3ee" stroke-width="6" opacity="0.85"/>
+  <rect x="10" y="10" width="180" height="180" rx="14" fill="none" stroke="#f5f3ff" stroke-width="3" filter="url(#glow)"/>
 </svg>

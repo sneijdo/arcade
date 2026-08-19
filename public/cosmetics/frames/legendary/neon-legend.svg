@@ -1,25 +1,35 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Legendary — full-spectrum neon ring, continuously hue-cycling, plus a bright traveling
+       highlight and a slow glow-breathe. The loudest, most "look at me" of the whole set. -->
   <defs>
-    <linearGradient id="rain" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ff3d81">
-        <animate attributeName="stop-color" values="#ff3d81;#a855f7;#38bdf8;#8fe36b;#ff3d81" dur="4s" repeatCount="indefinite"/>
-      </stop>
-      <stop offset="1" stop-color="#38bdf8">
-        <animate attributeName="stop-color" values="#38bdf8;#8fe36b;#ff3d81;#a855f7;#38bdf8" dur="4s" repeatCount="indefinite"/>
-      </stop>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f472b6"/>
+      <stop offset="0.5" stop-color="#a855f7"/>
+      <stop offset="1" stop-color="#22d3ee"/>
     </linearGradient>
-    <filter id="glow-rain" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="5.5" result="b"/>
+    <radialGradient id="sweep" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff" stop-opacity="1"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="6.5" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <g id="corner-rain">
-      <path d="M8,48 L8,18 Q8,8 18,8 L48,8" fill="none" stroke="url(#rain)" stroke-width="6" stroke-linecap="round" filter="url(#glow-rain)"/>
-      <path d="M8,48 L8,18 Q8,8 18,8 L48,8" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/>
-      <path d="M22,22 L14,30 L20,30 L12,40 L24,28 L18,28 Z" fill="#fff8e1"><animate attributeName="opacity" values="0.5;1;0.5" dur="1.4s" repeatCount="indefinite"/></path>
-    </g>
+    <style>
+      @keyframes cycle { to { filter: hue-rotate(360deg); } }
+      @keyframes orbit { to { transform: rotate(360deg); } }
+      @keyframes breathe { 0%,100% { stroke-width: 12; } 50% { stroke-width: 15; } }
+      .cycler { animation: cycle 4s linear infinite; }
+      .orbiter { animation: orbit 2.6s linear infinite; transform-origin: 100px 100px; }
+      .ring { animation: breathe 2s ease-in-out infinite; }
+      @media (prefers-reduced-motion: reduce) { .cycler, .orbiter, .ring { animation: none; } }
+    </style>
   </defs>
-  <use href="#corner-rain"/>
-  <use href="#corner-rain" transform="rotate(90 100 100)"/>
-  <use href="#corner-rain" transform="rotate(180 100 100)"/>
-  <use href="#corner-rain" transform="rotate(270 100 100)"/>
+  <g class="cycler">
+    <rect class="ring" x="9" y="9" width="182" height="182" rx="28" fill="none" stroke="url(#g)" stroke-width="12" filter="url(#glow)"/>
+  </g>
+  <rect x="9" y="9" width="182" height="182" rx="28" fill="none" stroke="#fff" stroke-width="2" opacity="0.8"/>
+  <g class="orbiter">
+    <circle cx="100" cy="9" r="14" fill="url(#sweep)"/>
+  </g>
 </svg>

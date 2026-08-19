@@ -1,16 +1,18 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rare — cyan-blue ring with small circuit-node ticks at each edge midpoint, soft glow. -->
   <defs>
-    <filter id="glow-cyber" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="2.5" result="b"/>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#3b82f6"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <g id="corner-cyber">
-      <path d="M8,42 L8,26 L22,26 L22,8 L42,8" fill="none" stroke="#38bdf8" stroke-width="4.5" stroke-linecap="square" filter="url(#glow-cyber)"/>
-      <rect x="4.5" y="4.5" width="7" height="7" fill="#38bdf8"/>
-    </g>
   </defs>
-  <use href="#corner-cyber"/>
-  <use href="#corner-cyber" transform="rotate(90 100 100)"/>
-  <use href="#corner-cyber" transform="rotate(180 100 100)"/>
-  <use href="#corner-cyber" transform="rotate(270 100 100)"/>
+  <rect x="10" y="10" width="180" height="180" rx="14" fill="none" stroke="url(#g)" stroke-width="7" filter="url(#glow)"/>
+  <g fill="#a5f3fc">
+    <circle cx="100" cy="10" r="5"/><circle cx="100" cy="190" r="5"/>
+    <circle cx="10" cy="100" r="5"/><circle cx="190" cy="100" r="5"/>
+  </g>
 </svg>

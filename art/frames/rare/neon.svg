@@ -1,16 +1,16 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rare — a real neon tube: gradient stroke + soft glow, static. -->
   <defs>
-    <filter id="glow-neon" x="-70%" y="-70%" width="240%" height="240%">
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f472b6"/>
+      <stop offset="0.5" stop-color="#a855f7"/>
+      <stop offset="1" stop-color="#f472b6"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="4.5" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <g id="corner-neon">
-      <path d="M8,44 L8,18 Q8,8 18,8 L44,8" fill="none" stroke="#ff3d81" stroke-width="5" stroke-linecap="round" filter="url(#glow-neon)"/>
-      <path d="M8,44 L8,18 Q8,8 18,8 L44,8" fill="none" stroke="#ffd6e8" stroke-width="1.5" stroke-linecap="round"/>
-    </g>
   </defs>
-  <use href="#corner-neon"/>
-  <use href="#corner-neon" transform="rotate(90 100 100)"/>
-  <use href="#corner-neon" transform="rotate(180 100 100)"/>
-  <use href="#corner-neon" transform="rotate(270 100 100)"/>
+  <rect x="10" y="10" width="180" height="180" rx="26" fill="none" stroke="url(#g)" stroke-width="8" filter="url(#glow)"/>
+  <rect x="10" y="10" width="180" height="180" rx="26" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.7"/>
 </svg>

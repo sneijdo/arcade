@@ -1,26 +1,33 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Legendary — near-black ring cracked with pulsing violet energy, orbited by small void
+       particles drifting around it on two counter-rotating rings. -->
   <defs>
-    <radialGradient id="voidg" cx="0.3" cy="0.3" r="0.9">
-      <stop offset="0" stop-color="#7c3aed"/>
-      <stop offset="1" stop-color="#0a0014"/>
-    </radialGradient>
-    <filter id="glow-void" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="5" result="b"/>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2e1065"/>
+      <stop offset="1" stop-color="#0b0714"/>
+    </linearGradient>
+    <filter id="glow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <g id="corner-void">
-      <path d="M9,46 L9,25 L16,19 L9,13 L18,8 L28,8 L34,15 L46,9" fill="none" stroke="url(#voidg)" stroke-width="6" stroke-linecap="round"/>
-      <path d="M9,46 L9,25 L16,19 L9,13 L18,8 L28,8 L34,15 L46,9" fill="none" stroke="#c4b5fd" stroke-width="1.2" opacity="0.7" filter="url(#glow-void)"/>
-      <g transform="translate(16 16)">
-        <path d="M0,-8 A8,8 0 0 1 8,0" stroke="#a855f7" stroke-width="2" fill="none" opacity="0.8">
-          <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="6s" repeatCount="indefinite"/>
-        </path>
-        <circle cx="0" cy="0" r="1.6" fill="#e9d5ff"><animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/></circle>
-      </g>
-    </g>
+    <style>
+      @keyframes crackle { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+      @keyframes orbitA { to { transform: rotate(360deg); } }
+      @keyframes orbitB { to { transform: rotate(-360deg); } }
+      .crack { animation: crackle 1.6s ease-in-out infinite; }
+      .orbitA { animation: orbitA 6s linear infinite; transform-origin: 100px 100px; }
+      .orbitB { animation: orbitB 9s linear infinite; transform-origin: 100px 100px; }
+      @media (prefers-reduced-motion: reduce) { .crack, .orbitA, .orbitB { animation: none; opacity: 0.8; } }
+    </style>
   </defs>
-  <use href="#corner-void"/>
-  <use href="#corner-void" transform="rotate(90 100 100)"/>
-  <use href="#corner-void" transform="rotate(180 100 100)"/>
-  <use href="#corner-void" transform="rotate(270 100 100)"/>
+  <rect x="9" y="9" width="182" height="182" rx="20" fill="none" stroke="url(#g)" stroke-width="13" filter="url(#glow)"/>
+  <rect class="crack" x="9" y="9" width="182" height="182" rx="20" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="3 10"/>
+  <g class="orbitA" fill="#c4b5fd">
+    <circle cx="100" cy="4" r="4"/>
+    <circle cx="196" cy="100" r="3"/>
+  </g>
+  <g class="orbitB" fill="#7c3aed">
+    <circle cx="4" cy="100" r="3.5"/>
+    <circle cx="100" cy="196" r="3"/>
+  </g>
 </svg>

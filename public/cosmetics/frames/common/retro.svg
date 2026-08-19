@@ -1,12 +1,11 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <g id="corner-retro">
-      <path d="M6,40 L6,16 Q6,6 16,6 L40,6" fill="none" stroke="#8fe36b" stroke-width="4" stroke-linecap="round" stroke-dasharray="9 7"/>
-      <circle cx="6" cy="6" r="3" fill="#8fe36b"/>
-    </g>
-  </defs>
-  <use href="#corner-retro"/>
-  <use href="#corner-retro" transform="rotate(90 100 100)"/>
-  <use href="#corner-retro" transform="rotate(180 100 100)"/>
-  <use href="#corner-retro" transform="rotate(270 100 100)"/>
+  <!-- Common — warm marquee-bulb ring: a thin amber line with small "light bulb" dots
+       spaced around it, evoking an old arcade-cabinet marquee. Flat, no glow. -->
+  <rect x="10" y="10" width="180" height="180" rx="22" fill="none" stroke="#f59e0b" stroke-width="4"/>
+  <g fill="#fde68a">
+    <circle cx="10" cy="10" r="5"/><circle cx="55" cy="10" r="5"/><circle cx="100" cy="10" r="5"/><circle cx="145" cy="10" r="5"/><circle cx="190" cy="10" r="5"/>
+    <circle cx="10" cy="190" r="5"/><circle cx="55" cy="190" r="5"/><circle cx="100" cy="190" r="5"/><circle cx="145" cy="190" r="5"/><circle cx="190" cy="190" r="5"/>
+    <circle cx="10" cy="55" r="5"/><circle cx="10" cy="100" r="5"/><circle cx="10" cy="145" r="5"/>
+    <circle cx="190" cy="55" r="5"/><circle cx="190" cy="100" r="5"/><circle cx="190" cy="145" r="5"/>
+  </g>
 </svg>

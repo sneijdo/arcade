@@ -1,15 +1,6 @@
 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <g id="corner-pixel" fill="#e2e8f0">
-      <rect x="4" y="4" width="10" height="10"/>
-      <rect x="16" y="4" width="10" height="10"/>
-      <rect x="28" y="4" width="10" height="10"/>
-      <rect x="4" y="16" width="10" height="10"/>
-      <rect x="4" y="28" width="10" height="10"/>
-    </g>
-  </defs>
-  <use href="#corner-pixel"/>
-  <use href="#corner-pixel" transform="rotate(90 100 100)"/>
-  <use href="#corner-pixel" transform="rotate(180 100 100)"/>
-  <use href="#corner-pixel" transform="rotate(270 100 100)"/>
+  <!-- Common — flat, no glow, no motion. A chunky 8-bit block border: big square teeth,
+       one flat mid-gray tone plus a single darker bevel line for a bit of depth. -->
+  <rect x="9" y="9" width="182" height="182" rx="18" fill="none" stroke="#475569" stroke-width="16" stroke-dasharray="15 9" stroke-linecap="butt"/>
+  <rect x="9" y="9" width="182" height="182" rx="18" fill="none" stroke="#cbd5e1" stroke-width="10" stroke-dasharray="15 9" stroke-linecap="butt"/>
 </svg>
