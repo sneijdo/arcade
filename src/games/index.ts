@@ -20,6 +20,7 @@ import { renderOddOneOutGame } from './oddoneout/oddoneout';
 import { renderTowerDefenseGame } from './towerdefense/towerdefense';
 import { renderColossusGame } from './colossus/colossus';
 import { renderTrajectoryGame } from './trajectory/trajectory';
+import { renderTetrisGame } from './tetris/tetris';
 
 /** Maps a GAMES registry id to its render function. router.ts dispatches `play-<id>` routes through this. */
 export const GAME_RENDERERS: Record<string, () => void> = {
@@ -45,4 +46,5 @@ export const GAME_RENDERERS: Record<string, () => void> = {
   towerdefense: renderTowerDefenseGame,
   colossus: renderColossusGame,
   trajectory: renderTrajectoryGame,
+  tetris: renderTetrisGame,
 };

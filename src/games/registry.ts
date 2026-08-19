@@ -218,6 +218,16 @@ export const GAMES: GameDef[] = [
     implemented: true,
   },
   {
+    id: 'tetris',
+    title: 'Tetris',
+    category: 'KLASSIKER',
+    icon: '🧱',
+    iconAsset: '/gameicons/tetris.svg',
+    description: 'Den evige klassiker. Klar linjer, hold roen, hvor højt kan du undgå at bygge?',
+    scoreKind: 'tetris_score',
+    implemented: true,
+  },
+  {
     id: 'towerdefense',
     title: 'Ember Ward',
     category: 'TÅRNFORSVAR',

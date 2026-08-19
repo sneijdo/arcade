@@ -298,4 +298,19 @@ export const ScoreKinds: Record<string, ScoreKind> = {
       return { label: 'SKAL ØVES', color: 'var(--coral)' };
     },
   },
+  tetris_score: {
+    direction: 'desc',
+    unit: 'point',
+    format: (v) => `${Math.round(v)}`,
+    // Guideline-style scoring (100/300/500/800 per line clear, ×level) means a casual run that
+    // clears a couple dozen lines before topping out lands low thousands — reaching SINDSSYGT
+    // means sustaining real speed well past level 5.
+    rating: (v) => {
+      if (v >= 10000) return { label: 'SINDSSYGT', color: 'var(--lime)' };
+      if (v >= 5000) return { label: 'FREMRAGENDE', color: 'var(--violet)' };
+      if (v >= 2000) return { label: 'GODT', color: 'var(--cyan)' };
+      if (v >= 500) return { label: 'OKAY', color: 'var(--text-dim)' };
+      return { label: 'SKAL ØVES', color: 'var(--coral)' };
+    },
+  },
 };
