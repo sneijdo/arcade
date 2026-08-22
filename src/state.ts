@@ -899,7 +899,15 @@ export async function finishGameSession(gameId: string, score: number, extraAchi
   if (isNewBest) profile.bestScores[gameId] = score;
   profile.sessionsPlayed++;
   await saveProfile();
-  await pushLeaderboardEntry(gameId, profile.bestScores[gameId]);
+  // This session's own score, not profile.bestScores[gameId] (the all-time best) — submit_score()
+  // already keeps only the best-of-the-week server-side (see supabase/schema_scores.sql), so
+  // submitting the all-time best here instead of what was actually just played meant a session
+  // that *wasn't* a new all-time record silently re-submitted an old score instead of recording
+  // this week's real (if worse) result — the weekly leaderboard/Hall of Fame never reflected an
+  // off week, just whichever old record happened to get replayed into it on first play. Confirmed
+  // live: Sneijdo's/Linnet's new-but-worse reaction runs this week (197ms/384ms) never showed up
+  // because their old personal-best average (157ms/156ms) kept getting sent instead.
+  await pushLeaderboardEntry(gameId, score);
   if (isNewAllTimeRecord) showTotalRecordReveal(gameId, profile.bestScores[gameId]);
 
   let xpGain = XP_RULES.complete;

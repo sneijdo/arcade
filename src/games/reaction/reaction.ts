@@ -257,7 +257,11 @@ async function finishReactionSession(): Promise<void> {
   profile.history = profile.history.slice(0, 20);
   const currentAvg = profile.bestAvg; // guaranteed non-null: either just set, or already existed
   await saveProfile();
-  await pushLeaderboardEntry('reaction', currentAvg!);
+  // This session's own avg, not profile.bestAvg (the all-time best) — see the identical fix (and
+  // its reasoning) in finishGameSession, state.ts. Same bug, same symptom here: an off round
+  // (worse than the all-time best) silently re-submitted the old average instead of recording
+  // this week's real result.
+  await pushLeaderboardEntry('reaction', avg);
   if (isNewAllTimeRecord) showTotalRecordReveal('reaction', currentAvg!);
 
   let xpGain = XP_RULES.complete;
