@@ -10,6 +10,7 @@ import { startPresence } from './activity';
 import { startInviteListener } from './duel/challenges';
 import { mountInviteBanner } from './duel/inviteBanner';
 import { mountServiceNotice } from './serviceNotice';
+import { openBugReportModal } from './bugReport';
 import { captureReferralFromUrl, syncReferrals } from './referral';
 import type { Session } from '@supabase/supabase-js';
 
@@ -22,6 +23,10 @@ function wireMuteButton(): void {
     }
     refreshHeader();
   });
+}
+
+function wireBugReportButton(): void {
+  document.getElementById('bugReportBtn')!.addEventListener('click', () => openBugReportModal());
 }
 
 function markGuest(): void {
@@ -98,6 +103,7 @@ async function init(): Promise<void> {
   captureReferralFromUrl();
   initRouter();
   wireMuteButton();
+  wireBugReportButton();
   wireAudioUnlock();
   if (authAvailable() && hasLocalGuestProfile()) {
     // A previous visit chose "play as guest" — resume that local profile straight away instead

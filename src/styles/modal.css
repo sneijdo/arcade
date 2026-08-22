@@ -48,6 +48,29 @@
   outline: none;
   border-color: var(--violet);
 }
+.modal textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-2);
+  background: var(--void-2);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  margin-bottom: 14px;
+  resize: vertical;
+}
+.modal textarea:focus {
+  outline: none;
+  border-color: var(--violet);
+}
+.bug-report-actions {
+  display: flex;
+  gap: 8px;
+}
+.bug-report-actions .btn {
+  flex: 1;
+}
 .recovery-code-box {
   font-family: var(--font-mono);
   font-size: 20px;

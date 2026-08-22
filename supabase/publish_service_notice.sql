@@ -21,8 +21,8 @@ values (
   true,
   'service_notice',
   jsonb_build_object(
-    'id', '2026-08-19',
-    'text', 'Vi er opmærksomme på en række bugs og balance-issues på tværs af spillene. Rettelser lander til næste nulstilling. Tak for tålmodigheden, og for at melde ind med fejl! 🔧',
+    'id', '2026-08-22-live',
+    'text', 'Vi er live! 🚀 Sikkerhed, balance og en bunke bugs er rettet, og alle scores/ranglister/Duel-stats er nulstillet til en fair start — din XP og dine ting i butikken er urørt. Kampen om denne uges legendary-slot er allerede i gang og afgøres i morgen, så nu er chancen! Fundet en fejl undervejs? Brug 🐛-knappen i toppen til at sende den direkte til mig.',
     'publishedAt', extract(epoch from now()) * 1000
   )
 )
