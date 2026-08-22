@@ -331,7 +331,18 @@ export async function pushLeaderboardEntry(gameId: string, score: number): Promi
   // range and atomically keeps only a genuine improvement, instead of the client being
   // free to upsert whatever score it likes (see that file's header for the incident —
   // a forged 99999 on Rule Breaker — this closes).
-  const { error } = await supabase.rpc('submit_score', { p_game_id: gameId, p_score: score });
+  //
+  // Retried a couple of times before giving up: a genuine out-of-bounds/validation
+  // rejection just fails identically each attempt (harmless, a couple of wasted round
+  // trips), but a transient network blip or a rate-limit collision can succeed on retry —
+  // previously a single failed attempt here was silently lost forever with nothing but a
+  // console.error and an easy-to-miss toast (see the Schwan/Snake incident this closes).
+  let error: { message: string } | null = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    ({ error } = await supabase.rpc('submit_score', { p_game_id: gameId, p_score: score }));
+    if (!error) break;
+    if (attempt < 3) await new Promise((r) => setTimeout(r, attempt * 500));
+  }
   if (error) {
     console.error('submit_score rejected', error);
     toast(`<span class="toast-icon">⚠️</span> Din score kunne ikke gemmes`);
