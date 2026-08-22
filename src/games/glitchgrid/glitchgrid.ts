@@ -61,7 +61,7 @@ function drawShell(): void {
     <div class="page">
       <div class="game-shell">
         <div class="game-topbar">
-          <span id="ggTimer">GLITCH GRID — 35s</span>
+          <span id="ggTimer">GLITCH GRID · 35s</span>
           <span id="ggScore" class="mono">0 POINT</span>
         </div>
         ${gameUtilBarHtml()}
@@ -81,7 +81,7 @@ function drawArenaContent(): void {
         <div class="arena-title">Klar til at jagte glitches?</div>
         <ul class="instructions-list">
           <li>Tap de lime-farvede "glitch"-felter så hurtigt du kan</li>
-          <li>Undgå de røde "korrupte" felter — de koster point og nulstiller din combo</li>
+          <li>Undgå de røde "korrupte" felter, de koster point og nulstiller din combo</li>
           <li>Højere combo giver flere point pr. glitch</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="glitchgridStartBtn">START</button>
@@ -174,7 +174,7 @@ function comboTier(): number {
 function updateCombo(): void {
   const el = document.getElementById('ggCombo');
   if (!el) return;
-  el.textContent = state.combo > 0 ? `COMBO ×${state.combo} — +${comboTier()} PR. HIT` : '';
+  el.textContent = state.combo > 0 ? `COMBO ×${state.combo} · +${comboTier()} PR. HIT` : '';
 }
 
 function handleGridPointerDown(e: PointerEvent): void {
@@ -238,7 +238,7 @@ function updateTimerLabel(remainingMsInput?: number): void {
   if (!el) return;
   const remainingMs = remainingMsInput ?? state.endAt - performance.now();
   const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
-  el.textContent = `GLITCH GRID — ${seconds}s`;
+  el.textContent = `GLITCH GRID · ${seconds}s`;
 }
 
 function updateScoreLabel(): void {

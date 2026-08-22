@@ -59,8 +59,8 @@ function translateAuthError(message: string): string {
   const m = message.toLowerCase();
   if (m.includes('already registered') || m.includes('already exists')) return 'Det brugernavn er allerede taget.';
   if (m.includes('invalid login credentials')) return 'Forkert brugernavn eller adgangskode.';
-  if (m.includes('password') && (m.includes('at least') || m.includes('should be'))) return 'Adgangskoden er for kort — mindst 6 tegn.';
-  if (m.includes('rate limit')) return 'For mange forsøg — vent et øjeblik og prøv igen.';
+  if (m.includes('password') && (m.includes('at least') || m.includes('should be'))) return 'Adgangskoden er for kort, mindst 6 tegn.';
+  if (m.includes('rate limit')) return 'For mange forsøg, vent et øjeblik og prøv igen.';
   return 'Der gik noget galt. Prøv igen.';
 }
 

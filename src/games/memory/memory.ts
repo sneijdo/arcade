@@ -97,7 +97,7 @@ function drawShell(): void {
     <div class="page">
       <div class="game-shell">
         <div class="game-topbar">
-          <span>MEMORY${state.sequence.length > 0 ? ' — NIVEAU ' + state.sequence.length : ''}</span>
+          <span>MEMORY${state.sequence.length > 0 ? ' · NIVEAU ' + state.sequence.length : ''}</span>
         </div>
         ${gameUtilBarHtml()}
         <div class="memory-stage" id="memoryStage"></div>
@@ -147,7 +147,7 @@ function drawStage(): void {
 
 function updateTopbar(): void {
   const bar = document.querySelector('.game-topbar span');
-  if (bar) bar.textContent = `MEMORY${state.sequence.length > 0 ? ' — NIVEAU ' + state.sequence.length : ''}`;
+  if (bar) bar.textContent = `MEMORY${state.sequence.length > 0 ? ' · NIVEAU ' + state.sequence.length : ''}`;
 }
 
 function setStatus(text: string): void {

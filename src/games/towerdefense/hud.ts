@@ -134,7 +134,7 @@ export function showTowerInfoModal(
       <div style="display:flex;align-items:center;gap:12px">
         <img src="${towerSpritePath(def.id)}" alt="" style="width:52px;height:52px;flex-shrink:0" />
         <div>
-          <div class="hero-tag" style="margin-bottom:4px">${def.name.toUpperCase()} — TIER ${instance.tier}</div>
+          <div class="hero-tag" style="margin-bottom:4px">${def.name.toUpperCase()} · TIER ${instance.tier}</div>
           <h2 id="towerInfoTitle" style="margin:0">${maxed ? 'Fuldt opgraderet' : 'Opgradér eller sælg'}</h2>
         </div>
       </div>
@@ -143,8 +143,8 @@ export function showTowerInfoModal(
         <div>Kills: <b>${instance.kills}</b></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
-        ${nextTier ? `<button class="btn btn-primary btn-block" id="towerUpgradeBtn" ${afford ? '' : 'disabled'}>OPGRADÉR TIL TIER ${nextTier.tier} — 💰 ${nextTier.cost}</button>` : ''}
-        <button class="btn btn-ghost btn-block" id="towerSellBtn">SÆLG — 💰 ${sellValue}</button>
+        ${nextTier ? `<button class="btn btn-primary btn-block" id="towerUpgradeBtn" ${afford ? '' : 'disabled'}>OPGRADÉR TIL TIER ${nextTier.tier} · 💰 ${nextTier.cost}</button>` : ''}
+        <button class="btn btn-ghost btn-block" id="towerSellBtn">SÆLG · 💰 ${sellValue}</button>
         <button class="btn btn-ghost btn-block" id="towerInfoCloseBtn">LUK</button>
       </div>
     </div>

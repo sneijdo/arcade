@@ -156,9 +156,9 @@ function drawArea(): void {
         <div class="arena-inner">
           <div class="arena-title">Klar til at bygge?</div>
           <ul class="instructions-list">
-            <li>Pile eller knapperne styrer — Op/tap roterer, Space/DROP hard-dropper</li>
-            <li>Klar linjer for point — flere på én gang giver mere</li>
-            <li>Farten stiger med niveauet — hold styr på tempoet</li>
+            <li>Pile eller knapperne styrer: Op/tap roterer, Space/DROP hard-dropper</li>
+            <li>Klar linjer for point, flere på én gang giver mere</li>
+            <li>Farten stiger med niveauet, hold styr på tempoet</li>
           </ul>
           <button class="btn btn-primary btn-lg" id="tetrisStartBtn">START</button>
         </div>

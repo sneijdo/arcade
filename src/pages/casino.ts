@@ -143,7 +143,7 @@ function renderMenu(): void {
       <a href="#/profile" data-nav="profile" class="btn btn-ghost" style="margin-bottom:16px">← TILBAGE TIL PROFIL</a>
       <div class="section-label">🎰 Kasino</div>
       <h1 class="section-title">Prøv lykken</h1>
-      <div class="casino-intro">Gambl din XP-saldo (aldrig dit level) i fire spil. Huset vinder i det lange løb — det er stadig gambling — men en enkelt tur kan gøre godt.</div>
+      <div class="casino-intro">Gambl din XP-saldo (aldrig dit level) i fire spil. Huset vinder i det lange løb, det er stadig gambling, men en enkelt tur kan gøre godt.</div>
       <div class="shop-balance casino-teaser" style="margin:16px 0">
         <div>
           <div class="shop-balance-label">DIN SALDO</div>
@@ -227,7 +227,7 @@ async function spinCoin(): Promise<void> {
     updateBalanceChip();
     const slot = document.getElementById('casinoResultSlot');
     if (slot) {
-      slot.innerHTML = resultHtml(result.delta, result.won ? `Det blev ${result.landedOn.toUpperCase()} — du vandt!` : `Det blev ${result.landedOn.toUpperCase()} — tabt.`);
+      slot.innerHTML = resultHtml(result.delta, result.won ? `Det blev ${result.landedOn.toUpperCase()}, du vandt!` : `Det blev ${result.landedOn.toUpperCase()}, tabt.`);
     }
     playFeedback(result.delta);
     if (playBtn) {
@@ -303,7 +303,7 @@ function finishSlots(result: SlotResult): void {
   updateBalanceChip();
   const slot = document.getElementById('casinoResultSlot');
   if (slot) {
-    const label = result.multiplier > 1 ? `Tre ens! ${result.multiplier}×` : result.multiplier === 1 ? 'To ens — pengene tilbage.' : 'Ingen match — tabt.';
+    const label = result.multiplier > 1 ? `Tre ens! ${result.multiplier}×` : result.multiplier === 1 ? 'To ens, pengene tilbage.' : 'Ingen match, tabt.';
     slot.innerHTML = resultHtml(result.delta, label);
   }
   playFeedback(result.delta);
@@ -381,7 +381,7 @@ async function spinDice(): Promise<void> {
       if (die2) die2.textContent = DICE_FACES[result.d2];
       updateBalanceChip();
       const slot = document.getElementById('casinoResultSlot');
-      if (slot) slot.innerHTML = resultHtml(result.delta, `Sum ${result.sum} — ${result.won ? 'ramt!' : 'tabt.'}`);
+      if (slot) slot.innerHTML = resultHtml(result.delta, `Sum ${result.sum}: ${result.won ? 'ramt!' : 'tabt.'}`);
       playFeedback(result.delta);
       if (playBtn) playBtn.disabled = false;
       document.querySelectorAll<HTMLButtonElement>('#casinoChips [data-bet]').forEach((b) => (b.disabled = profile!.xpBalance < Number(b.dataset.bet === 'max' ? MIN_BET : b.dataset.bet)));

@@ -54,7 +54,7 @@ export async function renderLegendaryRaceWidget(): Promise<string> {
         <div class="legendary-card-label">👑 KAMPEN OM LEGENDARY</div>
         <div class="legendary-countdown mono" id="legendaryCountdown">${initialCountdown}</div>
       </div>
-      <div class="legendary-card-sub">Til ugens nulstilling — vær #1 i ${LEGENDARY_WEEK_THRESHOLD}+ spil for at vinde et legendary-slot.</div>
+      <div class="legendary-card-sub">Til ugens nulstilling. Vær #1 i ${LEGENDARY_WEEK_THRESHOLD}+ spil for at vinde et legendary-slot.</div>
       ${
         top.length
           ? `<div class="legendary-contenders">
@@ -71,7 +71,7 @@ export async function renderLegendaryRaceWidget(): Promise<string> {
                 )
                 .join('')}
             </div>`
-          : `<div class="legendary-empty">Ingen har taget føringen endnu denne uge — bliv den første.</div>`
+          : `<div class="legendary-empty">Ingen har taget føringen endnu denne uge, bliv den første.</div>`
       }
       <a class="btn btn-ghost btn-block" href="#/leaderboard" data-nav="leaderboard">SE HELE KAPLØBET</a>
     </div>
@@ -114,7 +114,7 @@ function showRevealModal(winners: WeeklyLeadStanding[]): void {
     <div class="modal legendary-reveal-modal">
       <div class="legendary-reveal-confetti">🎉 ✨ 🏆 ✨ 🎉</div>
       <h2>LEGENDARY-VINDER${winners.length > 1 ? 'E' : ''} KÅRET</h2>
-      <p>Sidste uge var ${winners.length > 1 ? 'disse spillere' : 'denne spiller'} suverænt bedst — #1 i mindst ${LEGENDARY_WEEK_THRESHOLD} forskellige spil.</p>
+      <p>Sidste uge var ${winners.length > 1 ? 'disse spillere' : 'denne spiller'} suverænt bedst: #1 i mindst ${LEGENDARY_WEEK_THRESHOLD} forskellige spil.</p>
       <div class="legendary-reveal-winners">
         ${winners
           .map(

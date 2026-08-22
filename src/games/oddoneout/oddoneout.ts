@@ -80,7 +80,7 @@ function drawShell(): void {
     <div class="page">
       <div class="game-shell">
         <div class="game-topbar">
-          <span id="ooTitle">ODD ONE OUT — RUNDE 1</span>
+          <span id="ooTitle">ODD ONE OUT · RUNDE 1</span>
           <div class="oo-lives" id="ooLives"></div>
         </div>
         ${gameUtilBarHtml()}
@@ -110,7 +110,7 @@ function drawArenaContent(): void {
         <ul class="instructions-list">
           <li>Find feltet der er drejet anderledes end de andre</li>
           <li>Hurtigere og federe for hver runde</li>
-          <li>3 liv — forkert tap eller for langsom koster ét</li>
+          <li>3 liv, forkert tap eller for langsom koster ét</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="oooStartBtn">START</button>
       </div>
@@ -147,7 +147,7 @@ function renderRound(): void {
   state.oddAngle = oddAngleForAttempt(state.attempt) * (Math.random() < 0.5 ? -1 : 1);
 
   const titleEl = document.getElementById('ooTitle');
-  if (titleEl) titleEl.textContent = `ODD ONE OUT — RUNDE ${state.attempt}`;
+  if (titleEl) titleEl.textContent = `ODD ONE OUT · RUNDE ${state.attempt}`;
 
   a.innerHTML = `
     <div class="oo-grid" id="ooGrid" style="grid-template-columns:repeat(${state.gridSize}, 1fr)">

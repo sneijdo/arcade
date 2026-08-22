@@ -75,7 +75,7 @@ function drawShell(): void {
     <div class="page">
       <div class="game-shell">
         <div class="game-topbar">
-          <span id="pulseTimer">PULSE — 55s</span>
+          <span id="pulseTimer">PULSE · 55s</span>
           <span id="pulseScore" class="mono">0 POINT</span>
         </div>
         ${gameUtilBarHtml()}
@@ -94,9 +94,9 @@ function drawArenaContent(): void {
       <div class="arena-inner">
         <div class="arena-title">Klar til at ramme takten?</div>
         <ul class="instructions-list">
-          <li>Toner falder ned mod linjen — tap et sted i banen når de rammer den</li>
+          <li>Toner falder ned mod linjen, tap et sted i banen når de rammer den</li>
           <li>Ram præcist for PERFECT, lidt ved siden af for GOD</li>
-          <li>Combo øger point pr. hit — men brister ved et missede tryk</li>
+          <li>Combo øger point pr. hit, men brister ved et missede tryk</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="pulseStartBtn">START</button>
       </div>
@@ -314,7 +314,7 @@ function updateTimerLabel(remainingMs: number): void {
   const el = document.getElementById('pulseTimer');
   if (!el) return;
   const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
-  el.textContent = `PULSE — ${seconds}s`;
+  el.textContent = `PULSE · ${seconds}s`;
 }
 
 function updateScoreLabel(): void {

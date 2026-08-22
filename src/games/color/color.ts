@@ -66,7 +66,7 @@ function drawShell(): void {
     <div class="page">
       <div class="game-shell">
         <div class="game-topbar">
-          <span>COLOR MATCH — RUNDE ${Math.min(colorState.round + 1, COLOR_ROUNDS)} / ${COLOR_ROUNDS}</span>
+          <span>COLOR MATCH · RUNDE ${Math.min(colorState.round + 1, COLOR_ROUNDS)} / ${COLOR_ROUNDS}</span>
           <div class="round-dots">${roundDotsHtml()}</div>
         </div>
         ${gameUtilBarHtml()}
@@ -80,7 +80,7 @@ function drawShell(): void {
 function updateTopbar(): void {
   const bar = document.querySelector('.game-topbar span');
   const dots = document.querySelector('.round-dots');
-  if (bar) bar.textContent = `COLOR MATCH — RUNDE ${Math.min(colorState.round + 1, COLOR_ROUNDS)} / ${COLOR_ROUNDS}`;
+  if (bar) bar.textContent = `COLOR MATCH · RUNDE ${Math.min(colorState.round + 1, COLOR_ROUNDS)} / ${COLOR_ROUNDS}`;
   if (dots) dots.innerHTML = roundDotsHtml();
 }
 
@@ -135,8 +135,8 @@ function drawArenaContent(): void {
         <ul class="instructions-list">
           <li>Du får vist en målfarve</li>
           <li>Brug skyderne til at genskabe den så præcist som muligt</li>
-          <li>${(ROUND_TIME_MS / 1000).toFixed(0)} sekunder pr. runde — løber tiden ud, bekræftes gættet som det står</li>
-          <li>5 runder — jo tættere du rammer, jo højere nøjagtighed</li>
+          <li>${(ROUND_TIME_MS / 1000).toFixed(0)} sekunder pr. runde, løber tiden ud bekræftes gættet som det står</li>
+          <li>5 runder, jo tættere du rammer, jo højere nøjagtighed</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="colorStartBtn">START RUNDE 1</button>
       </div>

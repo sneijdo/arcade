@@ -11,7 +11,7 @@ export const TOWER_DEFS: Record<TowerId, TowerDef> = {
     id: 'firemage',
     name: 'Ildmagiker',
     icon: '🔥',
-    tagline: 'Billig og hurtig — den solide startvalg',
+    tagline: 'Billig og hurtig, den solide startvalg',
     color: '#ff8a3d',
     tiers: [
       { tier: 1, cost: 40, damage: 8, fireRate: 1.4, range: 130, projectileSpeed: 520, projectileRadius: 4 },
@@ -23,7 +23,7 @@ export const TOWER_DEFS: Record<TowerId, TowerDef> = {
     id: 'frosttower',
     name: 'Frosttårn',
     icon: '❄️',
-    tagline: 'Lav skade, men sænker farten — synergi-valget',
+    tagline: 'Lav skade, men sænker farten, synergi-valget',
     color: '#5cc9ff',
     tiers: [
       { tier: 1, cost: 50, damage: 3, fireRate: 1.0, range: 110, projectileSpeed: 420, projectileRadius: 4, slowPct: 0.32, slowDurationS: 1.1 },
@@ -35,7 +35,7 @@ export const TOWER_DEFS: Record<TowerId, TowerDef> = {
     id: 'lightning',
     name: 'Lynbue',
     icon: '⚡',
-    tagline: 'Kæder mellem mål — svaret på sværme',
+    tagline: 'Kæder mellem mål, svaret på sværme',
     color: '#c9a6ff',
     tiers: [
       { tier: 1, cost: 70, damage: 6, fireRate: 1.2, range: 140, projectileSpeed: 650, projectileRadius: 3.5, chainCount: 2, chainFalloff: 0.7 },
@@ -47,7 +47,7 @@ export const TOWER_DEFS: Record<TowerId, TowerDef> = {
     id: 'catapult',
     name: 'Belejringskatapult',
     icon: '💥',
-    tagline: 'Langsom og dyr — men splash rydder grupper',
+    tagline: 'Langsom og dyr, men splash rydder grupper',
     color: '#e05a5a',
     tiers: [
       { tier: 1, cost: 90, damage: 22, fireRate: 0.5, range: 160, projectileSpeed: 260, projectileRadius: 7, splashRadius: 42 },
@@ -59,7 +59,7 @@ export const TOWER_DEFS: Record<TowerId, TowerDef> = {
     id: 'obelisk',
     name: 'Runeobelisk',
     icon: '🔮',
-    tagline: 'Angriber ikke selv — booster tårne i nærheden',
+    tagline: 'Angriber ikke selv, booster tårne i nærheden',
     color: '#ffd23f',
     tiers: [
       { tier: 1, cost: 60, damage: 0, fireRate: 0, range: 0, projectileSpeed: 0, projectileRadius: 0, auraRadius: 120, auraDamageBonusPct: 0.15 },

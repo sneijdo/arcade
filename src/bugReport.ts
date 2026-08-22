@@ -19,8 +19,8 @@ export function openBugReportModal(): void {
   const backdrop = mountModal(`
     <div class="modal bug-report-modal">
       <h2>🐛 Indberet en fejl</h2>
-      <p>Beskriv hvad der gik galt — hvilket spil, hvad du gjorde, og hvad der skete. Jo mere konkret, jo bedre.</p>
-      <textarea id="bugReportText" rows="5" maxlength="2000" placeholder="Fx: Trajectory — når jeg trækker skyderen tilbage, ryger jeg ud af vinduet og kan ikke sigte."></textarea>
+      <p>Beskriv hvad der gik galt: hvilket spil, hvad du gjorde, og hvad der skete. Jo mere konkret, jo bedre.</p>
+      <textarea id="bugReportText" rows="5" maxlength="2000" placeholder="Fx: Trajectory: når jeg trækker skyderen tilbage, ryger jeg ud af vinduet og kan ikke sigte."></textarea>
       <div class="bug-report-actions">
         <button class="btn btn-ghost" id="bugReportCancel">ANNULLER</button>
         <button class="btn btn-primary" id="bugReportSubmit">SEND</button>
@@ -38,6 +38,6 @@ export function openBugReportModal(): void {
     }
     const { error } = await supabase!.from('bug_reports').insert({ name: profile?.name ?? 'Ukendt', message, page: route });
     backdrop.remove();
-    toast(error ? 'Kunne ikke sende — prøv igen senere.' : '<span class="toast-icon">🐛</span> Tak! Fejlen er sendt videre.');
+    toast(error ? 'Kunne ikke sende, prøv igen senere.' : '<span class="toast-icon">🐛</span> Tak! Fejlen er sendt videre.');
   });
 }

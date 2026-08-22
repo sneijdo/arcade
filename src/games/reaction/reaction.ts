@@ -59,7 +59,7 @@ function drawReactionShell(): void {
     <div class="page">
       <div class="game-shell">
         <div class="game-topbar">
-          <span>REACTION — RUNDE ${Math.min(reactionState.round + 1, REACTION_ROUNDS)} / ${REACTION_ROUNDS}</span>
+          <span>REACTION · RUNDE ${Math.min(reactionState.round + 1, REACTION_ROUNDS)} / ${REACTION_ROUNDS}</span>
           <div class="round-dots">${roundDotsHtml()}</div>
         </div>
         ${gameUtilBarHtml()}
@@ -84,7 +84,7 @@ function drawArenaContent(): void {
         <ul class="instructions-list">
           <li>Vent til skærmen lyser grønt</li>
           <li>Klik / tap i samme øjeblik du ser det</li>
-          <li>5 runder — klikker du for tidligt, koster det runden</li>
+          <li>5 runder, klikker du for tidligt koster det runden</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="reactionStartBtn">START RUNDE 1</button>
       </div>
@@ -141,7 +141,7 @@ function startRound(): void {
 function updateTopbar(): void {
   const bar = document.querySelector('.game-topbar span');
   const dots = document.querySelector('.round-dots');
-  if (bar) bar.textContent = `REACTION — RUNDE ${Math.min(reactionState.round + 1, REACTION_ROUNDS)} / ${REACTION_ROUNDS}`;
+  if (bar) bar.textContent = `REACTION · RUNDE ${Math.min(reactionState.round + 1, REACTION_ROUNDS)} / ${REACTION_ROUNDS}`;
   if (dots) dots.innerHTML = roundDotsHtml();
 }
 

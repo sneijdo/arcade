@@ -17,7 +17,7 @@ export const WEAPONS: Partial<Record<WeaponId, WeaponStats>> = {
   viper_ar: {
     id: 'viper_ar',
     name: 'Viper AR',
-    tagline: 'Alsidig og pålidelig — ingen svagheder',
+    tagline: 'Alsidig og pålidelig, ingen svagheder',
     icon: '🔫',
     fireRate: 3.2,
     damage: 9,
@@ -32,7 +32,7 @@ export const WEAPONS: Partial<Record<WeaponId, WeaponStats>> = {
   spectre_smg: {
     id: 'spectre_smg',
     name: 'Spectre SMG',
-    tagline: 'Smelter alt på klos hold — ubrugelig på afstand',
+    tagline: 'Smelter alt på klos hold, ubrugelig på afstand',
     icon: '💨',
     fireRate: 6.5,
     damage: 4,
@@ -48,7 +48,7 @@ export const WEAPONS: Partial<Record<WeaponId, WeaponStats>> = {
   breach_shotgun: {
     id: 'breach_shotgun',
     name: 'Breach Shotgun',
-    tagline: 'Ødelæggende på klos hold — tomt bagefter den rækkevidde',
+    tagline: 'Ødelæggende på klos hold, tomt bagefter den rækkevidde',
     icon: '💥',
     fireRate: 1.3,
     damage: 6,
@@ -64,7 +64,7 @@ export const WEAPONS: Partial<Record<WeaponId, WeaponStats>> = {
   longshot_rifle: {
     id: 'longshot_rifle',
     name: 'Longshot Rifle',
-    tagline: 'Langsom og dødbringende — belønner tålmodighed',
+    tagline: 'Langsom og dødbringende, belønner tålmodighed',
     icon: '🎯',
     fireRate: 0.9,
     damage: 32,
@@ -79,7 +79,7 @@ export const WEAPONS: Partial<Record<WeaponId, WeaponStats>> = {
   sidekick_pistol: {
     id: 'sidekick_pistol',
     name: 'Sidekick Pistol',
-    tagline: 'Hurtig og pålidelig backup — intet loft, ingen svaghed',
+    tagline: 'Hurtig og pålidelig backup, intet loft, ingen svaghed',
     icon: '🔹',
     fireRate: 4.0,
     damage: 7,
@@ -95,7 +95,7 @@ export const WEAPONS: Partial<Record<WeaponId, WeaponStats>> = {
   talon_burst: {
     id: 'talon_burst',
     name: 'Talon Burst',
-    tagline: '3-skuds byger — ram alle tre, eller ram intet',
+    tagline: '3-skuds byger, ram alle tre, eller ram intet',
     icon: '🔱',
     fireRate: 1.8,
     damage: 6,
@@ -112,7 +112,7 @@ export const WEAPONS: Partial<Record<WeaponId, WeaponStats>> = {
   juggernaut_lmg: {
     id: 'juggernaut_lmg',
     name: 'Juggernaut LMG',
-    tagline: 'Konstant tryk og tilbageslag — upræcis, men uendelig',
+    tagline: 'Konstant tryk og tilbageslag, upræcis, men uendelig',
     icon: '🛡️',
     fireRate: 5.5,
     damage: 6,
@@ -129,7 +129,7 @@ export const WEAPONS: Partial<Record<WeaponId, WeaponStats>> = {
   wraith_dmr: {
     id: 'wraith_dmr',
     name: 'Wraith DMR',
-    tagline: 'Midt mellem riffel og snigskytte — ingen kompromiser',
+    tagline: 'Midt mellem riffel og snigskytte, ingen kompromiser',
     icon: '👻',
     fireRate: 1.8,
     damage: 16,
@@ -144,7 +144,7 @@ export const WEAPONS: Partial<Record<WeaponId, WeaponStats>> = {
   havoc_launcher: {
     id: 'havoc_launcher',
     name: 'Havoc Launcher',
-    tagline: 'Eksplosivt splash — frygteligt mod ét mål, rædsel mod flere',
+    tagline: 'Eksplosivt splash, frygteligt mod ét mål, rædsel mod flere',
     icon: '☄️',
     fireRate: 0.75,
     damage: 22,
@@ -162,7 +162,7 @@ export const WEAPONS: Partial<Record<WeaponId, WeaponStats>> = {
   falcon_carbine: {
     id: 'falcon_carbine',
     name: 'Falcon Carbine',
-    tagline: 'Glaskanon — hurtig, skarp, og skrøbelig i skudlinjen',
+    tagline: 'Glaskanon, hurtig, skarp, og skrøbelig i skudlinjen',
     icon: '🦅',
     fireRate: 5.0,
     damage: 6,

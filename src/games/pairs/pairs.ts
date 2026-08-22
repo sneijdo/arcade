@@ -62,7 +62,7 @@ function drawShell(): void {
     <div class="page">
       <div class="game-shell">
         <div class="game-topbar">
-          <span id="prTimer">PAIRS — 60s</span>
+          <span id="prTimer">PAIRS · 60s</span>
           <span id="prScore" class="mono">0 POINT</span>
         </div>
         ${gameUtilBarHtml()}
@@ -82,7 +82,7 @@ function drawArenaContent(): void {
         <div class="arena-title">Klar til at finde par?</div>
         <ul class="instructions-list">
           <li>Vend to kort ad gangen og find parrene</li>
-          <li>Fejl koster intet — men bryder din combo</li>
+          <li>Fejl koster intet, men bryder din combo</li>
           <li>Bonus for tid tilbage, hvis du finder alle 8 par</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="pairsStartBtn">START</button>
@@ -211,7 +211,7 @@ function updateTimerLabel(remainingMsInput?: number): void {
   if (!el) return;
   const remainingMs = remainingMsInput ?? state.endAt - performance.now();
   const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
-  el.textContent = `PAIRS — ${seconds}s`;
+  el.textContent = `PAIRS · ${seconds}s`;
 }
 
 function updateScoreLabel(): void {

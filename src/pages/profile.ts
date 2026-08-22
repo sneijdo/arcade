@@ -108,7 +108,7 @@ export async function renderProfile(): Promise<void> {
           ? `
       <h2 class="section-title" style="margin-top:32px">Promover en ven</h2>
       <div class="panel referral-panel">
-        <p>Inviter en ven — når de opretter en rigtig konto via dit link og spiller 4 spil, får du ${REFERRAL_REWARD_XP} XP. Ingen grænse for hvor mange venner du kan invitere.</p>
+        <p>Inviter en ven. Når de opretter en rigtig konto via dit link og spiller 4 spil, får du ${REFERRAL_REWARD_XP} XP. Ingen grænse for hvor mange venner du kan invitere.</p>
         <div class="referral-link-row">
           <input type="text" id="referralLinkInput" class="settings-input" readonly value="${referralLink()}">
           <button class="btn btn-primary" id="copyReferralBtn">KOPIÉR LINK</button>
@@ -127,7 +127,7 @@ export async function renderProfile(): Promise<void> {
           ? `
       <h2 class="section-title" style="margin-top:32px">Gem din fremgang</h2>
       <div class="panel guest-upsell-panel">
-        <p>Du spiller som gæst — din fremgang findes kun på denne enhed. Opret en konto for at gemme den på tværs af enheder og komme på det globale leaderboard.</p>
+        <p>Du spiller som gæst, din fremgang findes kun på denne enhed. Opret en konto for at gemme den på tværs af enheder og komme på det globale leaderboard.</p>
         <button class="btn btn-primary btn-block" id="createAccountBtn">OPRET KONTO</button>
       </div>
       `
@@ -143,7 +143,7 @@ export async function renderProfile(): Promise<void> {
         </div>
         <div class="settings-block">
           <div class="settings-label">Gendannelseskode</div>
-          <p class="settings-hint">Mistet din kode? Generér en ny — den gamle holder op med at virke.</p>
+          <p class="settings-hint">Mistet din kode? Generér en ny, den gamle holder op med at virke.</p>
           <button class="btn btn-ghost" id="regenCodeBtn">GENERÉR NY KODE</button>
         </div>
       </div>
@@ -179,7 +179,7 @@ export async function renderProfile(): Promise<void> {
       return;
     }
     if (newPassword.length < 6) {
-      passwordChangeMsg.textContent = 'Adgangskoden er for kort — mindst 6 tegn.';
+      passwordChangeMsg.textContent = 'Adgangskoden er for kort, mindst 6 tegn.';
       passwordChangeMsg.style.color = 'var(--coral)';
       passwordChangeMsg.style.display = 'block';
       return;

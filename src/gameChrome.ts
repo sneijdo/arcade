@@ -34,12 +34,12 @@ async function fillLiveRecord(gameId: string): Promise<void> {
   if (!stillThere) return;
   const leader = board[0];
   if (!leader) {
-    stillThere.textContent = '🏆 Ingen rekord endnu — vær den første';
+    stillThere.textContent = '🏆 Ingen rekord endnu, vær den første';
     return;
   }
   const scoreText = kind ? formatScore(kind, leader.score) : `${Math.round(leader.score)}`;
   const isMe = profile?.id === leader.id;
-  stillThere.innerHTML = `🏆 ${scoreText}<span class="game-record-holder"> — ${isMe ? 'dig' : escapeHtml(leader.name)}</span>`;
+  stillThere.innerHTML = `🏆 ${scoreText}<span class="game-record-holder"> · ${isMe ? 'dig' : escapeHtml(leader.name)}</span>`;
 }
 
 /** Call once, right after building the shell (not on every arena redraw) — wires the restart

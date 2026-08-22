@@ -24,7 +24,7 @@ export async function renderLeaderboard(gameId?: string): Promise<void> {
     <div class="page">
       <div class="section-label">Ranglister</div>
       <h1 class="section-title">Leaderboard</h1>
-      ${isGuestMode() ? '<div class="guest-lb-note">Du spiller som gæst, så du er ikke med på det globale leaderboard endnu — opret en konto fra din profil for at komme med.</div>' : ''}
+      ${isGuestMode() ? '<div class="guest-lb-note">Du spiller som gæst, så du er ikke med på det globale leaderboard endnu. Opret en konto fra din profil for at komme med.</div>' : ''}
       <div class="tabs" id="lbViewTabs">
         <button class="tab-btn ${lbView === 'week' ? 'active' : ''}" data-view="week">DENNE UGE</button>
         <button class="tab-btn ${lbView === 'alltime' ? 'active' : ''}" data-view="alltime">ALL-TIME</button>
@@ -113,7 +113,7 @@ function myRankCardHtml(board: LeaderboardEntry[], kind: ScoreKind | null): stri
     return `
       <div class="my-rank-card">
         <div class="my-rank-label">DIN PLACERING</div>
-        <div class="my-rank-empty">Du er ikke med på ranglisten endnu — spil en runde for at komme med.</div>
+        <div class="my-rank-empty">Du er ikke med på ranglisten endnu, spil en runde for at komme med.</div>
       </div>
     `;
   }
@@ -128,7 +128,7 @@ function myRankCardHtml(board: LeaderboardEntry[], kind: ScoreKind | null): stri
           <div class="my-rank-num">🥇 #1</div>
           <div class="my-rank-score mono">${fmt(me.score)}</div>
         </div>
-        <div class="my-rank-gap">🔥 Du fører — ${marginText}</div>
+        <div class="my-rank-gap">🔥 Du fører · ${marginText}</div>
       </div>
     `;
   }
@@ -156,7 +156,7 @@ async function renderLegendaryProgress(): Promise<void> {
   if (!panel) return;
 
   if (standings.length === 0) {
-    panel.innerHTML = `<div style="color:var(--text-dim);font-size:13.5px">Ingen har sat en rekord denne uge endnu — vær den første #1.</div>`;
+    panel.innerHTML = `<div style="color:var(--text-dim);font-size:13.5px">Ingen har sat en rekord denne uge endnu, vær den første #1.</div>`;
     return;
   }
   panel.innerHTML =
@@ -199,7 +199,7 @@ async function renderDuelBoard(): Promise<void> {
   if (!panel) return;
 
   if (entries.length === 0) {
-    panel.innerHTML = `<div style="color:var(--text-dim);font-size:13.5px">Ingen har spillet Quiz Duel endnu — <a href="#/activity" data-nav="activity" style="color:var(--violet)">udfordr en modstander</a> for at komme først på listen.</div>`;
+    panel.innerHTML = `<div style="color:var(--text-dim);font-size:13.5px">Ingen har spillet Quiz Duel endnu, <a href="#/activity" data-nav="activity" style="color:var(--violet)">udfordr en modstander</a> for at komme først på listen.</div>`;
     return;
   }
   const medals = ['🥇', '🥈', '🥉'];
@@ -237,7 +237,7 @@ async function renderHallOfFame(): Promise<void> {
   if (!panel) return; // navigated away while finalizing/fetching
 
   if (entries.length === 0) {
-    panel.innerHTML = `<div style="color:var(--text-dim);font-size:13.5px">Ingen ugevindere endnu — kom tilbage når den første uge er omme.</div>`;
+    panel.innerHTML = `<div style="color:var(--text-dim);font-size:13.5px">Ingen ugevindere endnu, kom tilbage når den første uge er omme.</div>`;
     return;
   }
   const medals = ['🥇', '🥈', '🥉'];

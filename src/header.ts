@@ -29,7 +29,7 @@ export function refreshHeader(): void {
     if (profile.currentStreak > 0) {
       streakChip.style.display = 'flex';
       streakChip.innerHTML = `🔥 <span>${profile.currentStreak}</span>`;
-      streakChip.title = `${profile.currentStreak} dages stime — længste: ${profile.longestStreak}`;
+      streakChip.title = `${profile.currentStreak} dages stime, længste: ${profile.longestStreak}`;
     } else {
       streakChip.style.display = 'none';
     }

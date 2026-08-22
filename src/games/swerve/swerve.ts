@@ -110,7 +110,7 @@ function drawIdle(): void {
       <ul class="instructions-list">
         <li>Træk for at styre til siden</li>
         <li>Undgå blokkene der falder ned</li>
-        <li>Farten stiger — hvor længe kan du holde ud?</li>
+        <li>Farten stiger, hvor længe kan du holde ud?</li>
       </ul>
       <button class="btn btn-primary btn-lg" id="swerveStartBtn">START</button>
     </div>

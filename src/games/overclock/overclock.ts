@@ -63,10 +63,10 @@ function drawArenaContent(): void {
       <div class="arena-inner">
         <div class="arena-title">Klar til at presse held?</div>
         <ul class="instructions-list">
-          <li>Hold nede for at lade kernen op — jo længere, jo højere multiplikator</li>
+          <li>Hold nede for at lade kernen op, jo længere, jo højere multiplikator</li>
           <li>Slip for at banke gevinsten, før kernen overloader</li>
           <li>Overloader den mens du holder, mister du hele rundens gevinst</li>
-          <li>${TOTAL_ROUNDS} runder — din samlede bankede score tæller</li>
+          <li>${TOTAL_ROUNDS} runder, din samlede bankede score tæller</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="overclockStartBtn">START</button>
       </div>
@@ -99,7 +99,7 @@ function roundDotsHtml(): string {
 
 function updateRoundLabel(): void {
   const el = document.getElementById('ocRoundLabel');
-  if (el) el.textContent = `OVERCLOCK — RUNDE ${state.roundIndex + 1}/${TOTAL_ROUNDS}`;
+  if (el) el.textContent = `OVERCLOCK · RUNDE ${state.roundIndex + 1}/${TOTAL_ROUNDS}`;
 }
 
 function drawRound(): void {
@@ -203,7 +203,7 @@ function bust(): void {
   core?.classList.remove('charging');
   core?.classList.add('busted');
   const hint = document.getElementById('ocHint');
-  if (hint) hint.innerHTML = `<span style="color:var(--coral)">OVERLOAD — RUNDEN TABT</span>`;
+  if (hint) hint.innerHTML = `<span style="color:var(--coral)">OVERLOAD · RUNDEN TABT</span>`;
   setTimeout(nextRoundOrFinish, 900);
 }
 

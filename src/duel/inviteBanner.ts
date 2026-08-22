@@ -222,7 +222,7 @@ export async function challengePlayer(recipient: PresenceUser): Promise<void> {
   if (!profile) return;
   const challenge = await sendChallenge(profile.name, profile.equippedAvatar, profile.equippedFrame, recipient);
   if (!challenge) {
-    toast('Kunne ikke sende udfordringen — prøv igen.');
+    toast('Kunne ikke sende udfordringen, prøv igen.');
     return;
   }
   outgoingRecipients.set(challenge.id, recipient);

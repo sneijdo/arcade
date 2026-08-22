@@ -83,7 +83,7 @@ function drawShell(): void {
     <div class="page">
       <div class="game-shell">
         <div class="game-topbar">
-          <span id="rushTimer">NUMBER RUSH — 60s</span>
+          <span id="rushTimer">NUMBER RUSH · 60s</span>
           <span id="rushScore" class="mono">0 POINT</span>
         </div>
         ${gameUtilBarHtml()}
@@ -104,7 +104,7 @@ function drawArenaContent(): void {
         <ul class="instructions-list">
           <li>Løs så mange stykker som muligt på 60 sekunder</li>
           <li>Tap det rigtige svar blandt de fire muligheder</li>
-          <li>Forkert svar koster et point — gæt ikke i blinde</li>
+          <li>Forkert svar koster et point, gæt ikke i blinde</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="numberrushStartBtn">START</button>
       </div>
@@ -201,7 +201,7 @@ function updateTimerLabel(remainingMsInput?: number): void {
   if (!el) return;
   const remainingMs = remainingMsInput ?? rushState.endAt - performance.now();
   const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
-  el.textContent = `NUMBER RUSH — ${seconds}s`;
+  el.textContent = `NUMBER RUSH · ${seconds}s`;
 }
 
 function updateScoreLabel(): void {

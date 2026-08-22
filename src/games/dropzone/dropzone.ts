@@ -123,8 +123,8 @@ function drawArenaContent(): void {
         <ul class="instructions-list">
           <li>Hold nede for at sigte, træk for at flytte, slip for at give slip på kuglen</li>
           <li>Kuglen rikochetterer gennem felterne ned i en boks</li>
-          <li>Kant-boksene giver flest point — men er svære at ramme</li>
-          <li>${TOTAL_BALLS} kugler — din samlede score tæller</li>
+          <li>Kant-boksene giver flest point, men er svære at ramme</li>
+          <li>${TOTAL_BALLS} kugler, din samlede score tæller</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="dropzoneStartBtn">START</button>
       </div>
@@ -354,7 +354,7 @@ function startSession(): void {
 
 function updateBallLabel(): void {
   const el = document.getElementById('dzBalls');
-  if (el) el.textContent = `DROP ZONE — ${state.ballsLeft} KUGLER TILBAGE`;
+  if (el) el.textContent = `DROP ZONE · ${state.ballsLeft} KUGLER TILBAGE`;
 }
 
 function updateScoreLabel(): void {

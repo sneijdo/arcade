@@ -63,7 +63,7 @@ function drawShell(): void {
     <div class="page">
       <div class="game-shell">
         <div class="game-topbar">
-          <span id="aimTimer">AIM TRAINER — 30s</span>
+          <span id="aimTimer">AIM TRAINER · 30s</span>
           <span id="aimScore" class="mono">0 HITS</span>
         </div>
         ${gameUtilBarHtml()}
@@ -87,7 +87,7 @@ function drawArenaContent(): void {
         <ul class="instructions-list">
           <li>Ram målet så mange gange du kan på 30 sekunder</li>
           <li>Målet flytter sig med det samme efter hvert hit</li>
-          <li>Tap hurtigt og præcist — hvert hit tæller</li>
+          <li>Tap hurtigt og præcist, hvert hit tæller</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="aimStartBtn">START</button>
       </div>
@@ -95,7 +95,7 @@ function drawArenaContent(): void {
     document.getElementById('aimStartBtn')!.addEventListener('click', (e) => {
       e.stopPropagation();
       if (arenaTooSmall()) {
-        toast('Gør browservinduet større for at spille — banen er for lille til at sigte i.');
+        toast('Gør browservinduet større for at spille, banen er for lille til at sigte i.');
         return;
       }
       startSession();
@@ -154,7 +154,7 @@ function updateTimerLabel(remainingMsInput?: number): void {
   if (!el) return;
   const remainingMs = remainingMsInput ?? aimState.endAt - performance.now();
   const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
-  el.textContent = `AIM TRAINER — ${seconds}s`;
+  el.textContent = `AIM TRAINER · ${seconds}s`;
 }
 
 function updateScoreLabel(): void {

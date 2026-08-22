@@ -184,7 +184,7 @@ async function showIntroThenStart(): Promise<void> {
     <div class="hero-tag">BOSSKAMP</div>
     <div class="arena-title" style="margin:0">Kolossen vågner</div>
     <p style="color:var(--text-dim);font-size:12.5px;max-width:320px;line-height:1.5;margin:0">
-      Bliv tæt på kolossen for at gøre skade. Alle angreb varsles — flyt dig i tide.
+      Bliv tæt på kolossen for at gøre skade. Alle angreb varsles, flyt dig i tide.
       Sejr eller død, din skade tæller.
     </p>
     <button class="btn btn-primary btn-lg" id="clStartBtn">START</button>

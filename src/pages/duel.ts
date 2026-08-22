@@ -314,7 +314,7 @@ function renderAnswerLocked(optionIndex: number | null): void {
     if (optionIndex != null && i === optionIndex) btn.classList.add('selected');
   });
   const status = document.getElementById('quizStatus');
-  if (status) status.textContent = optionIndex == null ? 'Tiden er udløbet — venter på modstanderens svar…' : 'Venter på modstanderens svar…';
+  if (status) status.textContent = optionIndex == null ? 'Tiden er udløbet, venter på modstanderens svar…' : 'Venter på modstanderens svar…';
 }
 
 /** The score bar and streak badges live outside the arena (see drawShell) and persist

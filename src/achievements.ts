@@ -74,7 +74,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // Drop Zone
   { id: 'dropzone_lucky', icon: '🎱', title: 'HELDIG HÅND', desc: '800+ point i Drop Zone.', check: (s) => (s.bestScores.dropzone ?? 0) >= 800 },
   { id: 'dropzone_jackpot', icon: '💰', title: 'JACKPOT', desc: '3000+ point i Drop Zone.', check: (s) => (s.bestScores.dropzone ?? 0) >= 3000 },
-  { id: 'dropzone_perfectrun', icon: '👑', title: 'PERFEKT RUN', desc: '4000+ point i Drop Zone — alle otte kugler i topboksen.', check: (s) => (s.bestScores.dropzone ?? 0) >= 4000 },
+  { id: 'dropzone_perfectrun', icon: '👑', title: 'PERFEKT RUN', desc: '4000+ point i Drop Zone, alle otte kugler i topboksen.', check: (s) => (s.bestScores.dropzone ?? 0) >= 4000 },
 
   // Rule Breaker
   { id: 'ruleswitch_sharp', icon: '🔀', title: 'SKARP TÆNKER', desc: '12+ point i Rule Breaker.', check: (s) => (s.bestScores.ruleswitch ?? 0) >= 12 },

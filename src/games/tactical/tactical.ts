@@ -483,8 +483,8 @@ function update(dt: number): void {
       r.roomSequence = r.roomSequence.concat(buildRoomSequence());
       toast(
         firstBossThisRun
-          ? '<span class="toast-icon">🏆</span> MISSION FULDFØRT — fortsætter i endeløs tilstand'
-          : '<span class="toast-icon">🏆</span> Endnu en boss besejret — videre!',
+          ? '<span class="toast-icon">🏆</span> MISSION FULDFØRT, fortsætter i endeløs tilstand'
+          : '<span class="toast-icon">🏆</span> Endnu en boss besejret, videre!',
         'achievement',
       );
       const nextIndex = r.roomIndex + 1;

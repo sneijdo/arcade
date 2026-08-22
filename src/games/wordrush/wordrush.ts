@@ -194,7 +194,7 @@ function drawShell(): void {
     <div class="page">
       <div class="game-shell">
         <div class="game-topbar">
-          <span id="wrTimer">WORD RUSH — 40s</span>
+          <span id="wrTimer">WORD RUSH · 40s</span>
           <span id="wrScore" class="mono">0 ORD</span>
         </div>
         ${gameUtilBarHtml()}
@@ -215,7 +215,7 @@ function drawArenaContent(): void {
         <ul class="instructions-list">
           <li>Skriv ordet på skærmen så hurtigt du kan</li>
           <li>Ordet skifter automatisk når du rammer det rigtigt</li>
-          <li>Fejl koster intet — du går bare videre</li>
+          <li>Fejl koster intet, du går bare videre</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="wordrushStartBtn">START</button>
       </div>
@@ -329,7 +329,7 @@ function updateTimerLabel(remainingMsInput?: number): void {
   if (!el) return;
   const remainingMs = remainingMsInput ?? state.endAt - performance.now();
   const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
-  el.textContent = `WORD RUSH — ${seconds}s`;
+  el.textContent = `WORD RUSH · ${seconds}s`;
 }
 
 function updateScoreLabel(): void {

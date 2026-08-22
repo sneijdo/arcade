@@ -171,7 +171,7 @@ function updateLegendaryRow(): void {
   const legendarySpent = ownedLegendaryCount();
   el.innerHTML = `
     <span>⭐ ${legendarySpent} / ${myLegendarySlots} legendary-slots brugt</span>
-    <span class="shop-legendary-hint">${myLegendarySlots > legendarySpent ? 'Du har et ledigt slot — vælg en legendary nedenfor!' : 'Slut en uge som nr. 1 i 4+ spil for at optjene et nyt slot'}</span>
+    <span class="shop-legendary-hint">${myLegendarySlots > legendarySpent ? 'Du har et ledigt slot, vælg en legendary nedenfor!' : 'Slut en uge som nr. 1 i 4+ spil for at optjene et nyt slot'}</span>
     <a class="shop-legendary-hint" href="#/guide" data-nav="guide" style="text-decoration:underline;cursor:pointer">Læs mere om hvordan det virker →</a>
   `;
 }
@@ -199,7 +199,7 @@ function nextItemHtml(): string {
     <div class="shop-next-card">
       <div class="shop-next-emoji">${nextThumbHtml(next, shopTab)}</div>
       <div class="shop-next-body">
-        <div class="shop-next-label">NÆSTE — "${displayName(next)}"</div>
+        <div class="shop-next-label">NÆSTE: "${displayName(next)}"</div>
         <div class="shop-next-cost mono">${next.cost - balance} XP mangler</div>
       </div>
     </div>
@@ -383,11 +383,11 @@ async function handleTap(tab: ShopTab, id: string): Promise<void> {
       toast(
         def.rarity === 'legendary'
           ? def.requiresOwnedLegendary && owned < def.requiresOwnedLegendary
-            ? `Kræver ${def.requiresOwnedLegendary} andre ejede legendary ting — du har ${owned}`
+            ? `Kræver ${def.requiresOwnedLegendary} andre ejede legendary ting, du har ${owned}`
             : myLegendarySlots === 0
               ? 'Legendary kræver mindst 1 uge som nr. 1 i 4+ forskellige spil'
-              : `Ingen ledige legendary-slots — du har brugt alle ${myLegendarySlots}`
-          : `Låst op ved level ${def.unlockLevel} — du er level ${myLevel()}`,
+              : `Ingen ledige legendary-slots, du har brugt alle ${myLegendarySlots}`
+          : `Låst op ved level ${def.unlockLevel}, du er level ${myLevel()}`,
       );
       return;
     }

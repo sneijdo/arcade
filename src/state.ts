@@ -258,7 +258,7 @@ export async function updateStreak(): Promise<void> {
   if (bonusXp) {
     addXp(bonusXp);
     await saveProfile();
-    toast(`<span class="toast-icon">🔥</span> +${bonusXp} XP <span style="color:var(--text-dim)">— ${profile.currentStreak} dages stime</span>`, 'achievement');
+    toast(`<span class="toast-icon">🔥</span> +${bonusXp} XP <span style="color:var(--text-dim)">· ${profile.currentStreak} dages stime</span>`, 'achievement');
     Sound.achievement();
   }
 }
@@ -280,7 +280,7 @@ export async function checkDailyChallenge(gameId: string, score: number): Promis
   profile.dailyChallengeDate = today;
   addXp(challenge.xpReward);
   await saveProfile();
-  toast(`<span class="toast-icon">🎯</span> +${challenge.xpReward} XP <span style="color:var(--text-dim)">— Dagens udfordring gennemført</span>`, 'achievement');
+  toast(`<span class="toast-icon">🎯</span> +${challenge.xpReward} XP <span style="color:var(--text-dim)">· Dagens udfordring gennemført</span>`, 'achievement');
   Sound.achievement();
 }
 
@@ -533,7 +533,7 @@ export async function creditMyHallOfFameWins(): Promise<void> {
     Sound.achievement();
     if (newLegendaryWeeks > 0) {
       toast(
-        `<span class="toast-icon">⭐</span> Du har optjent et legendary-slot — vælg selv hvilken avatar, ramme eller titel i butikken!`,
+        `<span class="toast-icon">⭐</span> Du har optjent et legendary-slot, vælg selv hvilken avatar, ramme eller titel i butikken!`,
         'achievement',
       );
       Sound.pb();
@@ -623,7 +623,7 @@ export async function awardXP(amount: number, reasonLabel?: string): Promise<voi
   await saveProfile();
   refreshHeader();
   if (reasonLabel) {
-    toast(`<span class="xp-icon">✦</span> +${amount} XP <span style="color:var(--text-dim)">— ${reasonLabel}</span>`);
+    toast(`<span class="xp-icon">✦</span> +${amount} XP <span style="color:var(--text-dim)">· ${reasonLabel}</span>`);
   }
 }
 
@@ -690,7 +690,7 @@ export async function checkAchievements(extra: Partial<AchievementStats> = {}): 
   if (!profile.unlockedTitles.includes('title-secret-01') && statObj.gamesPlayed >= implementedGameIds.length) {
     profile.unlockedTitles.push('title-secret-01');
     changed = true;
-    toast(`<span class="toast-icon">🔮</span><div><b>Hemmelig titel fundet!</b><br><span style="color:var(--text-dim);font-size:11.5px">Du har spillet alle spil — tjek butikken.</span></div>`, 'achievement');
+    toast(`<span class="toast-icon">🔮</span><div><b>Hemmelig titel fundet!</b><br><span style="color:var(--text-dim);font-size:11.5px">Du har spillet alle spil, tjek butikken.</span></div>`, 'achievement');
     Sound.achievement();
   }
   const allLegendaryOwned =
@@ -700,7 +700,7 @@ export async function checkAchievements(extra: Partial<AchievementStats> = {}): 
   if (!profile.unlockedTitles.includes('title-secret-02') && allLegendaryOwned) {
     profile.unlockedTitles.push('title-secret-02');
     changed = true;
-    toast(`<span class="toast-icon">🔮</span><div><b>Hemmelig titel fundet!</b><br><span style="color:var(--text-dim);font-size:11.5px">Du ejer nu alt legendarisk — tjek butikken.</span></div>`, 'achievement');
+    toast(`<span class="toast-icon">🔮</span><div><b>Hemmelig titel fundet!</b><br><span style="color:var(--text-dim);font-size:11.5px">Du ejer nu alt legendarisk, tjek butikken.</span></div>`, 'achievement');
     Sound.achievement();
   }
 

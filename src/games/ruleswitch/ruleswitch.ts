@@ -116,7 +116,7 @@ function drawShell(): void {
     <div class="page">
       <div class="game-shell">
         <div class="game-topbar">
-          <span id="rbTimer">RULE BREAKER — 45s</span>
+          <span id="rbTimer">RULE BREAKER · 45s</span>
           <span id="rbScore" class="mono">0 POINT</span>
         </div>
         ${gameUtilBarHtml()}
@@ -135,10 +135,10 @@ function drawArenaContent(): void {
       <div class="arena-inner">
         <div class="arena-title">Klar til at følge reglen?</div>
         <ul class="instructions-list">
-          <li>Sortér tallet efter reglen øverst — tap venstre eller højre</li>
-          <li>Reglen skifter uden varsel undervejs — hold øje med banneret</li>
+          <li>Sortér tallet efter reglen øverst, tap venstre eller højre</li>
+          <li>Reglen skifter uden varsel undervejs, hold øje med banneret</li>
           <li>Svarer du ikke i tide, tæller det som forkert</li>
-          <li>Forkert svar koster et point — gæt ikke i blinde</li>
+          <li>Forkert svar koster et point, gæt ikke i blinde</li>
         </ul>
         <button class="btn btn-primary btn-lg" id="ruleswitchStartBtn">START</button>
       </div>
@@ -291,7 +291,7 @@ function updateTimerLabel(remainingMsInput?: number): void {
   if (!el) return;
   const remainingMs = remainingMsInput ?? state.endAt - performance.now();
   const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
-  el.textContent = `RULE BREAKER — ${seconds}s`;
+  el.textContent = `RULE BREAKER · ${seconds}s`;
 }
 
 function updateScoreLabel(): void {

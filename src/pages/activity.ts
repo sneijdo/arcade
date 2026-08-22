@@ -114,7 +114,7 @@ export async function renderActivity(): Promise<void> {
         !live
           ? `<div class="guest-lb-note">${
               isGuestMode()
-                ? 'Du spiller som gæst, så du kan ikke se eller optræde i live-aktiviteten — opret en konto fra din profil for at komme med.'
+                ? 'Du spiller som gæst, så du kan ikke se eller optræde i live-aktiviteten. Opret en konto fra din profil for at komme med.'
                 : 'Live-aktivitet kræver at appen er sat op med en konto-backend.'
             }</div>`
           : ''

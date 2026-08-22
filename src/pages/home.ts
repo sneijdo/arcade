@@ -35,7 +35,7 @@ function renderDailyChallengeCard(): string {
       <div class="daily-challenge-icon">${completed ? '✅' : game ? `<img src="${game.iconAsset}" alt="" class="daily-challenge-icon-img">` : '🎯'}</div>
       <div class="daily-challenge-body">
         <div class="daily-challenge-label">DAGENS UDFORDRING</div>
-        <div class="daily-challenge-title">${completed ? 'Gennemført!' : `${challenge.gameTitle} — nå ${targetText}`}</div>
+        <div class="daily-challenge-title">${completed ? 'Gennemført!' : `${challenge.gameTitle} · nå ${targetText}`}</div>
         <div class="daily-challenge-reward">${completed ? `+${challenge.xpReward} XP optjent` : `Belønning: +${challenge.xpReward} XP`}</div>
       </div>
       ${completed ? '' : `<button class="btn btn-primary" data-nav="play-${challenge.gameId}">SPIL</button>`}

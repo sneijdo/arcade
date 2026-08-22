@@ -224,7 +224,7 @@ function completeWave(): void {
   run.waveNumber++;
   hud.setStartWaveButton(true, 'START NÆSTE BØLGE');
   run.autoStartRemaining = BALANCE.waves.autoStartDelayS;
-  hud.updateWaveLabel(`BØLGE ${run.waveNumber - 1} KLARET — 💰+${bonus}`);
+  hud.updateWaveLabel(`BØLGE ${run.waveNumber - 1} KLARET · 💰+${bonus}`);
 }
 
 function loseLife(cost: number): void {
@@ -276,7 +276,7 @@ function drawFinalScreen(score: number, isNewBest: boolean, xpGain: number, rank
   const main = document.getElementById('main')!;
   const rating = ScoreKinds.towerdefense_waves.rating(score);
   const progressHtml = EMBER_WARD_BETA
-    ? '<div class="xp-toast" style="opacity:.75">🧪 Testversion — intet gemmes på leaderboard eller XP</div>'
+    ? '<div class="xp-toast" style="opacity:.75">🧪 Testversion, intet gemmes på leaderboard eller XP</div>'
     : `${isNewBest ? '<div class="pb-flag">★ NY PERSONLIG REKORD</div>' : ''}<div class="xp-toast">✦ +${xpGain} XP optjent${rank && rank <= 3 ? ' · TOP 3-BONUS' : ''}</div>`;
   main.innerHTML = `
     <div class="page">
@@ -552,7 +552,7 @@ function tryPlaceAt(pos: Vec2): void {
   }
   if (distanceToPathPx(pos, run.arenaW, run.arenaH) < pathClearancePx(run.arenaW)) {
     Sound.mistake();
-    toast('For tæt på stien — fjendene skal kunne gå frit');
+    toast('For tæt på stien, fjendene skal kunne gå frit');
     return;
   }
   if (run.towers.some((t) => Math.hypot(t.pos.x - pos.x, t.pos.y - pos.y) < MIN_TOWER_SPACING_PX)) {

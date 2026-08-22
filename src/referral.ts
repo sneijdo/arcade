@@ -107,7 +107,7 @@ export async function syncReferrals(): Promise<ReferralStats> {
     await saveProfile();
     refreshHeader();
     const who = newlyRewarded.length === 1 ? 'en ven du inviterede er' : `${newlyRewarded.length} venner du inviterede er`;
-    toast(`<span class="toast-icon">🤝</span> +${xpGrantedThisSync} XP — ${who} nu i gang!`);
+    toast(`<span class="toast-icon">🤝</span> +${xpGrantedThisSync} XP · ${who} nu i gang!`);
   }
 
   const rewardedCount = referred.filter((r) => profile!.referralRewardsClaimed.includes(r.id)).length;

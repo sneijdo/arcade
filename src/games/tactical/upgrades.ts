@@ -56,7 +56,7 @@ export const UPGRADES: UpgradeDef[] = [
     icon: '➕',
     rarity: 'epic',
     tag: 'projectile',
-    desc: '+1 projektil pr. skud — hvert ekstra projektil kan selv ramme kritisk og rikochettere',
+    desc: '+1 projektil pr. skud, hvert ekstra projektil kan selv ramme kritisk og rikochettere',
     maxStacks: 3,
     apply: (b: BuildStats) => {
       b.projectileCountBonus += 1;
@@ -164,7 +164,7 @@ export const UPGRADES: UpgradeDef[] = [
     icon: '🩸',
     rarity: 'epic',
     tag: 'offense',
-    desc: '-20 max HP, men +35% skade og +10% skudhastighed — alt-ind-build for dem der tør',
+    desc: '-20 max HP, men +35% skade og +10% skudhastighed, alt-ind-build for dem der tør',
     maxStacks: 2,
     apply: (b: BuildStats) => {
       b.maxHpBonus -= 20;

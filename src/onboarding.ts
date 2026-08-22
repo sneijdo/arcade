@@ -34,7 +34,7 @@ export function showOnboarding(): void {
     <div class="modal">
       <div class="hero-tag" style="margin-bottom:10px">VELKOMMEN TIL</div>
       <h2>ARCADE</h2>
-      <p>Vælg et navn — sådan viser du dig på leaderboards og til venner.</p>
+      <p>Vælg et navn, sådan viser du dig på leaderboards og til venner.</p>
       <input type="text" id="nameInput" maxlength="18" placeholder="Dit navn" autocomplete="off">
       <button class="btn btn-primary btn-block btn-lg" id="enterBtn">GÅ TIL ARCADE</button>
     </div>
@@ -105,7 +105,7 @@ export function showAuthModal(mode: AuthMode = 'signup'): void {
     <div class="modal">
       <div class="hero-tag" style="margin-bottom:10px">${isSignup ? 'NY HER?' : 'VELKOMMEN TILBAGE'}</div>
       <h2>${isSignup ? 'Opret konto' : 'Log ind'}</h2>
-      <p>${isSignup ? 'Vælg et brugernavn og en adgangskode — det er hele processen.' : 'Log ind med dit brugernavn og din adgangskode.'}${isSignup && isGuestMode() ? ' Din nuværende gæsteprofil på denne enhed bliver ikke overført til den nye konto.' : ''}</p>
+      <p>${isSignup ? 'Vælg et brugernavn og en adgangskode, det er hele processen.' : 'Log ind med dit brugernavn og din adgangskode.'}${isSignup && isGuestMode() ? ' Din nuværende gæsteprofil på denne enhed bliver ikke overført til den nye konto.' : ''}</p>
       <input type="text" id="usernameInput" maxlength="18" placeholder="Brugernavn" autocomplete="username">
       <input type="password" id="passwordInput" placeholder="Adgangskode" autocomplete="${isSignup ? 'new-password' : 'current-password'}" style="margin-top:-4px">
       ${isSignup ? '<p style="color:var(--text-faint);font-size:11.5px;text-align:left;line-height:1.5;margin-top:-6px">Brug ikke en adgangskode du bruger til andre/vigtige ting.</p>' : ''}
@@ -240,7 +240,7 @@ export async function showRecoveryCodeReveal(): Promise<void> {
         <div class="hero-tag" style="margin-bottom:10px">VIGTIGT</div>
         <h2>Gem din gendannelseskode</h2>
         <p>Hvis du glemmer din adgangskode, er det kun den her kode der kan give dig adgang til kontoen igen. Den vises ikke igen.</p>
-        <div class="recovery-code-box" id="recoveryCodeBox">${saved ? code : 'Kunne ikke oprette en kode — prøv igen fra din profil.'}</div>
+        <div class="recovery-code-box" id="recoveryCodeBox">${saved ? code : 'Kunne ikke oprette en kode, prøv igen fra din profil.'}</div>
         ${saved ? '<button class="btn btn-ghost btn-block" id="copyCodeBtn">KOPIÉR KODE</button>' : ''}
         <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;color:var(--text-dim);text-align:left">
           <input type="checkbox" id="savedCheckbox" style="width:18px;height:18px;flex-shrink:0">
@@ -306,7 +306,7 @@ function showForgotPasswordModal(): void {
       return;
     }
     if (newPassword.length < 6) {
-      showError('Adgangskoden er for kort — mindst 6 tegn.');
+      showError('Adgangskoden er for kort, mindst 6 tegn.');
       return;
     }
     submitBtn.disabled = true;

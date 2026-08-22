@@ -146,7 +146,7 @@ async function showIntroThenStart(): Promise<void> {
     <div class="hero-tag">SIGT & SKYD</div>
     <div class="arena-title" style="margin:0;color:#fff">Balloner venter</div>
     <p style="color:#dfe9ff;font-size:12.5px;max-width:320px;line-height:1.5;margin:0">
-      Træk tilbage fra slyngen og slip for at skyde. ${BALANCE.totalShots} skud —
+      Træk tilbage fra slyngen og slip for at skyde. ${BALANCE.totalShots} skud,
       ram så mange balloner som muligt. Mindre balloner giver flere point.
     </p>
     <button class="btn btn-primary btn-lg" id="tjStartBtn">START</button>
