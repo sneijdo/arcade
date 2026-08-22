@@ -21,8 +21,8 @@ values (
   true,
   'service_notice',
   jsonb_build_object(
-    'id', '2026-08-22-live',
-    'text', 'Vi er live! 🚀 Sikkerhed, balance og en bunke bugs er rettet, og alle scores/ranglister/Duel-stats er nulstillet til en fair start — din XP og dine ting i butikken er urørt. Kampen om denne uges legendary-slot er allerede i gang og afgøres i morgen, så nu er chancen! Fundet en fejl undervejs? Brug 🐛-knappen i toppen til at sende den direkte til mig.',
+    'id', '2026-08-22-hard-refresh',
+    'text', 'Vigtigt: hvis dine rekorder ikke dukker op på leaderboardet, skyldes det højst sandsynligt at din browser stadig kører en gammel udgave af appen. Luk appen helt ned og åbn den igen, eller lav et hard refresh (Ctrl+Shift+R på PC, Cmd+Shift+R på Mac) — så er du opdateret. 🔄',
     'publishedAt', extract(epoch from now()) * 1000
   )
 )
