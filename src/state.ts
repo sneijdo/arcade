@@ -802,7 +802,24 @@ async function rankFor(gameId: string, week: string): Promise<number | null> {
   return (data as number | null) ?? null;
 }
 
-export async function checkAchievements(extra: Partial<AchievementStats> = {}): Promise<void> {
+// Serializes every call instead of letting them run concurrently — same underlying risk as
+// creditMyHallOfFameWins() had (see that function's comment): this is called from several places
+// that can land close together (a session ending, a shop purchase, a Hall of Fame credit), and
+// each call's "already unlocked?" checks read the in-memory profile arrays synchronously but the
+// rank lookups above them are async, leaving a gap where two overlapping calls could both decide
+// the same achievement/badge is newly earned and both push it — duplicate entries, double XP,
+// double toasts. Queued (not collapsed onto one shared promise like creditMyHallOfFameWins) since
+// calls here carry their own `extra` stats argument and must each still run in full, just never
+// overlapping with another call's read-then-write.
+let checkAchievementsQueue: Promise<void> = Promise.resolve();
+
+export function checkAchievements(extra: Partial<AchievementStats> = {}): Promise<void> {
+  const run = checkAchievementsQueue.then(() => checkAchievementsInner(extra));
+  checkAchievementsQueue = run.catch(() => {}); // one failed check shouldn't wedge every call after it
+  return run;
+}
+
+async function checkAchievementsInner(extra: Partial<AchievementStats>): Promise<void> {
   if (!profile) return;
   const implementedGameIds = GAMES.filter((g) => g.implemented).map((g) => g.id);
   const week = weekKey(new Date());
