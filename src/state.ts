@@ -1,4 +1,5 @@
-import { storage } from './storage';
+import { storage, isGuestMode } from './storage';
+import { supabase } from './supabaseClient';
 import { ACHIEVEMENTS } from './achievements';
 import { BADGES } from './badges';
 import { GAMES } from './games/registry';
@@ -219,9 +220,15 @@ export function todayLocalDateString(): string {
  * weekly reset boundary. A new week starts every Sunday, which is also when a fresh shot at a
  * legendary slot opens up. Plain calendar-date strings sort lexicographically in chronological
  * order, same as the ISO-week strings this replaced, so every caller that compares week keys as
- * strings keeps working unchanged. */
+ * strings keeps working unchanged.
+ *
+ * Computed from `d`'s UTC calendar date, not the browser's local date — it has to be, since
+ * submit_score() (see supabase/schema_scores.sql) buckets weeks the same way on the server, which
+ * has no way to know a client's local timezone. Using local-date-reinterpreted-as-UTC here (as this
+ * used to) would let two players see the same instant land in different week buckets, and would
+ * disagree with what the server just wrote near the UTC day boundary. */
 export function weekKey(d: Date): string {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
   date.setUTCDate(date.getUTCDate() - date.getUTCDay()); // back up to that week's Sunday (UTC day 0)
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
 }
@@ -280,22 +287,37 @@ export async function checkDailyChallenge(gameId: string, score: number): Promis
 /** Entries are keyed per week (Sunday-start, see weekKey()), so a new week naturally starts empty — that IS the weekly reset, no cron/migration needed. Pre-existing (pre-weekly-key) entries keep matching the wider 'alltime' prefix below, so historical scores aren't lost, they just don't count for the current week until replayed. */
 export async function pushLeaderboardEntry(gameId: string, score: number): Promise<void> {
   if (!profile) return;
-  const week = weekKey(new Date());
-  const key = `lb:${gameId}:${week}:` + profile.id;
-  // Only a genuine improvement earns a fresh timestamp — this session re-pushes the same
-  // personal best on every play, and if we stamped "now" every time, whoever merely played
-  // most recently would look like they set the record most recently too. Ties in score are
-  // broken by this timestamp (see readLeaderboard), so preserving it is what makes "first to
-  // reach the record" win instead of "last to replay it".
-  const existing = await storage.get<LeaderboardEntry>(key, true);
-  const dir = directionForGame(gameId);
-  const isImprovement = !existing || (dir === 'asc' ? score < existing.score : score > existing.score);
-  const ts = isImprovement ? Date.now() : existing?.ts;
-  await storage.set(
-    key,
-    { name: profile.name, score, id: profile.id, avatar: profile.equippedAvatar, title: profile.equippedTitle, frame: profile.equippedFrame, ts },
-    true,
-  );
+  if (isGuestMode() || !supabase) {
+    // Local-only guest mode has no server to validate against and no other players
+    // to protect from — same generic kv storage this always used.
+    const week = weekKey(new Date());
+    const key = `lb:${gameId}:${week}:` + profile.id;
+    // Only a genuine improvement earns a fresh timestamp — this session re-pushes the same
+    // personal best on every play, and if we stamped "now" every time, whoever merely played
+    // most recently would look like they set the record most recently too. Ties in score are
+    // broken by this timestamp (see readLeaderboard), so preserving it is what makes "first to
+    // reach the record" win instead of "last to replay it".
+    const existing = await storage.get<LeaderboardEntry>(key, true);
+    const dir = directionForGame(gameId);
+    const isImprovement = !existing || (dir === 'asc' ? score < existing.score : score > existing.score);
+    const ts = isImprovement ? Date.now() : existing?.ts;
+    await storage.set(
+      key,
+      { name: profile.name, score, id: profile.id, avatar: profile.equippedAvatar, title: profile.equippedTitle, frame: profile.equippedFrame, ts },
+      true,
+    );
+    return;
+  }
+  // Real accounts submit through submit_score() (see supabase/schema_scores.sql) — a
+  // SECURITY DEFINER function that validates the score against a per-game plausibility
+  // range and atomically keeps only a genuine improvement, instead of the client being
+  // free to upsert whatever score it likes (see that file's header for the incident —
+  // a forged 99999 on Rule Breaker — this closes).
+  const { error } = await supabase.rpc('submit_score', { p_game_id: gameId, p_score: score });
+  if (error) {
+    console.error('submit_score rejected', error);
+    toast(`<span class="toast-icon">⚠️</span> Din score kunne ikke gemmes`);
+  }
 }
 
 function lbPrefix(gameId: string, week: string | null): string {
@@ -303,23 +325,48 @@ function lbPrefix(gameId: string, week: string | null): string {
 }
 
 async function readLeaderboard(gameId: string, week: string | null): Promise<LeaderboardEntry[]> {
-  const keys = await storage.list(lbPrefix(gameId, week), true);
-  // Fetched in parallel rather than one round-trip per key — with many
-  // players on a leaderboard, sequential fetches here were the single
-  // biggest contributor to the post-game wait (see finishGameSession).
-  const rows = await Promise.all(keys.map((k) => storage.get<LeaderboardEntry>(k, true)));
-  const entries: LeaderboardEntry[] = rows.filter((r): r is LeaderboardEntry => r != null);
   const dir = directionForGame(gameId);
-  // dedupe by id keeping the best score for that game's direction
+  let entries: LeaderboardEntry[];
+  if (isGuestMode() || !supabase) {
+    const keys = await storage.list(lbPrefix(gameId, week), true);
+    // Fetched in parallel rather than one round-trip per key — with many
+    // players on a leaderboard, sequential fetches here were the single
+    // biggest contributor to the post-game wait (see finishGameSession).
+    const rows = await Promise.all(keys.map((k) => storage.get<LeaderboardEntry>(k, true)));
+    entries = rows.filter((r): r is LeaderboardEntry => r != null);
+  } else {
+    // public.scores is a real table (see supabase/schema_scores.sql) — one round trip
+    // for every player's row instead of a per-key fetch. It doesn't carry
+    // name/avatar/title/frame; getCombinedLeaderboard's meta overlay fills those in.
+    let query = supabase.from('scores').select('owner_id, score, achieved_at').eq('game_id', gameId);
+    if (week) query = query.eq('week', week);
+    const { data, error } = await query;
+    if (error) {
+      console.error('leaderboard fetch failed', error);
+      return [];
+    }
+    entries = (data ?? []).map((row) => ({
+      id: row.owner_id as string,
+      name: '',
+      score: Number(row.score),
+      avatar: null,
+      title: null,
+      frame: null,
+      ts: new Date(row.achieved_at as string).getTime(),
+    }));
+  }
+  // dedupe by id keeping the best score for that game's direction — the "alltime" scope
+  // (week === null) has one row per week per player, so this also collapses those down
+  // to each player's single best-ever row.
   const byId: Record<string, LeaderboardEntry> = {};
   for (const e of entries) {
     const existing = byId[e.id];
     if (!existing || (dir === 'asc' ? e.score < existing.score : e.score > existing.score)) byId[e.id] = e;
   }
   const combined = Object.values(byId);
-  // Tied scores go to whoever set that score first, not whoever's key happened to sort first —
-  // see the ts comment in pushLeaderboardEntry. Entries from before ts existed have no way to
-  // know when they were set, so they fall to the back of their tie group.
+  // Tied scores go to whoever set that score first, not whoever's row happened to sort first —
+  // see the ts comment in pushLeaderboardEntry / achieved_at in submit_score. Entries from before
+  // ts existed have no way to know when they were set, so they fall to the back of their tie group.
   combined.sort((a, b) => {
     if (a.score !== b.score) return dir === 'asc' ? a.score - b.score : b.score - a.score;
     return (a.ts ?? Infinity) - (b.ts ?? Infinity);
@@ -329,20 +376,44 @@ async function readLeaderboard(gameId: string, week: string | null): Promise<Lea
 
 export async function getCombinedLeaderboard(gameId: string, scope: 'week' | 'alltime' = 'week'): Promise<LeaderboardEntry[]> {
   const combined = await readLeaderboard(gameId, scope === 'week' ? weekKey(new Date()) : null);
+  if (combined.length === 0) return combined;
   // Overlay each player's live avatar/title/name so an equip change shows up
   // immediately instead of waiting for that player's next score push.
-  await Promise.all(
-    combined.map(async (e) => {
-      const meta = await storage.get<PlayerMeta>('playerMeta:' + e.id, true);
-      if (meta) {
-        e.name = meta.name;
-        e.avatar = meta.avatar;
-        e.title = meta.title;
-        e.frame = meta.frame;
-        e.nameEffect = meta.nameEffect;
-      }
-    }),
-  );
+  if (isGuestMode() || !supabase) {
+    await Promise.all(
+      combined.map(async (e) => {
+        const meta = await storage.get<PlayerMeta>('playerMeta:' + e.id, true);
+        if (meta) {
+          e.name = meta.name;
+          e.avatar = meta.avatar;
+          e.title = meta.title;
+          e.frame = meta.frame;
+          e.nameEffect = meta.nameEffect;
+        }
+      }),
+    );
+    return combined;
+  }
+  // One round trip for every row's meta instead of one call per row (the generic kv
+  // storage.get() this replaced here was a call each) — cuts request count sharply on a
+  // leaderboard with many players.
+  const metaKeys = combined.map((e) => 'playerMeta:' + e.id);
+  const { data, error } = await supabase.from('kv').select('key, value').eq('shared', true).in('key', metaKeys);
+  if (error) {
+    console.error('leaderboard meta fetch failed', error);
+    return combined;
+  }
+  const metaByKey = new Map((data ?? []).map((row) => [row.key as string, row.value as unknown as PlayerMeta]));
+  for (const e of combined) {
+    const meta = metaByKey.get('playerMeta:' + e.id);
+    if (meta) {
+      e.name = meta.name;
+      e.avatar = meta.avatar;
+      e.title = meta.title;
+      e.frame = meta.frame;
+      e.nameEffect = meta.nameEffect;
+    }
+  }
   return combined;
 }
 
