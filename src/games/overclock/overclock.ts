@@ -19,13 +19,14 @@ interface OverclockState {
   heldMs: number;
   multiplier: number;
   tickId: ReturnType<typeof setInterval> | null;
+  nextTimeoutId: ReturnType<typeof setTimeout> | null;
   lastChargeSoundAt: number;
 }
 
 let state: OverclockState = makeInitialState();
 
 function makeInitialState(): OverclockState {
-  return { phase: 'idle', roundIndex: 0, roundPhase: 'ready', totalScore: 0, heldMs: 0, multiplier: 1, tickId: null, lastChargeSoundAt: 0 };
+  return { phase: 'idle', roundIndex: 0, roundPhase: 'ready', totalScore: 0, heldMs: 0, multiplier: 1, tickId: null, nextTimeoutId: null, lastChargeSoundAt: 0 };
 }
 
 function main(): HTMLElement {
@@ -34,6 +35,11 @@ function main(): HTMLElement {
 
 export function renderOverclockGame(): void {
   if (state.tickId) clearInterval(state.tickId);
+  // bank()/bust() schedule nextRoundOrFinish 900ms out — restarting mid-round didn't cancel
+  // that, so a stale call could later fire against the fresh session and bump roundIndex
+  // (same bug class fixed in reaction.ts; nextRoundOrFinish's own phase guard only helps if
+  // the player hasn't already started a new round by the time it fires).
+  if (state.nextTimeoutId) clearTimeout(state.nextTimeoutId);
   state = makeInitialState();
   drawShell();
   wireGameChrome('overclock', renderOverclockGame);
@@ -190,7 +196,7 @@ function bank(): void {
   core?.classList.add('banked');
   const hint = document.getElementById('ocHint');
   if (hint) hint.innerHTML = `<span style="color:var(--lime)">BANKET +${gained}</span>`;
-  setTimeout(nextRoundOrFinish, 900);
+  state.nextTimeoutId = setTimeout(nextRoundOrFinish, 900);
 }
 
 function bust(): void {
@@ -204,7 +210,7 @@ function bust(): void {
   core?.classList.add('busted');
   const hint = document.getElementById('ocHint');
   if (hint) hint.innerHTML = `<span style="color:var(--coral)">OVERLOAD · RUNDEN TABT</span>`;
-  setTimeout(nextRoundOrFinish, 900);
+  state.nextTimeoutId = setTimeout(nextRoundOrFinish, 900);
 }
 
 function nextRoundOrFinish(): void {

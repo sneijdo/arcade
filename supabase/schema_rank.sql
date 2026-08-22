@@ -8,9 +8,16 @@
 -- the same computation as a single window-function query against public.scores directly,
 -- with no meta fetch at all (a rank number never needed anyone's name/avatar).
 
+-- security definer: score_bounds has RLS enabled with no select policy for normal roles
+-- (only submit_score's own SECURITY DEFINER lookup could see it) — without this, the
+-- direction lookup below silently sees zero rows, v_direction stays null, and the function
+-- returns null for every call regardless of whether a score actually exists. Confirmed live
+-- against production before writing this fix.
 create or replace function public.rank_for(p_game_id text, p_owner_id uuid, p_week date)
 returns int
 language plpgsql
+security definer
+set search_path = public
 stable
 as $$
 declare

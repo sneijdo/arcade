@@ -29,12 +29,25 @@ interface PairsState {
   combo: number;
   endAt: number;
   tickId: ReturnType<typeof setInterval> | null;
+  revealTimeoutId: ReturnType<typeof setTimeout> | null;
 }
 
 let state: PairsState = makeInitialState();
 
 function makeInitialState(): PairsState {
-  return { phase: 'idle', cards: [], flipped: [], locked: false, score: 0, matches: 0, mismatches: 0, combo: 0, endAt: 0, tickId: null };
+  return {
+    phase: 'idle',
+    cards: [],
+    flipped: [],
+    locked: false,
+    score: 0,
+    matches: 0,
+    mismatches: 0,
+    combo: 0,
+    endAt: 0,
+    tickId: null,
+    revealTimeoutId: null,
+  };
 }
 
 function main(): HTMLElement {
@@ -43,6 +56,11 @@ function main(): HTMLElement {
 
 export function renderPairsGame(): void {
   if (state.tickId) clearInterval(state.tickId);
+  // The match/mismatch-reveal timeouts below only checked whether #prGrid still existed —
+  // restarting redraws a brand new #prGrid, so that guard never actually caught a restart.
+  // A stale one firing after restart mutated the FRESH state's matches/score/combo/locked
+  // (same bug class fixed in reaction.ts), so it has to be explicitly cancelled here too.
+  if (state.revealTimeoutId) clearTimeout(state.revealTimeoutId);
   state = makeInitialState();
   drawShell();
   wireGameChrome('pairs', renderPairsGame);
@@ -143,7 +161,7 @@ function handleGridPointerDown(e: PointerEvent): void {
   const c2 = state.cards[i2];
 
   if (c1.symbol === c2.symbol) {
-    setTimeout(() => {
+    state.revealTimeoutId = setTimeout(() => {
       if (!document.getElementById('prGrid')) return;
       c1.matched = true;
       c2.matched = true;
@@ -163,7 +181,7 @@ function handleGridPointerDown(e: PointerEvent): void {
       }
     }, MATCH_LOCK_MS);
   } else {
-    setTimeout(() => {
+    state.revealTimeoutId = setTimeout(() => {
       if (!document.getElementById('prGrid')) return;
       state.combo = 0;
       state.mismatches++;

@@ -78,6 +78,7 @@ interface RuleBreakerState {
   endAt: number;
   itemDeadline: number;
   tickId: ReturnType<typeof setInterval> | null;
+  advanceTimeoutId: ReturnType<typeof setTimeout> | null;
   answered: boolean;
 }
 
@@ -96,6 +97,7 @@ function makeInitialState(): RuleBreakerState {
     endAt: 0,
     itemDeadline: 0,
     tickId: null,
+    advanceTimeoutId: null,
     answered: false,
   };
 }
@@ -106,6 +108,10 @@ function main(): HTMLElement {
 
 export function renderRuleSwitchGame(): void {
   if (state.tickId) clearInterval(state.tickId);
+  // nextItem()/switchRule() below schedule the next advance 220-1000ms out — restarting
+  // mid-round didn't cancel that, so a stale call could fire against the fresh session and
+  // switch its rule or draw an extra item out of turn (same bug class fixed in reaction.ts).
+  if (state.advanceTimeoutId) clearTimeout(state.advanceTimeoutId);
   state = makeInitialState();
   drawShell();
   wireGameChrome('ruleswitch', renderRuleSwitchGame);
@@ -241,7 +247,7 @@ function answer(side: 'left' | 'right' | null): void {
   }
   updateScoreLabel();
 
-  setTimeout(() => {
+  state.advanceTimeoutId = setTimeout(() => {
     if (state.phase !== 'playing' || !document.getElementById('rbArena')) return;
     if (state.correctSinceSwitch >= state.switchThreshold) {
       switchRule();
@@ -263,7 +269,7 @@ function switchRule(): void {
   const rbArena = document.getElementById('rbArena');
   if (!rbArena) return;
   rbArena.innerHTML = `<div class="rb-switch-banner">NY REGEL<br><span>${RULES[state.ruleIdx].question}</span></div>`;
-  setTimeout(() => {
+  state.advanceTimeoutId = setTimeout(() => {
     if (state.phase === 'playing' && document.getElementById('rbArena')) nextItem();
   }, 1000);
 }

@@ -34,6 +34,11 @@ interface TrailPoint {
 
 interface DashState {
   phase: Phase;
+  /** Bumped every renderDashGame() call — lets the death-transition setTimeout recognize a
+   * stale firing from a run the player already restarted out of, instead of acting on whatever
+   * fresh session is now on screen. Checking fieldEl() alone isn't enough since a new run
+   * re-creates its own #dashField with the same id. */
+  sessionId: number;
   distance: number;
   obstaclesPassed: number;
   playerY: number;
@@ -48,11 +53,13 @@ interface DashState {
   trailEls: HTMLElement[];
 }
 
+let sessionCounter = 0;
 let state: DashState = makeInitialState();
 
 function makeInitialState(): DashState {
   return {
     phase: 'idle',
+    sessionId: ++sessionCounter,
     distance: 0,
     obstaclesPassed: 0,
     playerY: 0,
@@ -357,10 +364,13 @@ function loop(t: number): void {
 
   if (dead) {
     triggerDeathImpact(playerXpx, state.playerY);
+    // The player may have navigated away OR restarted during this brief death-impact delay —
+    // fieldEl() alone only catches navigating away (a restart recreates its own #dashField
+    // with the same id), so the sessionId check is what actually stops a stale endRun() from
+    // firing against a freshly-restarted run and submitting the old run's score for it.
+    const deathSessionId = state.sessionId;
     setTimeout(() => {
-      // The player may have navigated away during this brief death-impact
-      // delay — bail instead of clobbering whatever page they're on now.
-      if (!fieldEl()) return;
+      if (state.sessionId !== deathSessionId || !fieldEl()) return;
       void endRun();
     }, 180);
     return;

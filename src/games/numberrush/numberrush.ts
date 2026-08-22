@@ -23,6 +23,7 @@ interface RushState {
   score: number;
   endAt: number;
   tickId: ReturnType<typeof setInterval> | null;
+  nextProblemTimeoutId: ReturnType<typeof setTimeout> | null;
   problem: Problem | null;
   answered: boolean;
 }
@@ -30,7 +31,7 @@ interface RushState {
 let rushState: RushState = makeInitialState();
 
 function makeInitialState(): RushState {
-  return { phase: 'idle', score: 0, endAt: 0, tickId: null, problem: null, answered: false };
+  return { phase: 'idle', score: 0, endAt: 0, tickId: null, nextProblemTimeoutId: null, problem: null, answered: false };
 }
 
 function main(): HTMLElement {
@@ -39,6 +40,7 @@ function main(): HTMLElement {
 
 export function renderNumberRushGame(): void {
   if (rushState.tickId) clearInterval(rushState.tickId);
+  if (rushState.nextProblemTimeoutId) clearTimeout(rushState.nextProblemTimeoutId);
   rushState = makeInitialState();
   drawShell();
   wireGameChrome('numberrush', renderNumberRushGame);
@@ -166,9 +168,8 @@ function handleChoicePointerDown(e: PointerEvent): void {
     Haptics.miss();
   }
 
-  setTimeout(() => {
-    // Bail if the player navigated away mid-problem — nothing else cancels
-    // this timer on route change.
+  rushState.nextProblemTimeoutId = setTimeout(() => {
+    // Bail if the player navigated away mid-problem, or restarted before this fired.
     if (rushState.phase === 'playing' && document.getElementById('arena')) renderProblem();
   }, 220);
 }

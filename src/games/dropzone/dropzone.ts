@@ -62,6 +62,7 @@ interface DropZoneState {
   aimX: number;
   rafId: number | null;
   lastT: number | null;
+  endCheckTimeoutId: ReturnType<typeof setTimeout> | null;
 }
 
 let state: DropZoneState = makeInitialState();
@@ -79,6 +80,7 @@ function makeInitialState(): DropZoneState {
     arenaH: 0,
     aimX: 0,
     rafId: null,
+    endCheckTimeoutId: null,
     lastT: null,
   };
 }
@@ -92,6 +94,7 @@ function fieldEl(): HTMLElement | null {
 
 export function renderDropZoneGame(): void {
   if (state.rafId != null) cancelAnimationFrame(state.rafId);
+  if (state.endCheckTimeoutId) clearTimeout(state.endCheckTimeoutId);
   state = makeInitialState();
   drawShell();
   wireGameChrome('dropzone', renderDropZoneGame);
@@ -322,7 +325,7 @@ function landBall(): void {
   state.ballsLeft--;
   state.sub = 'ready';
   updateBallLabel();
-  setTimeout(() => {
+  state.endCheckTimeoutId = setTimeout(() => {
     if (state.phase !== 'playing') return;
     if (state.ballsLeft <= 0) endSession();
   }, 550);

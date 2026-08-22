@@ -48,6 +48,12 @@ interface BurstState {
 }
 
 interface RunState {
+  /** Bumped every makeRunState() call — lets the room-transition setTimeouts below recognize a
+   * stale firing from a run the player already restarted out of, instead of acting on whatever
+   * fresh run is now in progress. Checking `run` itself (or run.phase) alone isn't enough: a
+   * restart immediately assigns a brand new RunState object, which can coincidentally reach the
+   * same phase a stale callback is checking for before that callback fires. */
+  runId: number;
   phase: RunPhase;
   weaponId: WeaponId;
   player: Player;
@@ -83,6 +89,7 @@ interface RunState {
 }
 
 let run: RunState | null = null;
+let runIdCounter = 0;
 let meta: TacticalMeta = { currency: 0, unlockedWeapons: [STARTING_UNLOCKED_WEAPON], unlockedPerks: [], eliteKills: 0, vaultsUsed: 0, bossesDefeated: [] };
 let metaLoaded = false;
 
@@ -99,6 +106,7 @@ function xpForLevel(level: number): number {
 
 function makeRunState(): RunState {
   return {
+    runId: ++runIdCounter,
     phase: 'intro',
     weaponId: STARTING_WEAPON_ID,
     player: new Player(),
@@ -490,8 +498,9 @@ function update(dt: number): void {
       );
       const nextIndex = r.roomIndex + 1;
       r.phase = 'playing';
+      const bossRunId = r.runId;
       setTimeout(() => {
-        if (!run || run.phase !== 'playing') return;
+        if (!run || run.runId !== bossRunId || run.phase !== 'playing') return;
         startRoom(nextIndex);
       }, 900);
       return;
@@ -514,8 +523,9 @@ function update(dt: number): void {
     // A vault checkpoint every 3rd cleared room (never right before the boss room, which has its own warning beat) — a breather with a guaranteed reward instead of pure combat back-to-back.
     const showVault = (r.roomIndex + 1) % 3 === 0 && nextIndex < r.roomSequence.length;
     r.phase = showVault ? 'vault' : 'playing';
+    const clearRunId = r.runId;
     setTimeout(() => {
-      if (!run) return;
+      if (!run || run.runId !== clearRunId) return;
       if (showVault) {
         if (run.phase !== 'vault') return;
         showVaultScreen(nextIndex);

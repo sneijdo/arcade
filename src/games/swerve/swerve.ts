@@ -283,8 +283,13 @@ function loop(t: number): void {
 
   if (dead) {
     triggerDeathFlash(state.playerX, playerY);
+    // sessionId guard actually wired up here — fieldEl() alone doesn't catch a restart, since a
+    // new run recreates its own #swField with the same id (see the sessionId doc comment above).
+    // Without this, restarting within this 180ms window let a stale endRun() fire against the
+    // fresh session and submit the OLD run's score as if the new one had just ended.
+    const deathSessionId = state.sessionId;
     setTimeout(() => {
-      if (!fieldEl()) return;
+      if (state.sessionId !== deathSessionId || !fieldEl()) return;
       void endRun();
     }, 180);
     return;
