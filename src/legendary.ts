@@ -8,14 +8,18 @@ import type { WeeklyLeadStanding } from './state';
  * module just turns that into a countdown, a race widget, and a one-time
  * "who won" reveal. */
 
-/** Next Sunday 00:00 local time — the weekly leaderboard reset boundary (see
- * weekKey() in state.ts). Always 1-7 days out, never 0, even at the instant a
- * new week just started. */
+/** Next Sunday 00:00 UTC — the weekly leaderboard reset boundary (see weekKey()
+ * in state.ts, which is itself UTC-anchored so it agrees with submit_score() on
+ * the server). Must mirror weekKey()'s UTC day-of-week math exactly: an earlier
+ * local-time version of this rolled over at local midnight, up to ~14h before
+ * the real (UTC) boundary for anyone east of UTC — showing "reset!" while the
+ * leaderboard/Hall of Fame were still genuinely on the old week. Always 1-7
+ * days out, never 0, even at the instant a new week just started. */
 export function msUntilNextWeekReset(): number {
   const now = new Date();
-  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const daysUntilSunday = (7 - next.getDay()) % 7;
-  next.setDate(next.getDate() + (daysUntilSunday === 0 ? 7 : daysUntilSunday));
+  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const daysUntilSunday = (7 - next.getUTCDay()) % 7;
+  next.setUTCDate(next.getUTCDate() + (daysUntilSunday === 0 ? 7 : daysUntilSunday));
   return next.getTime() - now.getTime();
 }
 
