@@ -102,8 +102,13 @@ function markRevealSeen(week: string): void {
 export async function maybeShowLegendaryReveal(): Promise<void> {
   const currentWeek = weekKey(new Date());
   if (hasSeenReveal(currentWeek)) return;
+  // Marked *before* the fetch below, not after, so a second call (the Activity page can
+  // call this again before the first call's fetch resolves, e.g. a quick nav-away-and-back)
+  // sees it already seen and bails out here instead of both calls racing to show their own
+  // modal — that's what produced two stacked "reveal" backdrops with only one of them
+  // actually wired to its close button (see showRevealModal below).
+  markRevealSeen(currentWeek);
   const winners = await getLastWeekLegendaryWinners();
-  markRevealSeen(currentWeek); // don't re-prompt every visit even when no one won
   if (winners.length === 0) return;
   showRevealModal(winners);
 }
@@ -130,5 +135,9 @@ function showRevealModal(winners: WeeklyLeadStanding[]): void {
       <button class="btn btn-primary btn-block btn-lg" id="legendaryRevealCloseBtn">DENNE UGE ER DIN CHANCE</button>
     </div>
   `);
-  document.getElementById('legendaryRevealCloseBtn')!.addEventListener('click', () => backdrop.remove());
+  // Scoped to this call's own backdrop, not document.getElementById — the id isn't
+  // guaranteed unique (see maybeShowLegendaryReveal's race-condition fix below), and a
+  // global lookup would wire the click to whichever backdrop happened to be first in the
+  // DOM instead of the one actually on screen, leaving the visible modal's button dead.
+  backdrop.querySelector('#legendaryRevealCloseBtn')!.addEventListener('click', () => backdrop.remove());
 }
