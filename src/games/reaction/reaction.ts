@@ -21,14 +21,14 @@ interface ReactionState {
   round: number;
   results: number[];
   phase: ReactionPhase;
-  timeoutId: ReturnType<typeof setTimeout> | null;
+  timeoutIds: ReturnType<typeof setTimeout>[];
   targetShownAt: number;
 }
 
 let reactionState: ReactionState = makeInitialState();
 
 function makeInitialState(): ReactionState {
-  return { round: 0, results: [], phase: 'idle', timeoutId: null, targetShownAt: 0 };
+  return { round: 0, results: [], phase: 'idle', timeoutIds: [], targetShownAt: 0 };
 }
 
 function main(): HTMLElement {
@@ -38,8 +38,26 @@ function arenaEl(): HTMLElement {
   return document.getElementById('arena')!;
 }
 
+/** Every setTimeout this game schedules goes through here (see schedule() below) instead of a
+ * bare setTimeout, specifically so a restart mid-round can actually cancel all of them. Only
+ * the "waiting for green" delay used to be tracked (as a single timeoutId) — the post-hit and
+ * early-click "advance to next round" timers (handleArenaPointerDown/advanceAfterRound) were
+ * bare setTimeouts with no way to cancel them. Hitting FORFRA while one was still pending reset
+ * `reactionState` to a fresh round-0 object, but that stale timeout still fired later against
+ * whatever `reactionState` was reassigned to (the module-level `let` binding, not a snapshot) —
+ * silently bumping `round` on the just-restarted game, which looked like the first tap after a
+ * restart "not registering" before jumping straight to round 2. */
+function clearPendingTimeouts(): void {
+  reactionState.timeoutIds.forEach((id) => clearTimeout(id));
+  reactionState.timeoutIds = [];
+}
+function schedule(fn: () => void, delay: number): void {
+  const id = setTimeout(fn, delay);
+  reactionState.timeoutIds.push(id);
+}
+
 export function renderReactionGame(): void {
-  if (reactionState.timeoutId) clearTimeout(reactionState.timeoutId);
+  clearPendingTimeouts();
   reactionState = makeInitialState();
   drawReactionShell();
   wireGameChrome('reaction', renderReactionGame);
@@ -132,7 +150,7 @@ function startRound(): void {
   drawArenaContent();
   Sound.countdown();
   const delay = 900 + Math.random() * 2600;
-  reactionState.timeoutId = setTimeout(() => {
+  schedule(() => {
     reactionState.phase = 'target';
     drawArenaContent();
   }, delay);
@@ -151,12 +169,12 @@ function handleArenaPointerDown(e: PointerEvent): void {
   e.preventDefault();
 
   if (reactionState.phase === 'waiting') {
-    if (reactionState.timeoutId) clearTimeout(reactionState.timeoutId);
+    clearPendingTimeouts();
     reactionState.phase = 'early';
     drawArenaContent();
     Sound.mistake();
     Haptics.miss();
-    setTimeout(() => {
+    schedule(() => {
       advanceAfterRound(1200);
     }, 1100);
     return;
@@ -170,14 +188,14 @@ function handleArenaPointerDown(e: PointerEvent): void {
     drawArenaContent();
     Sound.hit();
     Haptics.hit();
-    setTimeout(() => {
+    schedule(() => {
       advanceAfterRound(650);
     }, 50);
   }
 }
 
 function advanceAfterRound(delay: number): void {
-  setTimeout(async () => {
+  schedule(async () => {
     // The player may have navigated away mid-round — nothing else cancels
     // this timer on route change, so bail out instead of silently
     // resuming/scoring a game nobody is looking at anymore.
