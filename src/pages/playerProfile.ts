@@ -26,8 +26,7 @@ export async function renderPlayerProfile(id: string): Promise<void> {
     container.innerHTML = `
       <div class="page">
         <a href="#/leaderboard" data-nav="leaderboard" class="btn btn-ghost" style="margin-bottom:16px">← TILBAGE</a>
-        <div class="section-label">Spiller</div>
-        <h1 class="section-title">Ikke fundet</h1>
+        <h1 class="section-title">Spiller ikke fundet</h1>
         <div style="color:var(--text-dim);font-size:13.5px">Denne spiller findes ikke, eller har endnu ikke spillet en runde.</div>
       </div>
     `;

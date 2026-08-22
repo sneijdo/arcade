@@ -22,7 +22,6 @@ export async function renderLeaderboard(gameId?: string): Promise<void> {
   const activeGame = implementedGames.find((g) => g.id === lbGameId) ?? implementedGames[0];
   main.innerHTML = `
     <div class="page">
-      <div class="section-label">Ranglister</div>
       <h1 class="section-title">Leaderboard</h1>
       ${isGuestMode() ? '<div class="guest-lb-note">Du spiller som gæst, så du er ikke med på det globale leaderboard endnu. Opret en konto fra din profil for at komme med.</div>' : ''}
       <div class="tabs" id="lbViewTabs">

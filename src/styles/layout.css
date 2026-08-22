@@ -16,7 +16,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.18em;
-  color: var(--text-faint);
+  color: var(--text-dim);
   text-transform: uppercase;
   margin-bottom: 10px;
 }

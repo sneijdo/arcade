@@ -71,7 +71,6 @@ function shellOpen(title: string, icon: string): string {
           <button class="btn btn-ghost btn-sm" id="casinoBack">← KASINO</button>
           <span class="mono casino-balance-chip">✦ ${profile!.xpBalance} XP</span>
         </div>
-        <div class="section-label">🎰 Kasino</div>
         <h1 class="section-title" style="margin-bottom:2px">${icon} ${title}</h1>
   `;
 }
@@ -141,8 +140,7 @@ function renderMenu(): void {
   main().innerHTML = `
     <div class="page">
       <a href="#/profile" data-nav="profile" class="btn btn-ghost" style="margin-bottom:16px">← TILBAGE TIL PROFIL</a>
-      <div class="section-label">🎰 Kasino</div>
-      <h1 class="section-title">Prøv lykken</h1>
+      <h1 class="section-title">🎰 Prøv lykken</h1>
       <div class="casino-intro">Gambl din XP-saldo (aldrig dit level) i fire spil. Huset vinder i det lange løb, det er stadig gambling, men en enkelt tur kan gøre godt.</div>
       <div class="shop-balance casino-teaser" style="margin:16px 0">
         <div>

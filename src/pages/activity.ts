@@ -103,7 +103,6 @@ export async function renderActivity(): Promise<void> {
 
   main.innerHTML = `
     <div class="page">
-      <div class="section-label">Live</div>
       <h1 class="section-title">Aktivitet</h1>
       ${
         live

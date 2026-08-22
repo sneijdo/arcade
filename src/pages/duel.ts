@@ -77,8 +77,7 @@ function drawInactive(): void {
   main().innerHTML = `
     <div class="page">
       <a href="#/activity" data-nav="activity" class="btn btn-ghost" style="margin-bottom:16px">← TILBAGE TIL AKTIVITET</a>
-      <div class="section-label">Duel</div>
-      <h1 class="section-title">Ikke længere aktiv</h1>
+      <h1 class="section-title">Duel ikke længere aktiv</h1>
       <div style="color:var(--text-dim);font-size:13.5px">Denne duel findes ikke længere, er allerede afgjort, eller du er ikke en del af den.</div>
     </div>
   `;

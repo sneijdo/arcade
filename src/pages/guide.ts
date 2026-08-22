@@ -56,7 +56,6 @@ export function renderGuide(): void {
   const main = document.getElementById('main')!;
   main.innerHTML = `
     <div class="page">
-      <div class="section-label">Hjælp</div>
       <h1 class="section-title">Sådan virker det</h1>
       <div class="guide-list">
         ${SECTIONS.map(

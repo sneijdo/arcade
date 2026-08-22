@@ -128,7 +128,6 @@ export async function renderShop(): Promise<void> {
 
   main.innerHTML = `
     <div class="page">
-      <div class="section-label">Brug din XP</div>
       <h1 class="section-title">Butik</h1>
 
       <div class="shop-balance">

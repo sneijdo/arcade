@@ -68,8 +68,7 @@ export async function renderHome(): Promise<void> {
       ${renderProgressCard()}
       ${renderDailyChallengeCard()}
 
-      <div class="section-label" style="margin-top:44px">Hurtigt i gang</div>
-      <h2 class="section-title">Spil</h2>
+      <h2 class="section-title" style="margin-top:44px">Hurtigt i gang</h2>
       <div class="game-grid" id="homeGameGrid"></div>
 
       <div class="footer-note">ARCADE · BYGGET TIL ÉT FORSØG MERE</div>
