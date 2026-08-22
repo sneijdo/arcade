@@ -90,8 +90,14 @@ create table if not exists public.score_rate_limit (
 alter table public.score_rate_limit enable row level security;
 revoke all on public.score_rate_limit from anon, authenticated;
 
+-- returns a plain boolean (accepted/improved or not) rather than a table — the client
+-- (pushLeaderboardEntry in src/state.ts) only ever checks for an error, never reads the
+-- return value, and a `returns table(week date, score numeric, ...)` shape turns those
+-- column names into implicit PL/pgSQL variables that collide with public.scores' own
+-- `week`/`score` columns ("column reference is ambiguous") — this is exactly what broke
+-- every single submission from day one of this function's deployment.
 create or replace function public.submit_score(p_game_id text, p_score numeric)
-returns table(accepted boolean, week date, score numeric)
+returns boolean
 language plpgsql
 security definer
 set search_path = public
@@ -150,9 +156,9 @@ begin
     values (v_uid, p_game_id, v_week, p_score, now(), now())
     on conflict (owner_id, game_id, week)
     do update set score = excluded.score, achieved_at = now(), updated_at = now();
-    return query select true, v_week, p_score;
+    return true;
   else
-    return query select false, v_week, v_existing;
+    return false;
   end if;
 end;
 $$;
