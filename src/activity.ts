@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { isGuestMode } from './storage';
+import { toastNetworkError } from './toast';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 /**
@@ -83,6 +84,7 @@ export async function fetchRecentActivity(limit = 30): Promise<ActivityEntry[]> 
   const { data, error } = await supabase.from('activity').select('*').order('created_at', { ascending: false }).limit(limit);
   if (error) {
     console.error('activity fetch failed', error);
+    toastNetworkError();
     return [];
   }
   return (data ?? []).map(rowToEntry);

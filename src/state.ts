@@ -5,7 +5,7 @@ import { BADGES } from './badges';
 import { GAMES } from './games/registry';
 import { ScoreKinds } from './scoring';
 import { XP_RULES, levelInfo } from './xp';
-import { toast } from './toast';
+import { toast, toastNetworkError } from './toast';
 import { pushActivity } from './activity';
 import { Sound } from './sound';
 import { refreshHeader } from './header';
@@ -284,6 +284,23 @@ export async function checkDailyChallenge(gameId: string, score: number): Promis
   Sound.achievement();
 }
 
+// Short-lived caches so hammering FORFRA (restart) on a result screen — or just browsing
+// between tabs — doesn't refetch the same leaderboard/standings/Hall of Fame data from
+// scratch on every click. Invalidated immediately wherever this player's own action could
+// have actually changed the answer (a new score, a new Hall of Fame credit), so nobody's
+// own result ever renders stale — the TTL is purely for *other* players' updates showing up
+// a little late, not for anything the current session itself just wrote.
+const LB_CACHE_TTL_MS = 30_000;
+const leaderboardCache = new Map<string, { data: LeaderboardEntry[]; expiresAt: number }>();
+let weeklyStandingsCache: { week: string; data: WeeklyLeadStanding[]; expiresAt: number } | null = null;
+let hallOfFameCache: { data: HallOfFameEntry[]; expiresAt: number } | null = null;
+
+function invalidateLeaderboardCaches(gameId: string): void {
+  leaderboardCache.delete(`${gameId}:week`);
+  leaderboardCache.delete(`${gameId}:alltime`);
+  weeklyStandingsCache = null;
+}
+
 /** Entries are keyed per week (Sunday-start, see weekKey()), so a new week naturally starts empty — that IS the weekly reset, no cron/migration needed. Pre-existing (pre-weekly-key) entries keep matching the wider 'alltime' prefix below, so historical scores aren't lost, they just don't count for the current week until replayed. */
 export async function pushLeaderboardEntry(gameId: string, score: number): Promise<void> {
   if (!profile) return;
@@ -306,6 +323,7 @@ export async function pushLeaderboardEntry(gameId: string, score: number): Promi
       { name: profile.name, score, id: profile.id, avatar: profile.equippedAvatar, title: profile.equippedTitle, frame: profile.equippedFrame, ts },
       true,
     );
+    invalidateLeaderboardCaches(gameId);
     return;
   }
   // Real accounts submit through submit_score() (see supabase/schema_scores.sql) — a
@@ -317,7 +335,9 @@ export async function pushLeaderboardEntry(gameId: string, score: number): Promi
   if (error) {
     console.error('submit_score rejected', error);
     toast(`<span class="toast-icon">⚠️</span> Din score kunne ikke gemmes`);
+    return;
   }
+  invalidateLeaderboardCaches(gameId);
 }
 
 function lbPrefix(gameId: string, week: string | null): string {
@@ -343,6 +363,7 @@ async function readLeaderboard(gameId: string, week: string | null): Promise<Lea
     const { data, error } = await query;
     if (error) {
       console.error('leaderboard fetch failed', error);
+      toastNetworkError();
       return [];
     }
     entries = (data ?? []).map((row) => ({
@@ -374,46 +395,54 @@ async function readLeaderboard(gameId: string, week: string | null): Promise<Lea
   return combined;
 }
 
-export async function getCombinedLeaderboard(gameId: string, scope: 'week' | 'alltime' = 'week'): Promise<LeaderboardEntry[]> {
-  const combined = await readLeaderboard(gameId, scope === 'week' ? weekKey(new Date()) : null);
-  if (combined.length === 0) return combined;
-  // Overlay each player's live avatar/title/name so an equip change shows up
-  // immediately instead of waiting for that player's next score push.
+/** One batched fetch for many shared kv keys at once instead of N single-key requests —
+ * used by every "list of players" reader below (leaderboard meta overlay, weekly standings,
+ * Hall of Fame, Duel leaderboard). Falls back to the generic per-key storage.get() in
+ * guest/local mode, where there's no bulk API to batch through. */
+async function batchGetShared<T>(keys: string[]): Promise<Map<string, T>> {
+  const result = new Map<string, T>();
+  if (keys.length === 0) return result;
   if (isGuestMode() || !supabase) {
     await Promise.all(
-      combined.map(async (e) => {
-        const meta = await storage.get<PlayerMeta>('playerMeta:' + e.id, true);
-        if (meta) {
-          e.name = meta.name;
-          e.avatar = meta.avatar;
-          e.title = meta.title;
-          e.frame = meta.frame;
-          e.nameEffect = meta.nameEffect;
-        }
+      keys.map(async (k) => {
+        const v = await storage.get<T>(k, true);
+        if (v != null) result.set(k, v);
       }),
     );
-    return combined;
+    return result;
   }
-  // One round trip for every row's meta instead of one call per row (the generic kv
-  // storage.get() this replaced here was a call each) — cuts request count sharply on a
-  // leaderboard with many players.
-  const metaKeys = combined.map((e) => 'playerMeta:' + e.id);
-  const { data, error } = await supabase.from('kv').select('key, value').eq('shared', true).in('key', metaKeys);
+  const { data, error } = await supabase.from('kv').select('key, value').eq('shared', true).in('key', keys);
   if (error) {
-    console.error('leaderboard meta fetch failed', error);
-    return combined;
+    console.error('batched kv fetch failed', error);
+    toastNetworkError();
+    return result;
   }
-  const metaByKey = new Map((data ?? []).map((row) => [row.key as string, row.value as unknown as PlayerMeta]));
-  for (const e of combined) {
-    const meta = metaByKey.get('playerMeta:' + e.id);
-    if (meta) {
-      e.name = meta.name;
-      e.avatar = meta.avatar;
-      e.title = meta.title;
-      e.frame = meta.frame;
-      e.nameEffect = meta.nameEffect;
+  for (const row of data ?? []) result.set(row.key as string, row.value as unknown as T);
+  return result;
+}
+
+export async function getCombinedLeaderboard(gameId: string, scope: 'week' | 'alltime' = 'week'): Promise<LeaderboardEntry[]> {
+  const cacheKey = `${gameId}:${scope}`;
+  const cached = leaderboardCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.data;
+
+  const combined = await readLeaderboard(gameId, scope === 'week' ? weekKey(new Date()) : null);
+  if (combined.length > 0) {
+    // Overlay each player's live avatar/title/name so an equip change shows up
+    // immediately instead of waiting for that player's next score push.
+    const metaByKey = await batchGetShared<PlayerMeta>(combined.map((e) => 'playerMeta:' + e.id));
+    for (const e of combined) {
+      const meta = metaByKey.get('playerMeta:' + e.id);
+      if (meta) {
+        e.name = meta.name;
+        e.avatar = meta.avatar;
+        e.title = meta.title;
+        e.frame = meta.frame;
+        e.nameEffect = meta.nameEffect;
+      }
     }
   }
+  leaderboardCache.set(cacheKey, { data: combined, expiresAt: Date.now() + LB_CACHE_TTL_MS });
   return combined;
 }
 
@@ -432,6 +461,9 @@ export interface WeeklyLeadStanding {
  * week directly so players can track real-time progress toward the 4-game legendary threshold
  * (see LEGENDARY_WEEK_THRESHOLD below) before the week ends. Nothing is written here. */
 export async function getWeeklyLeadStandings(week: string = weekKey(new Date())): Promise<WeeklyLeadStanding[]> {
+  if (weeklyStandingsCache && weeklyStandingsCache.week === week && weeklyStandingsCache.expiresAt > Date.now()) {
+    return weeklyStandingsCache.data;
+  }
   const implementedGameIds = GAMES.filter((g) => g.implemented).map((g) => g.id);
   const byId: Record<string, string[]> = {};
   await Promise.all(
@@ -440,21 +472,21 @@ export async function getWeeklyLeadStandings(week: string = weekKey(new Date()))
       if (board.length > 0) (byId[board[0].id] ??= []).push(gameId);
     }),
   );
-  const standings = await Promise.all(
-    Object.entries(byId).map(async ([id, gameIds]) => {
-      const meta = await storage.get<PlayerMeta>('playerMeta:' + id, true);
-      return {
-        id,
-        name: meta?.name ?? 'Ukendt spiller',
-        avatar: meta?.avatar ?? null,
-        frame: meta?.frame ?? null,
-        title: meta?.title ?? null,
-        nameEffect: meta?.nameEffect ?? null,
-        gameIds,
-      };
-    }),
-  );
+  const metaByKey = await batchGetShared<PlayerMeta>(Object.keys(byId).map((id) => 'playerMeta:' + id));
+  const standings = Object.entries(byId).map(([id, gameIds]) => {
+    const meta = metaByKey.get('playerMeta:' + id);
+    return {
+      id,
+      name: meta?.name ?? 'Ukendt spiller',
+      avatar: meta?.avatar ?? null,
+      frame: meta?.frame ?? null,
+      title: meta?.title ?? null,
+      nameEffect: meta?.nameEffect ?? null,
+      gameIds,
+    };
+  });
   standings.sort((a, b) => b.gameIds.length - a.gameIds.length);
+  weeklyStandingsCache = { week, data: standings, expiresAt: Date.now() + LB_CACHE_TTL_MS };
   return standings;
 }
 
@@ -529,6 +561,7 @@ export async function creditMyHallOfFameWins(): Promise<void> {
   }
   if (hof) {
     await storage.set('hof:' + profile.id, hof, true);
+    hallOfFameCache = null;
     toast(`<span class="toast-icon">🏆</span> Du er kommet i Hall of Fame for en #1-placering!`, 'achievement');
     Sound.achievement();
     if (newLegendaryWeeks > 0) {
@@ -561,13 +594,12 @@ export async function getMyLegendarySlots(): Promise<number> {
 }
 
 export async function getHallOfFame(): Promise<HallOfFameEntry[]> {
+  if (hallOfFameCache && hallOfFameCache.expiresAt > Date.now()) return hallOfFameCache.data;
   const keys = await storage.list('hof:', true);
-  const entries: HallOfFameEntry[] = [];
-  for (const k of keys) {
-    const r = await storage.get<HallOfFameEntry>(k, true);
-    if (r) entries.push(r);
-  }
+  const metaByKey = await batchGetShared<HallOfFameEntry>(keys);
+  const entries = keys.map((k) => metaByKey.get(k)).filter((r): r is HallOfFameEntry => r != null);
   entries.sort((a, b) => b.totalWins - a.totalWins);
+  hallOfFameCache = { data: entries, expiresAt: Date.now() + LB_CACHE_TTL_MS };
   return entries;
 }
 
@@ -584,7 +616,7 @@ export interface DuelLeaderboardEntry {
   rating: number;
 }
 
-/** Same "list keys, fetch each, sort" shape as getHallOfFame() above, reading the same
+/** Same "list keys, batch-fetch, sort" shape as getHallOfFame() above, reading the same
  * playerMeta:<id> rows getPlayerMeta() reads one at a time — only players with at least
  * one recorded duel show up, so a fresh account with 0-0-0 doesn't pad out the list.
  * Ranked by rating (see duelTierForRating/finishDuelSession above) rather than raw win
@@ -592,9 +624,10 @@ export interface DuelLeaderboardEntry {
  * shorter but more dominant streak. */
 export async function getDuelLeaderboard(): Promise<DuelLeaderboardEntry[]> {
   const keys = await storage.list('playerMeta:', true);
+  const metaByKey = await batchGetShared<PlayerMeta>(keys);
   const entries: DuelLeaderboardEntry[] = [];
   for (const k of keys) {
-    const meta = await storage.get<PlayerMeta>(k, true);
+    const meta = metaByKey.get(k);
     if (!meta) continue;
     const wins = meta.duelWins ?? 0;
     const losses = meta.duelLosses ?? 0;
@@ -627,17 +660,36 @@ export async function awardXP(amount: number, reasonLabel?: string): Promise<voi
   }
 }
 
+/** One rank_for() RPC per game (see supabase/schema_rank.sql) instead of pulling each
+ * game's entire leaderboard — plus a meta lookup nobody needed — just to findIndex() this
+ * player's row out of it. Guest/local mode has no `scores` table to query, so it falls back
+ * to the same full-board findIndex() it always used. */
+async function rankFor(gameId: string, week: string): Promise<number | null> {
+  if (!profile) return null;
+  if (isGuestMode() || !supabase) {
+    const board = await getCombinedLeaderboard(gameId, 'week');
+    const idx = board.findIndex((e) => e.id === profile!.id);
+    return idx >= 0 ? idx + 1 : null;
+  }
+  const { data, error } = await supabase.rpc('rank_for', { p_game_id: gameId, p_owner_id: profile.id, p_week: week });
+  if (error) {
+    console.error('rank_for failed', error);
+    return null;
+  }
+  return (data as number | null) ?? null;
+}
+
 export async function checkAchievements(extra: Partial<AchievementStats> = {}): Promise<void> {
   if (!profile) return;
   const implementedGameIds = GAMES.filter((g) => g.implemented).map((g) => g.id);
-  // Fetched in parallel across games rather than one game's leaderboard at a
-  // time — this loop used to be the dominant cost of ending a session (up to
-  // 15 sequential full-leaderboard reads).
-  const boards = await Promise.all(implementedGameIds.map((gameId) => getCombinedLeaderboard(gameId)));
+  const week = weekKey(new Date());
+  // Fetched in parallel across games — this loop used to be the dominant cost of ending a
+  // session (up to 15 sequential full-leaderboard-plus-meta reads); now it's one lightweight
+  // rank_for() call per game.
+  const rankList = await Promise.all(implementedGameIds.map((gameId) => rankFor(gameId, week)));
   const ranks: Record<string, number | null> = {};
   implementedGameIds.forEach((gameId, i) => {
-    const idx = boards[i].findIndex((e) => e.id === profile!.id);
-    ranks[gameId] = idx >= 0 ? idx + 1 : null;
+    ranks[gameId] = rankList[i];
   });
   const gamesPlayed = Object.keys(profile.bestScores).length + (profile.bestReaction != null ? 1 : 0);
   const statObj: AchievementStats = {
@@ -735,7 +787,10 @@ export async function finishGameSession(gameId: string, score: number, extraAchi
   // one fetch before the write is enough — no need to re-read after to confirm it stuck.
   let isNewAllTimeRecord = false;
   if (isNewBest) {
-    const priorLeader = (await getCombinedLeaderboard(gameId, 'alltime'))[0];
+    // Only the leader's id/score are needed here, not their name/avatar, so this calls
+    // readLeaderboard() directly rather than getCombinedLeaderboard() — skips that meta
+    // overlay entirely for a value nothing below ever reads.
+    const priorLeader = (await readLeaderboard(gameId, null))[0];
     const wasAlreadyLeader = priorLeader?.id === profile.id;
     const tookTheLead = !priorLeader || (dir === 'asc' ? score < priorLeader.score : score > priorLeader.score);
     isNewAllTimeRecord = !wasAlreadyLeader && tookTheLead;
@@ -748,9 +803,7 @@ export async function finishGameSession(gameId: string, score: number, extraAchi
 
   let xpGain = XP_RULES.complete;
   if (isNewBest) xpGain += XP_RULES.personalBest;
-  const board = await getCombinedLeaderboard(gameId);
-  const rankIdx = board.findIndex((e) => e.id === profile!.id);
-  const rank = rankIdx >= 0 ? rankIdx + 1 : null;
+  const rank = await rankFor(gameId, weekKey(new Date()));
   if (rank && rank <= 3) xpGain += XP_RULES.top3;
 
   addXp(xpGain);
@@ -787,6 +840,7 @@ async function settleSessionExtras(gameId: string, score: number, extraAchieveme
     await checkAchievements(extraAchievementStats);
   } catch (e) {
     console.error('post-session bookkeeping failed', e);
+    toastNetworkError();
   }
 }
 

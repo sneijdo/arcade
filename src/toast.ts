@@ -12,3 +12,18 @@ export function toast(html: string, cls = ''): void {
     setTimeout(() => el.remove(), 320);
   }, 3200);
 }
+
+let lastNetworkErrorToastAt = 0;
+
+/** A failed read used to just log to the console and quietly render as empty/zero — an
+ * empty leaderboard or Activity feed then looks identical to "nobody's played yet" instead
+ * of "something's actually broken." This gives failed reads a visible signal instead,
+ * without needing every call site to build its own message. Debounced to one toast per 4s
+ * so a genuine outage (several parallel reads failing at once, e.g. loading the leaderboard
+ * grid) doesn't stack a toast per failed call. */
+export function toastNetworkError(): void {
+  const now = Date.now();
+  if (now - lastNetworkErrorToastAt < 4000) return;
+  lastNetworkErrorToastAt = now;
+  toast(`<span class="toast-icon">⚠️</span> Kunne ikke hente data, tjek din forbindelse`);
+}
