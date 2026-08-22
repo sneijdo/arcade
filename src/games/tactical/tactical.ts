@@ -328,7 +328,7 @@ function startRoom(index: number): void {
 /**
  * Endless-mode difficulty scaling: rooms 1-10 (the handcrafted story campaign, see
  * NON_BOSS_ROOM_COUNT in encounters.ts) are always base stats — every room after that
- * compounds +5% enemy HP and +4% enemy damage. Without this, upgrades cap out (maxStacks
+ * compounds +7% enemy HP and +6% enemy damage. Without this, upgrades cap out (maxStacks
  * per card, see upgrades.ts) within the first 5-10 rooms while enemies never got any
  * tougher, so endless mode just stayed trivial forever past that point — a run's length
  * measured patience, not skill. Applies to the boss too (see startRoom), so repeat boss
@@ -336,7 +336,7 @@ function startRoom(index: number): void {
  */
 function roomScaleMults(roomIndex: number): { hp: number; dmg: number } {
   const roomsPastTen = Math.max(0, roomIndex - (TOTAL_ROOMS - 1));
-  return { hp: Math.pow(1.05, roomsPastTen), dmg: Math.pow(1.04, roomsPastTen) };
+  return { hp: Math.pow(1.07, roomsPastTen), dmg: Math.pow(1.06, roomsPastTen) };
 }
 
 function spawnAtEdge(defId: EnemyId): void {
@@ -349,10 +349,11 @@ function spawnAtEdge(defId: EnemyId): void {
   else if (edge === 1) { x = run.arenaW - pad; y = Math.random() * run.arenaH; }
   else if (edge === 2) { x = Math.random() * run.arenaW; y = pad; }
   else { x = Math.random() * run.arenaW; y = run.arenaH - pad; }
-  // Elite-instance chance climbs with room progress — near-zero in the opening rooms, ~22%
-  // by the last story room, and keeps climbing (capped at 50%) through endless rooms past
-  // room 10 so a run that keeps going actually keeps getting harder, not just longer.
-  const eliteChance = Math.min(0.5, run.roomIndex * 0.025);
+  // Elite-instance chance climbs with room progress — a real threat even in the opening
+  // room (5%), ~37% by the last story room, and keeps climbing (capped at 60%) through
+  // endless rooms past room 10 so a run that keeps going actually keeps getting harder,
+  // not just longer.
+  const eliteChance = Math.min(0.6, 0.05 + run.roomIndex * 0.04);
   const mult = roomScaleMults(run.roomIndex);
   const enemy = spawnEnemy(defId, { x, y }, eliteChance, mult.hp, mult.dmg);
   run.enemies.push(enemy);
