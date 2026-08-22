@@ -1,4 +1,4 @@
-import { getWeeklyLeadStandings, getLastWeekLegendaryWinners, LEGENDARY_WEEK_THRESHOLD, weekKey, avatarFrameHtml, escapeHtml } from './state';
+import { getWeeklyLeadStandings, getLastWeekLegendaryWinners, LEGENDARY_WEEK_THRESHOLD, weekKey, nextWeekResetMs, avatarFrameHtml, escapeHtml } from './state';
 import { mountModal } from './onboarding';
 import type { WeeklyLeadStanding } from './state';
 
@@ -8,19 +8,14 @@ import type { WeeklyLeadStanding } from './state';
  * module just turns that into a countdown, a race widget, and a one-time
  * "who won" reveal. */
 
-/** Next Sunday 00:00 UTC — the weekly leaderboard reset boundary (see weekKey()
- * in state.ts, which is itself UTC-anchored so it agrees with submit_score() on
- * the server). Must mirror weekKey()'s UTC day-of-week math exactly: an earlier
- * local-time version of this rolled over at local midnight, up to ~14h before
- * the real (UTC) boundary for anyone east of UTC — showing "reset!" while the
- * leaderboard/Hall of Fame were still genuinely on the old week. Always 1-7
- * days out, never 0, even at the instant a new week just started. */
+/** Ms until the weekly leaderboard reset boundary — see nextWeekResetMs() in state.ts, which is
+ * also what weekKey() itself backs up from, so this can never drift out of sync with the actual
+ * reset the way an independent local-time calculation once did (that version rolled over at local
+ * midnight, up to ~2h before the real WEEK_TZ boundary — showing "reset!" while the leaderboard/
+ * Hall of Fame were still genuinely on the old week). */
 export function msUntilNextWeekReset(): number {
   const now = new Date();
-  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const daysUntilSunday = (7 - next.getUTCDay()) % 7;
-  next.setUTCDate(next.getUTCDate() + (daysUntilSunday === 0 ? 7 : daysUntilSunday));
-  return next.getTime() - now.getTime();
+  return nextWeekResetMs(now) - now.getTime();
 }
 
 export function formatCountdown(ms: number): string {

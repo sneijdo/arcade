@@ -216,21 +216,86 @@ export function todayLocalDateString(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+/** IANA zone every weekly boundary (leaderboard, Hall of Fame, legendary countdown) is anchored
+ * to — every player here is assumed to be in this zone. Must exactly match submit_score()'s week
+ * calculation in supabase/schema_scores.sql. If this site ever gets players in other timezones,
+ * this needs to go back to a genuinely zone-agnostic anchor (UTC) instead — anchoring to one
+ * zone only makes the reset land at a sensible local time *for that zone*. */
+const WEEK_TZ = 'Europe/Copenhagen';
+
+function tzOffsetMs(timeZone: string, instant: Date): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+    .formatToParts(instant)
+    .reduce<Record<string, string>>((acc, p) => {
+      if (p.type !== 'literal') acc[p.type] = p.value;
+      return acc;
+    }, {});
+  const hour = parts.hour === '24' ? 0 : Number(parts.hour); // some locales render midnight as "24:00"
+  const asUTC = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), hour, Number(parts.minute), Number(parts.second));
+  return asUTC - instant.getTime();
+}
+
+function zonedYMD(instant: Date, timeZone: string): { y: number; m: number; day: number } {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
+    .formatToParts(instant)
+    .reduce<Record<string, string>>((acc, p) => {
+      if (p.type !== 'literal') acc[p.type] = p.value;
+      return acc;
+    }, {});
+  return { y: Number(parts.year), m: Number(parts.month), day: Number(parts.day) };
+}
+
+/** Epoch ms of 00:00:00 on the given zone-local calendar date. Resolves the zone's actual DST
+ * offset for that date via Intl rather than assuming a fixed UTC+N, so this stays correct across
+ * the two DST changeover weekends a year. Two-pass fixed point since the offset can itself differ
+ * right at local midnight vs. at the initial UTC-midnight guess. */
+function zonedMidnightMs(y: number, m: number, day: number, timeZone: string): number {
+  const guess = Date.UTC(y, m - 1, day);
+  const offset = tzOffsetMs(timeZone, new Date(guess));
+  const refined = tzOffsetMs(timeZone, new Date(guess - offset));
+  return guess - refined;
+}
+
 /** Sunday-start week key (e.g. "2026-08-16", the date of that week's Sunday) — the leaderboard's
- * weekly reset boundary. A new week starts every Sunday, which is also when a fresh shot at a
- * legendary slot opens up. Plain calendar-date strings sort lexicographically in chronological
- * order, same as the ISO-week strings this replaced, so every caller that compares week keys as
- * strings keeps working unchanged.
+ * weekly reset boundary. A new week starts every Sunday (WEEK_TZ-local midnight), which is also
+ * when a fresh shot at a legendary slot opens up. Plain calendar-date strings sort lexicographically
+ * in chronological order, same as the ISO-week strings this replaced, so every caller that compares
+ * week keys as strings keeps working unchanged.
  *
- * Computed from `d`'s UTC calendar date, not the browser's local date — it has to be, since
- * submit_score() (see supabase/schema_scores.sql) buckets weeks the same way on the server, which
- * has no way to know a client's local timezone. Using local-date-reinterpreted-as-UTC here (as this
- * used to) would let two players see the same instant land in different week buckets, and would
- * disagree with what the server just wrote near the UTC day boundary. */
+ * Computed from `d`'s WEEK_TZ calendar date, not raw UTC or the browser's own local date — it has
+ * to agree with whatever submit_score() (see supabase/schema_scores.sql) buckets weeks as on the
+ * server, or a client could see the same instant land in a different week bucket than the server
+ * just wrote near the boundary. This used to use UTC, which was internally consistent but meant the
+ * reset landed at 01:00/02:00 WEEK_TZ-local time instead of local midnight — confirmed live: the
+ * on-page countdown (see msUntilNextWeekReset in legendary.ts) hit zero at local midnight while the
+ * leaderboard/Hall of Fame were still genuinely on the old week for another ~2h. */
 export function weekKey(d: Date): string {
-  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-  date.setUTCDate(date.getUTCDate() - date.getUTCDay()); // back up to that week's Sunday (UTC day 0)
+  const { y, m, day } = zonedYMD(d, WEEK_TZ);
+  const date = new Date(Date.UTC(y, m - 1, day));
+  date.setUTCDate(date.getUTCDate() - date.getUTCDay()); // back up to that week's Sunday
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+}
+
+/** Epoch ms of the next Sunday 00:00 WEEK_TZ-local time — the weekly reset boundary from
+ * weekKey() above, as an actual instant. Exported so legendary.ts's countdown derives it from the
+ * exact same zone/week math as weekKey() instead of keeping an independent implementation that can
+ * drift out of sync (see weekKey()'s doc comment for what that drift looked like). Always 1-7 days
+ * out, never 0/negative, even at the instant a new week just started. */
+export function nextWeekResetMs(d: Date): number {
+  const { y, m, day } = zonedYMD(d, WEEK_TZ);
+  const date = new Date(Date.UTC(y, m - 1, day));
+  const daysUntilSunday = (7 - date.getUTCDay()) % 7;
+  date.setUTCDate(date.getUTCDate() + (daysUntilSunday === 0 ? 7 : daysUntilSunday));
+  return zonedMidnightMs(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate(), WEEK_TZ);
 }
 
 /**

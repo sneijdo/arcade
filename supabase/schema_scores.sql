@@ -146,9 +146,16 @@ begin
     raise exception 'too many submissions — slow down';
   end if;
 
-  -- Sunday-start week bucket, UTC — must exactly mirror weekKey() in
-  -- src/state.ts (Date.UTC(...) then subtract getUTCDay()).
-  v_today := (now() at time zone 'utc')::date;
+  -- Sunday-start week bucket, anchored to Europe/Copenhagen local time (every
+  -- player here is in that zone) — must exactly mirror weekKey() in
+  -- src/state.ts, which resolves the same zone's calendar date via Intl and
+  -- backs up to that week's Sunday. Postgres's tz database handles the DST
+  -- changeover automatically, same as Intl does client-side. This used to be
+  -- UTC, which was internally consistent but meant the weekly reset landed at
+  -- 01:00/02:00 local time instead of local midnight — confirmed live: a
+  -- player watching the countdown hit zero at local midnight still saw last
+  -- week's leaderboard/Hall of Fame for another ~2h.
+  v_today := (now() at time zone 'Europe/Copenhagen')::date;
   v_dow := extract(dow from v_today)::int;
   v_week := v_today - v_dow;
 
