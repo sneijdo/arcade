@@ -1,0 +1,48 @@
+/* ---- sitewide service notice bar — sits below #header in normal document flow (not
+   fixed like #toast-container/#duel-invite-container), so it scrolls away with the page
+   instead of permanently eating screen space, but is still the first thing every player
+   sees on load until they dismiss it. See src/serviceNotice.ts for the dismiss-once logic. ---- */
+#service-notice-container:empty {
+  display: none;
+}
+.service-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 28px;
+  background: linear-gradient(90deg, rgba(139, 107, 255, 0.16), rgba(92, 208, 255, 0.1));
+  border-bottom: 1px solid var(--border-2);
+  animation: toast-in 0.3s var(--ease);
+}
+.service-notice-icon {
+  flex: none;
+  font-size: 16px;
+  line-height: 1;
+}
+.service-notice-text {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.service-notice-close {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border-2);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+.service-notice-close:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+@media (max-width: 860px) {
+  .service-notice {
+    padding: 10px 16px;
+  }
+}

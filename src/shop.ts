@@ -207,10 +207,10 @@ export const TAUNTS: TauntDef[] = [
   { id: 'taunt-diary', text: 'Skriv det i dagbogen din 📔', rarity: 'common', cost: 130 },
   { id: 'taunt-notes', text: 'Tag noter, nybegynder', rarity: 'rare', cost: 260 },
   { id: 'taunt-collection', text: 'Endnu en til samlingen 📈', rarity: 'rare', cost: 280 },
-  { id: 'taunt-sorry', text: 'Beklager, ikke beklager 😏', rarity: 'epic', cost: 620 },
-  { id: 'taunt-cleanup', text: 'Ryd op efter dig selv', rarity: 'epic', cost: 650 },
-  { id: 'taunt-kneel', text: 'Bøj knæ for kongen 👑', rarity: 'legendary', cost: 1400 },
-  { id: 'taunt-besteffort', text: 'Var det virkelig dit bedste forsøg?', rarity: 'legendary', cost: 1600 },
+  { id: 'taunt-sorry', text: 'Beklager... NOOB', rarity: 'epic', cost: 620 },
+  { id: 'taunt-cleanup', text: 'He :)', rarity: 'epic', cost: 650 },
+  { id: 'taunt-kneel', text: 'SUT MINE KOGLER.', rarity: 'legendary', cost: 1400 },
+  { id: 'taunt-besteffort', text: 'Se om du kan slå den, bums.', rarity: 'legendary', cost: 1600 },
 ];
 
 export function findAvatar(id: string | null | undefined): AvatarDef | null {
