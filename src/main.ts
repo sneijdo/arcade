@@ -1,6 +1,6 @@
 import './styles/index.css';
 import { Sound } from './sound';
-import { loadProfile, saveProfile, profile } from './state';
+import { loadProfile, saveProfile, profile, creditMyHallOfFameWins } from './state';
 import { refreshHeader } from './header';
 import { initRouter, navigate, currentHashRoute } from './router';
 import { showOnboarding, showAuthModal, closeAnyModal } from './onboarding';
@@ -45,6 +45,7 @@ async function initLocalMode(): Promise<void> {
   Sound.setMuted(!!p.muted);
   Sound.setPack(p.equippedSoundPack);
   refreshHeader();
+  void creditMyHallOfFameWins();
   navigate(currentHashRoute());
 }
 
@@ -78,6 +79,12 @@ async function initSupabaseMode(): Promise<void> {
     mountInviteBanner();
     void mountServiceNotice();
     void syncReferrals();
+    // Previously this only ran when a player happened to open the Leaderboard's
+    // Hall of Fame tab, so a weekly legendary win could go uncredited (no shop
+    // slot, no token) for anyone who didn't click through — even after they'd
+    // already seen the "you won" reveal on the Activity page. Run it on every
+    // login instead so crediting doesn't depend on which page they land on.
+    void creditMyHallOfFameWins();
     // Refreshes this player's public PlayerMeta snapshot (see saveProfile in state.ts)
     // just from opening the app — not only from playing/equipping something. Otherwise
     // a player who's genuinely progressed but hasn't triggered a save since a new
