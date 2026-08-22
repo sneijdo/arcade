@@ -13,6 +13,7 @@ import { renderGuide } from './pages/guide';
 import { renderDuelMatch } from './pages/duel';
 import { renderCasino } from './pages/casino';
 import { GAME_RENDERERS } from './games';
+import { GAMES } from './games/registry';
 import type { Route } from './types';
 
 export let route: Route = 'home';
@@ -47,6 +48,13 @@ export async function navigate(r: string): Promise<void> {
     // Ember Ward is closed-testing (see games/towerdefense/beta.ts) — block direct URL
     // navigation too, not just hide it from the games grid.
     if (gameId === 'towerdefense' && !canAccessEmberWard(profile?.name)) {
+      toast('Dette spil er endnu ikke tilgængeligt.');
+      await navigate('home');
+      return;
+    }
+    // Any other game not yet marked implemented (registry.ts) is "coming soon" — block
+    // direct URL navigation the same way, not just hide it from the games grid.
+    if (GAMES.find((g) => g.id === gameId)?.implemented === false) {
       toast('Dette spil er endnu ikke tilgængeligt.');
       await navigate('home');
       return;

@@ -205,7 +205,9 @@ export const GAMES: GameDef[] = [
     iconAsset: '/gameicons/colossus.svg',
     description: 'Stå tæt på kolossen for at gøre skade, undgå dens varslede angreb. Sejr eller død, din skade tæller.',
     scoreKind: 'colossus_damage',
-    implemented: true,
+    // Not ready yet — flip back to true once it's ready to publish. See router.ts's
+    // "not implemented" guard for why this alone is enough to also block direct URL access.
+    implemented: false,
   },
   {
     id: 'trajectory',
@@ -215,7 +217,9 @@ export const GAMES: GameDef[] = [
     iconAsset: '/gameicons/trajectory.svg',
     description: 'Træk tilbage og slip — sigt med tyngdekraft og ram så mange balloner som muligt på 8 skud.',
     scoreKind: 'trajectory_score',
-    implemented: true,
+    // Not ready yet — dragging the slingshot back can drag the browser window/viewport
+    // instead, making it impossible to actually shoot. Flip back to true once fixed.
+    implemented: false,
   },
   {
     id: 'tetris',
