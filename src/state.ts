@@ -616,7 +616,29 @@ export async function getLastWeekLegendaryWinners(): Promise<WeeklyLeadStanding[
  * is this player's own "already checked up to here" bookmark, standing in
  * for what would otherwise need a shared cross-user marker.
  */
-export async function creditMyHallOfFameWins(): Promise<void> {
+let creditHofInFlight: Promise<void> | null = null;
+
+/** Thin re-entrancy-safe wrapper around creditMyHallOfFameWinsInner() below — there are two call
+ * sites (main.ts on every login, and leaderboard.ts whenever the Hall of Fame tab renders), and
+ * landing straight on that tab right after login fires both within the same page load. Both would
+ * start from the same not-yet-updated profile.hofCheckedThroughWeek and independently compute the
+ * same wins delta, and since the inner function's many sequential readLeaderboard() awaits leave
+ * a wide window for the two runs to interleave, whichever call's hof: write lands second would read
+ * a baseline that already includes the first call's write and add the same delta again on top —
+ * doubling it. Confirmed live: Sneijdo's Hall of Fame tally kept climbing on every fresh page load
+ * even after the actual stuck-save bug (see saveProfile()'s doc comment) was fixed, because this
+ * race doesn't need any save to be failing — two concurrent *successful* runs are enough on their
+ * own. Collapsing every concurrent call onto one shared in-flight promise removes the race
+ * entirely instead of trying to make the read-modify-write itself atomic. */
+export function creditMyHallOfFameWins(): Promise<void> {
+  if (creditHofInFlight) return creditHofInFlight;
+  creditHofInFlight = creditMyHallOfFameWinsInner().finally(() => {
+    creditHofInFlight = null;
+  });
+  return creditHofInFlight;
+}
+
+async function creditMyHallOfFameWinsInner(): Promise<void> {
   if (!profile) return;
   const implementedGameIds = GAMES.filter((g) => g.implemented).map((g) => g.id);
   const now = Date.now();
