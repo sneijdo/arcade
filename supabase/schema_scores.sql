@@ -17,6 +17,13 @@
 -- (TOTAL_BALLS cap, see dropzone.ts), trajectory_score (8 shots x 30pts max, see
 -- trajectory.ts), colossus_damage (boss max HP, see colossus.ts). reaction_ms
 -- gets a floor (low values are what get forged), not a ceiling.
+--
+-- oddoneout_score's original bound (200) turned out too tight and rejected a genuine
+-- 247-round run: its difficulty (grid size/round time/angle, see oddoneout.ts) caps out
+-- around attempt ~15 and then holds flat forever, so — unlike a fixed-round-count game —
+-- there's no natural ceiling, only how long a skilled player keeps their streak going.
+-- Raised to 2000; worth remembering for any other game with this same "ramps then caps,
+-- keeps going until you slip" shape (survival/endless modes generally, not timed rounds).
 
 create table if not exists public.score_bounds (
   game_id text primary key,
@@ -44,7 +51,7 @@ insert into public.score_bounds (game_id, direction, min_value, max_value) value
   ('wordrush', 'desc', 0, 200),
   ('swerve', 'desc', 0, 600000),
   ('pairs', 'desc', 0, 2000),
-  ('oddoneout', 'desc', 0, 200),
+  ('oddoneout', 'desc', 0, 2000),
   ('colossus', 'desc', 0, 320),
   ('trajectory', 'desc', 0, 240),
   ('tetris', 'desc', 0, 2000000),
@@ -174,9 +181,17 @@ grant execute on function public.submit_score(text, numeric) to authenticated;
 -- score_bounds table submit_score() uses. It does NOT touch xp/xpBalance,
 -- unlocked-item arrays, or duelRating — those have no equivalent physical
 -- plausibility bound and are out of scope here.
+-- security definer: score_bounds has RLS enabled with no select policy for normal roles, so
+-- without this the `for r in select * from public.score_bounds` loops below silently iterate
+-- zero times (as the calling role, e.g. authenticated, sees no rows) and this trigger has
+-- never actually validated anything since it was first deployed — confirmed live: Linnet's
+-- profile/playerMeta happily stored bestScores.oddoneout = 247 despite the (then-200) bound,
+-- with no error at all. Same root cause and same fix as rank_for()'s security definer above.
 create or replace function public.validate_score_bounds()
 returns trigger
 language plpgsql
+security definer
+set search_path = public
 as $$
 declare
   r record;
