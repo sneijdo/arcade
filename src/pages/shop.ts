@@ -364,6 +364,7 @@ async function handleTap(tab: ShopTab, id: string): Promise<void> {
   if (!def) return;
   const owned = ownedIds(tab).includes(id);
   let justPurchased = false;
+  let rollback: (() => void) | null = null;
 
   if (owned) {
     if (tab === 'avatars') profile.equippedAvatar = profile.equippedAvatar === id ? null : id;
@@ -394,6 +395,11 @@ async function handleTap(tab: ShopTab, id: string): Promise<void> {
       toast('Ikke nok XP endnu');
       return;
     }
+    // Snapshotted so a failed save (see saveProfile()'s doc comment — e.g. a stuck invalid
+    // field silently rejecting every write for this player) can be rolled back below instead
+    // of leaving the UI showing "purchased" with the XP already gone while nothing persisted.
+    const prevXpBalance = profile.xpBalance;
+    const prevEquipped = equippedId(tab);
     profile.xpBalance -= def.cost;
     if (tab === 'avatars') {
       profile.unlockedAvatars.push(id);
@@ -415,10 +421,42 @@ async function handleTap(tab: ShopTab, id: string): Promise<void> {
       profile.unlockedTaunts.push(id);
       profile.equippedTaunt = id;
     }
-    showPurchaseReveal(def, tab);
+    rollback = () => {
+      if (!profile) return;
+      profile.xpBalance = prevXpBalance;
+      if (tab === 'avatars') {
+        profile.unlockedAvatars.pop();
+        profile.equippedAvatar = prevEquipped;
+      } else if (tab === 'frames') {
+        profile.unlockedFrames.pop();
+        profile.equippedFrame = prevEquipped;
+      } else if (tab === 'titles') {
+        profile.unlockedTitles.pop();
+        profile.equippedTitle = prevEquipped;
+      } else if (tab === 'nameEffects') {
+        profile.unlockedNameEffects.pop();
+        profile.equippedNameEffect = prevEquipped;
+      } else if (tab === 'soundPacks') {
+        profile.unlockedSoundPacks.pop();
+        profile.equippedSoundPack = prevEquipped;
+        Sound.setPack(prevEquipped);
+      } else {
+        profile.unlockedTaunts.pop();
+        profile.equippedTaunt = prevEquipped;
+      }
+    };
     justPurchased = true;
   }
-  await saveProfile();
+  const saved = await saveProfile();
+  if (!saved) {
+    // saveProfile() already toasted the generic save-error message — nothing more to say here,
+    // just undo the optimistic change so the shop doesn't lie about what actually happened.
+    rollback?.();
+    renderGrid();
+    return;
+  }
+  // Only celebrate once the purchase is actually confirmed saved, not optimistically beforehand.
+  if (justPurchased) showPurchaseReveal(def, tab);
   refreshHeader();
   // Owning the last legendary item can itself unlock a secret title (see checkAchievements in
   // state.ts) — check right away instead of leaving it stale until the player's next game.

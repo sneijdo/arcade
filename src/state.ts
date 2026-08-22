@@ -5,7 +5,7 @@ import { BADGES } from './badges';
 import { GAMES } from './games/registry';
 import { ScoreKinds } from './scoring';
 import { XP_RULES, levelInfo } from './xp';
-import { toast, toastNetworkError } from './toast';
+import { toast, toastNetworkError, toastSaveError } from './toast';
 import { pushActivity } from './activity';
 import { Sound } from './sound';
 import { refreshHeader } from './header';
@@ -119,9 +119,25 @@ export async function loadProfile(): Promise<Profile | null> {
   return profile;
 }
 
-export async function saveProfile(): Promise<void> {
-  if (!profile) return;
-  await storage.set('profile', profile, false);
+/**
+ * Returns whether the write actually persisted — every call used to just fire-and-forget
+ * (storage.set()'s own false return was silently dropped), so a rejected write (e.g. the
+ * validate_score_bounds trigger in supabase/schema_scores.sql rejecting the whole blob because
+ * of one already-invalid field, like a pre-validation forged bestReaction sitting in a profile
+ * from before that trigger existed) left the *player's own client* looking fully up to date —
+ * new XP, a "purchased" item, a new personal best — while nothing behind it actually saved.
+ * Confirmed live: this is what made Linnet's shop purchases never stick while still spending his
+ * XP, and what made Sneijdo's personal-best updates silently stop landing. Callers that show an
+ * optimistic result (a purchase, a new record) should check this and roll back / warn instead of
+ * celebrating unconditionally; everyone else can ignore the return value — the toast below still
+ * surfaces the failure either way. */
+export async function saveProfile(): Promise<boolean> {
+  if (!profile) return false;
+  const ok = await storage.set('profile', profile, false);
+  if (!ok) {
+    toastSaveError();
+    return false;
+  }
   // Mirror the public-facing identity fields to a shared record so leaderboard/Hall
   // of Fame rows can resolve a player's *current* avatar/title/name instead of a
   // stale snapshot from whenever they last posted a score (see getCombinedLeaderboard).
@@ -147,6 +163,7 @@ export async function saveProfile(): Promise<void> {
     referredBy: profile.referredBy,
   };
   await storage.set('playerMeta:' + profile.id, meta, true);
+  return true;
 }
 
 export function clearProfile(): void {
@@ -631,11 +648,19 @@ export async function creditMyHallOfFameWins(): Promise<void> {
     if (latestChecked == null || week > latestChecked) latestChecked = week;
   }
 
+  // The wins tally below must only be written once the "already checked through" bookmark has
+  // actually persisted — otherwise a save that keeps failing (see saveProfile()'s doc comment)
+  // never advances the bookmark, so every future call reprocesses the exact same weeks from
+  // scratch and re-adds the same wins on top of whatever's already in hof:<id> (that key isn't
+  // covered by the same validation the profile row is, so IT keeps saving fine even while the
+  // bookmark can't) — confirmed live: this is what inflated Sneijdo's Hall of Fame tally to 10x
+  // real (wins: 10/10/10 instead of 1/1/1) after several reloads while his profile save was stuck.
+  let bookmarkSaved = true;
   if (latestChecked !== profile.hofCheckedThroughWeek) {
     profile.hofCheckedThroughWeek = latestChecked;
-    await saveProfile();
+    bookmarkSaved = await saveProfile();
   }
-  if (hof) {
+  if (hof && bookmarkSaved) {
     await storage.set('hof:' + profile.id, hof, true);
     hallOfFameCache = null;
     toast(`<span class="toast-icon">🏆</span> Du er kommet i Hall of Fame for en #1-placering!`, 'achievement');

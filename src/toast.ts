@@ -27,3 +27,17 @@ export function toastNetworkError(): void {
   lastNetworkErrorToastAt = now;
   toast(`<span class="toast-icon">⚠️</span> Kunne ikke hente data, tjek din forbindelse`);
 }
+
+let lastSaveErrorToastAt = 0;
+
+/** A failed profile write used to just log to the console and be silently discarded — the UI
+ * kept showing whatever the in-memory optimistic change was (new XP, a "purchased" item, a new
+ * personal best) even though none of it actually persisted, so the player only found out on
+ * their next reload, if ever. Same debounce shape as toastNetworkError() so a run of saves
+ * failing back-to-back (finishGameSession alone calls saveProfile twice) doesn't stack toasts. */
+export function toastSaveError(): void {
+  const now = Date.now();
+  if (now - lastSaveErrorToastAt < 4000) return;
+  lastSaveErrorToastAt = now;
+  toast(`<span class="toast-icon">⚠️</span> Kunne ikke gemme dine ændringer, prøv igen`);
+}
