@@ -334,17 +334,18 @@ function startRoom(index: number): void {
 }
 
 /**
- * Endless-mode difficulty scaling: rooms 1-10 (the handcrafted story campaign, see
- * NON_BOSS_ROOM_COUNT in encounters.ts) are always base stats — every room after that
- * compounds +7% enemy HP and +6% enemy damage. Without this, upgrades cap out (maxStacks
- * per card, see upgrades.ts) within the first 5-10 rooms while enemies never got any
- * tougher, so endless mode just stayed trivial forever past that point — a run's length
- * measured patience, not skill. Applies to the boss too (see startRoom), so repeat boss
+ * Difficulty scaling compounds every single room, starting from room 1 — not just past room 10
+ * as it used to. That old version left the entire handcrafted 9-room story campaign at flat,
+ * unscaled stats and only ramped in endless mode, which most runs never reach; the campaign
+ * itself never got harder room to room, just longer. Now every room is +6% enemy HP and +5%
+ * damage over the last: by the final story room (index 8) that's already ~59% more HP and ~48%
+ * more damage than room 1, and it keeps compounding indefinitely into endless mode past room 10
+ * so upgrades capping out (maxStacks per card, see upgrades.ts) doesn't leave a plateau where
+ * enemies stop getting tougher. Applies to the boss too (see startRoom), so repeat boss
  * encounters every 10 rooms don't stay a free kill while regular rooms ramp up around them.
  */
 function roomScaleMults(roomIndex: number): { hp: number; dmg: number } {
-  const roomsPastTen = Math.max(0, roomIndex - (TOTAL_ROOMS - 1));
-  return { hp: Math.pow(1.07, roomsPastTen), dmg: Math.pow(1.06, roomsPastTen) };
+  return { hp: Math.pow(1.06, roomIndex), dmg: Math.pow(1.05, roomIndex) };
 }
 
 function spawnAtEdge(defId: EnemyId): void {
