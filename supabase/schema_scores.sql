@@ -24,6 +24,15 @@
 -- there's no natural ceiling, only how long a skilled player keeps their streak going.
 -- Raised to 2000; worth remembering for any other game with this same "ramps then caps,
 -- keeps going until you slip" shape (survival/endless modes generally, not timed rounds).
+--
+-- aim's original bound (100) had the same problem: it was a guessed ceiling, not a real
+-- one, and a genuinely skilled player was going to reach it eventually — confirmed live:
+-- Linnet legitimately hit 100 twice (making it look like a natural cap), then 103 and 104
+-- on later plays, every one of which submit_score() silently rejected as "out of range"
+-- once she actually cleared it. aim DOES have a real mechanical cap, unlike oddoneout —
+-- MIN_HIT_INTERVAL_MS (110ms) and SESSION_MS (30s) in aim.ts mean at most
+-- floor(30000/110) = 272 hits are physically possible in one session. Raised to that
+-- exact cap instead of another guess.
 
 create table if not exists public.score_bounds (
   game_id text primary key,
@@ -34,7 +43,7 @@ create table if not exists public.score_bounds (
 
 insert into public.score_bounds (game_id, direction, min_value, max_value) values
   ('reaction', 'asc', 80, 2000),
-  ('aim', 'desc', 0, 100),
+  ('aim', 'desc', 0, 272),
   ('memory', 'desc', 0, 50),
   ('numberrush', 'desc', 0, 200),
   ('snake', 'desc', 0, 1000),
